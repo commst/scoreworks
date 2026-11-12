@@ -431,6 +431,7 @@ python3 tools/gen_outline_templates.py <fonts 폴더> src/outline-templates.js
 | `python3 test/levelref.py /tmp/levelref.musicxml` → `node test/levelstems.mjs <html> /tmp/levelref.musicxml <폴더>` → `python3 test/levelmeas.py <폴더>` | 악기 기본 음량 측정(곡과 상관없는 시험 악보로 악기·타악 소리마다 크기, 157번). 기본 음량(LV·GAIN)을 바꾸면 이것으로 확인 |
 | `node test/stems.mjs <html> <접두어> <폴더>` → `test/frontier/*.py` | 줄마다(크기 맞추기 없이) WAV를 받아 실제 연주 음원과 악기별 크기·대역·울림 비교 (test/frontier/README.md) |
 | `node test/pwboot.cjs index.html` | 시작 시험: 저장된 설정(악보로 보기·탭·자동 저장 등) 여러 가지로 열어 끝까지 시작되는지. 화면 코드를 고치면 꼭 |
+| `NODE_PATH=/opt/npm-tools/node_modules node test/pwspill.cjs <접두어> [out.json]` | 총보를 열고 모든 줄을 켠 뒤 재생 마디(state.bars)에서 마디 길이를 넘어 잘리는 음을 줄·마디별로 셈(170번 점검 도구). out.json에 마디 길이 목록도 |
 | `node test/pwxml.cjs <접두어…>` → `xsdcheck.py`·`xmlcheck.py`·`integrity.py`·`msall.sh` | MusicXML 내보내기 검사(표준 규칙, 원래 음 대비, 붙임줄·이음줄·잇단 짝, 뮤즈스코어로 열기) |
 
 이어 작업할 때의 규칙·샘플 목록·검사 순서·남은 과제는 `HANDOFF.md`에 모아 두었습니다.

@@ -1268,13 +1268,27 @@ export function parseScore(pages, opts = {}) {
         // 같은 기둥: 기둥 가로 자리가 0.6pt 안이면 한 묶음(예전에는 0.25pt 칸으로 반올림해, 222.77·222.95처럼 칸 경계에 걸친 2도 화음이
         // 두 묶음으로 갈려 윗머리가 뒤 음으로 밀렸다 — 연변목가 양금 2마디)
         const stemKeys = [];
+        // 기둥 없는 음(온음표): 머리를 비켜 적은 2도 화음·같은 음 둘(달빛항해 해금 138마디, 프론티어 거문고 44마디)은 가로로 머리 하나 폭쯤 떨어져 있다.
+        // 예전에는 x를 반올림한 값이 같을 때만 한 묶음이어서 차례로 치는 온음표 둘로 읽어 마디가 2/1이 되었다 → 같은 성부에서 머리 폭(1.9칸) 안에 이어진 것은 한 묶음(전체 폭 2.4칸까지)
+        const spC = (st.bottom - st.top) / 4 || 2.5, xKey = new Map();
+        {
+          const loose = headNotesAll.filter(n => !n.grace && n._stem == null).sort((a, b) => a.x - b.x);
+          const open = {};
+          for (const n of loose) {
+            // 온음표(길이 1 이상) 머리끼리만: 기둥을 못 찾은 4분·8분 머리는 예전대로 x가 거의 같을 때만 묶는다(멋으로 사는 세상 25현 113마디의 이어진 두 음)
+            if (n.dur.v < 1) { xKey.set(n, n.voice + 'x' + Math.round(n.x)); continue; }
+            const o = open[n.voice];
+            if (o && n.x - o.last < spC * 1.9 && n.x - o.x0 < spC * 2.4) { o.last = n.x; xKey.set(n, o.k); }
+            else { const k = n.voice + 'x' + n.x.toFixed(2); open[n.voice] = { k, x0: n.x, last: n.x }; xKey.set(n, k); }
+          }
+        }
         for (const n of headNotesAll) {
           if (n.grace) continue;
           let k;
           if (n._stem != null) {
             const hit = stemKeys.find(q => q.v === n.voice && Math.abs(q.s - n._stem) < 0.6);
             if (hit) k = hit.k; else { k = n.voice + 's' + stemKeys.length; stemKeys.push({ v: n.voice, s: n._stem, k }); }
-          } else k = n.voice + 'x' + Math.round(n.x);
+          } else k = xKey.get(n);
           if (!groups.has(k)) groups.set(k, []); groups.get(k).push(n);
         }
         for (const g of groups.values()) if (g.length > 1) {
@@ -1283,7 +1297,7 @@ export function parseScore(pages, opts = {}) {
           const sm = g.filter(n => n._stem != null), mx = sm.reduce((b, n) => (n._dots || 0) > (b?._dots || 0) ? n : b, null);
           if (mx && mx._dots) for (const n of sm) if ((n._dots || 0) < mx._dots && n.dur.mul(mx._dots === 1 ? F(3, 2) : F(7, 4)).div(n._dots === 1 ? F(3, 2) : F(1)).eq(mx.dur)) { n.dur = mx.dur; n._dots = mx._dots; }
           // 기둥 없는 음(온음표)은 x가 거의 같을 때만
-          for (const n of g.slice(1)) if (n._stem != null || Math.abs(n.x - g[0].x) < 1.5) { if (n.dur.eq(g[0].dur)) n.chordOf = g[0]; }
+          for (const n of g.slice(1)) if (n.dur.eq(g[0].dur)) n.chordOf = g[0];   // 기둥 없는 음은 위에서 머리 폭 안의 것끼리만 묶였다
         }
       }
       // 타악 오선에서 한 기둥에 머리가 둘(장구 덩 등): 기둥 끝 쪽 머리는 그 성부, 다른 머리는 같은 때 반대 성부로 친다

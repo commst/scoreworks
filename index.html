@@ -1841,6 +1841,12 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 
 <template id="histTpl">
+  <section class="hday"><h3>11월 13일</h3>
+      <details class="hbug"><summary>버그 수정 <small>2건</small></summary><ul class="hlist bug">
+      <li><details><summary>달빛항해 10~12·14·34마디가 4/4로 연주되던 문제</summary><p>5/4 마디인데 대아쟁 온음표 한 줄만 '마디 길이' 표를 내어 4/4로 연주되었습니다(장구·징·탬버린의 다섯째 박이 잘리고 모든 악기가 한 박 당겨짐). 되풀이(%) 마디도 표를 내도록 고쳤습니다.</p></details></li>
+      <li><details><summary>머리를 비켜 적은 온음표 2도 화음이 두 음으로 갈라져 들리던 문제</summary><p>달빛항해 끝부분(138~145마디) 해금·대금·대아쟁, 월광 신디 137~141마디, 프론티어 거문고 44·120·136마디처럼 온음표 화음의 이웃한 두 머리를 비켜 적은 것을 온음표 둘을 차례로 치는 것으로 읽어 화음이 갈라지고 마디가 길어졌습니다. 머리 폭 안에 붙은 온음표 머리는 한 화음으로 읽습니다.</p></details></li>
+    </ul></details>
+  </section>
   <section class="hday"><h3>11월 12일</h3>
     <h4>기능 업데이트 <small>11</small></h4><ul class="hlist">
       <li><details><summary>음 고치기(✎)에서 붙임줄 잇기·끊기</summary><p>악보에서 붙임줄을 놓쳐 같은 음을 다시 치면 그 음의 <b>[⌒ 앞 음과 잇기]</b>로 앞 음과 이어 길게 울리게 할 수 있습니다. 반대로 붙임줄을 잘못 읽어 이어지는 음은 창 아래 '붙임줄로 앞 음에 이어 읽은 음'에서 <b>[⌒ 이어 감]</b>을 눌러 다시 치게 합니다. 다른 수정처럼 자동 저장되고 되돌리기·내보내기·공유 설정에도 함께 갑니다.</p></details></li>
@@ -3584,13 +3590,27 @@ function parseScore(pages, opts = {}) {
         // 같은 기둥: 기둥 가로 자리가 0.6pt 안이면 한 묶음(예전에는 0.25pt 칸으로 반올림해, 222.77·222.95처럼 칸 경계에 걸친 2도 화음이
         // 두 묶음으로 갈려 윗머리가 뒤 음으로 밀렸다 — 연변목가 양금 2마디)
         const stemKeys = [];
+        // 기둥 없는 음(온음표): 머리를 비켜 적은 2도 화음·같은 음 둘(달빛항해 해금 138마디, 프론티어 거문고 44마디)은 가로로 머리 하나 폭쯤 떨어져 있다.
+        // 예전에는 x를 반올림한 값이 같을 때만 한 묶음이어서 차례로 치는 온음표 둘로 읽어 마디가 2/1이 되었다 → 같은 성부에서 머리 폭(1.9칸) 안에 이어진 것은 한 묶음(전체 폭 2.4칸까지)
+        const spC = (st.bottom - st.top) / 4 || 2.5, xKey = new Map();
+        {
+          const loose = headNotesAll.filter(n => !n.grace && n._stem == null).sort((a, b) => a.x - b.x);
+          const open = {};
+          for (const n of loose) {
+            // 온음표(길이 1 이상) 머리끼리만: 기둥을 못 찾은 4분·8분 머리는 예전대로 x가 거의 같을 때만 묶는다(멋으로 사는 세상 25현 113마디의 이어진 두 음)
+            if (n.dur.v < 1) { xKey.set(n, n.voice + 'x' + Math.round(n.x)); continue; }
+            const o = open[n.voice];
+            if (o && n.x - o.last < spC * 1.9 && n.x - o.x0 < spC * 2.4) { o.last = n.x; xKey.set(n, o.k); }
+            else { const k = n.voice + 'x' + n.x.toFixed(2); open[n.voice] = { k, x0: n.x, last: n.x }; xKey.set(n, k); }
+          }
+        }
         for (const n of headNotesAll) {
           if (n.grace) continue;
           let k;
           if (n._stem != null) {
             const hit = stemKeys.find(q => q.v === n.voice && Math.abs(q.s - n._stem) < 0.6);
             if (hit) k = hit.k; else { k = n.voice + 's' + stemKeys.length; stemKeys.push({ v: n.voice, s: n._stem, k }); }
-          } else k = n.voice + 'x' + Math.round(n.x);
+          } else k = xKey.get(n);
           if (!groups.has(k)) groups.set(k, []); groups.get(k).push(n);
         }
         for (const g of groups.values()) if (g.length > 1) {
@@ -3599,7 +3619,7 @@ function parseScore(pages, opts = {}) {
           const sm = g.filter(n => n._stem != null), mx = sm.reduce((b, n) => (n._dots || 0) > (b?._dots || 0) ? n : b, null);
           if (mx && mx._dots) for (const n of sm) if ((n._dots || 0) < mx._dots && n.dur.mul(mx._dots === 1 ? F(3, 2) : F(7, 4)).div(n._dots === 1 ? F(3, 2) : F(1)).eq(mx.dur)) { n.dur = mx.dur; n._dots = mx._dots; }
           // 기둥 없는 음(온음표)은 x가 거의 같을 때만
-          for (const n of g.slice(1)) if (n._stem != null || Math.abs(n.x - g[0].x) < 1.5) { if (n.dur.eq(g[0].dur)) n.chordOf = g[0]; }
+          for (const n of g.slice(1)) if (n.dur.eq(g[0].dur)) n.chordOf = g[0];   // 기둥 없는 음은 위에서 머리 폭 안의 것끼리만 묶였다
         }
       }
       // 타악 오선에서 한 기둥에 머리가 둘(장구 덩 등): 기둥 끝 쪽 머리는 그 성부, 다른 머리는 같은 때 반대 성부로 친다
@@ -8946,7 +8966,8 @@ function applySelection(first = false) {
   if (multi) bars.forEach((b, k) => {
     // 음이 있고 경고 없이 읽은 보통 마디만 센다: 쉬는 줄은 앞 박자를 그대로 이어 쓰고(박자표를 못 읽은 단에서 4/4로 남음), 되풀이(%) 마디는 앞 마디 길이를 베낌
     // (월광 16마디부터 12/8인데 쉬는 줄이 많아 4/4로 내보내던 문제). 그런 줄이 하나도 없으면 모든 줄로
-    const votes = new Map(), good = o => o.events.length && !o.warnings.length && o.kind === 'normal';
+    // 되풀이(%) 마디도 표를 낸다: 앞 마디 길이를 그대로 베낀 것이라 근거가 같다 (달빛항해 10~12·14·34마디 — 대아쟁 온음표 한 줄(1/1)만 표를 내 5/4 마디가 4/4로 연주되던 문제, 170번)
+    const votes = new Map(), good = o => o.events.length && !o.warnings.length && (o.kind === 'normal' || /^repeat/.test(o.kind || ''));
     const all = numMaps.map(mp => mp.get(b.number)).filter(Boolean), voters = all.some(good) ? all.filter(good) : all;
     for (const o of voters) { const key = o.barLen.v; const v = votes.get(key) || { n: 0, o }; v.n++; votes.set(key, v); }
     let best = null; for (const [len, v] of votes) if (!best || v.n > best.n || (v.n === best.n && len === b.barLen.v)) best = { len, ...v };
@@ -10685,7 +10706,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-12 23:50';
+const APP_VERSION = '2026-11-13 00:40';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();
