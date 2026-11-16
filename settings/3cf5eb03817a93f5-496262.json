@@ -4,7 +4,7 @@
  "title": "얼씨구야",
  "titleRead": "얼씨구야",
  "file": "얼씨구야환상곡 - Score_5부.pdf",
- "saved": "2026-11-15T23:56:03.771Z",
+ "saved": "2026-11-16T00:00:03.174Z",
  "lastBar": 249,
  "lines": {
   "main:0": {
@@ -253,10 +253,11 @@
   },
   {
    "start": 129,
-   "unit": "dq",
+   "unit": "q",
    "bpm": 180,
    "auto": true,
-   "text": "♩.=180"
+   "text": "♩.=180",
+   "edited": true
   },
   {
    "start": 170,
