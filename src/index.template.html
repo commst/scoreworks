@@ -1833,6 +1833,11 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 
 <template id="histTpl">
+  <section class="hday"><h3>11월 17일</h3>
+      <details class="hbug"><summary>버그 수정 <small>1건</small></summary><ul class="hlist bug">
+      <li><details><summary>소나기 253마디 대아쟁 8분음표가 4분음표로 읽히던 문제</summary><p>소아쟁 음과 같은 자리에 있는 대아쟁 화음은 악보 파일이 꼬리를 기둥 끝이 아닌 음표 머리 자리에 찍어 두어 8분음표 꼬리를 놓쳤습니다. 머리 자리의 꼬리도 세도록 고쳤고, 함께 붙임줄 조각을 빔으로 세어 길이가 반으로 읽히던 마디(소나기 91·191마디 등)도 바로잡았습니다.</p></details></li>
+    </ul></details>
+  </section>
   <section class="hday"><h3>11월 13일</h3>
       <details class="hbug"><summary>버그 수정 <small>2건</small></summary><ul class="hlist bug">
       <li><details><summary>달빛항해 10~12·14·34마디가 4/4로 연주되던 문제</summary><p>5/4 마디인데 대아쟁 온음표 한 줄만 '마디 길이' 표를 내어 4/4로 연주되었습니다(장구·징·탬버린의 다섯째 박이 잘리고 모든 악기가 한 박 당겨짐). 되풀이(%) 마디도 표를 내도록 고쳤습니다.</p></details></li>

@@ -1,6 +1,6 @@
 # ScoreWorks(옛 이름 합주연습기) 인수인계 메모
 
-새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-13 00:50, CHANGELOG 170번까지)
+새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-17 08:00, CHANGELOG 171번까지 — 170·171은 푸시 권한이 막혀 로컬 커밋만, 사용자가 올려야 함)
 
 ## 170번(11-13) 연주회 6곡 음 재생 점검 — 끝남, 남은 것은 CHANGELOG 170 '남은 것'
 
@@ -51,7 +51,8 @@
   3. **앱 안 '업데이트 이력'** — src/index.template.html의 `<template id="histTpl">`. 날짜별 `<section class="hday">`, `<h4>기능 업데이트 <small>n</small>`의 `<details><summary>제목</summary><p>설명</p></details>`, 버그는 `<details class="hbug">` 안에. 개수(small)도 맞출 것
   4. **프로젝트 문서 동기화** — Projects 도구 project_write로 `claude/CHANGELOG.md`, `claude/README.md`에 local_path로 올림
 - **토큰 절약(사용자 11-12)**: 꼭 필요한 시험만 한다 — 고친 부분에 직접 닿는 시험 + pwboot 정도. 전체 화면 시험·전체 회귀는 해석기를 고칠 때만, 그림 대조는 바뀐 유형마다 대표 마디만
-- 목표는 **무결점 프로그램**: 고칠 때 기존 기능을 깨지 않는다. 해석기를 고치면 반드시 기존 샘플 전체 회귀 비교
+- 목표는 **무결점 프로그램**: 고칠 때 기존 기능을 깨지 않는다
+- **회귀 범위(사용자 11-17)**: 해석기를 고치면 전체 샘플이 아니라 **소나기·월광·프론티어·미락흘·달빛항해**의 총보·파트보(test/cmp/samples5.txt, 101파일)만 비교한다 — `ls /home/claude/samples | grep -f <(grep -v '^#' test/cmp/samples5.txt) | sed 's#^#/home/claude/samples/#' > /tmp/readable5; LIST=/tmp/readable5 bash test/cmp/reg2.sh /home/claude/prev test/regrn.mjs`(약 2분). 나머지 곡은 필요할 때 git 이력의 옛 해석기(`git show <커밋>:src/score-parser.js`)와 전체 비교하면 누적된 변화가 한꺼번에 나온다
 - **MusicXML 내보내기가 매우 중요**: 사용자는 내보낸 MusicXML을 피날레·뮤즈스코어에서 열어 새 악보를 편집하는 일이 많다. 읽어 들인 PDF와 최대한 같아야 함
 - 디자인: A안(가운데 악보, 아래 연주 막대, 왼쪽 탭 설정). 다크 테마 안 씀(시스템 어두운 모드에서 글씨는 보여야 함)
 - 오래 걸리는 작업은 **단계가 끝날 때마다 진행 상황을 알린다**. 사용량 한도로 끊기면 리셋 뒤 **묻지 말고 이어서** 한다(진행 메모를 남겨 둘 것)

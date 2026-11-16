@@ -889,6 +889,10 @@ function pagePrep(pg, layout, pi) {
   const quadParts = d => d.items.length >= 3 && d.items.length <= 5 ? [d.items] : d.items.length % 4 === 0 && d.items.length <= 16 && d.rect.width >= d.rect.height * 1.5 ? Array.from({ length: d.items.length / 4 }, (_, k) => d.items.slice(k * 4, k * 4 + 4)) : [];
   for (const d of fills) for (const items of quadParts(d)) {
   if (!items.every(i => i.op === 'l')) continue;
+  // 붙임줄 채움(곡선 테두리 안의 납작한 사각형 — Microsoft Print to PDF Encore는 붙임줄을 반쪽씩 곡선+채움으로 그림)은 빔이 아니다
+  // (소나기 총보 191마디: 8분음표 바로 옆 붙임줄 머리 조각(6pt)을 빔으로 세어 길이가 틀렸음)
+  // 단, 납작한 곡선(높이 3.2pt 이하 — 붙임줄 반쪽)일 때만: 빔 묶음을 덮는 이음줄의 상자 안에 든 진짜 빔까지 빼면 안 된다(판놀음·방황·멋으로 사는 세상에서 경고 107개)
+  if (items.length <= 5 && d.rect && curveStrokes.some(c => c.height <= 3.2 && c.x0 - 1 <= d.rect.x0 && d.rect.x1 <= c.x1 + 1 && c.y0 - 1 <= d.rect.y0 && d.rect.y1 <= c.y1 + 1 && c.width < d.rect.width + 2)) continue;
   const pts = [];
   for (const it of items) for (const p of [it.p, it.q]) if (p && !pts.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < 0.05)) pts.push(p);
   if (pts.length !== 4) continue;
@@ -1206,10 +1210,16 @@ export function parseScore(pages, opts = {}) {
             // 꼬리: 기둥 끝 가까이의 꼬리 글자. 위 기둥 꼬리와 아래 기둥 꼬리가 함께 걸리면(두 성부의 기둥이 바로 붙어 있음 — 판놀음 장구 60마디:
             // 옆 음의 아래 기둥 꼬리까지 세어 8분음표를 16분음표로 읽음) 이 기둥 방향의 꼬리만 센다
             let fOwn = 0, fOther = 0;
+            // Encore(Anastasia)는 꼬리 글자를 기둥 끝이 아니라 머리 자리에 찍는다. 위·아래 오선의 음이 같은 가로 자리에 있으면 두 오선의 기둥이
+            // 한 줄로 이어져(소나기 총보 253마디 소아쟁 D4 ↔ 대아쟁 G#3+G#2) 기둥 끝이 다른 오선까지 멀어지므로, 이 기둥에 달린 머리 자리의 꼬리도 이 음의 꼬리로 센다
+            // (머리 자리의 꼬리는 이 기둥 방향의 것만 — 같은 자리 다른 성부의 반대 방향 꼬리를 세지 않게)
+            const encoreAt = f => heads.some(h => h.size === g.size && h.x0 - 1.2 <= v[0] && v[0] <= h.x1 + 1.2 && v[1] - 3 <= h.oy && h.oy <= v[2] + 3 && Math.abs(f.oy - h.oy) < 1);
             for (const f of sg) {
               const fl = (f.code === FLAG_UP || f.code === FLAG_DN) ? 1 : (f.code === FLAG16_UP || f.code === FLAG16_DN) ? 2 : 0;
-              if (fl && Math.abs(f.x0 - v[0]) < 2.5 && Math.abs(f.size - g.size) < 3 &&
-                Math.min(Math.abs(f.y0 - tip), Math.abs(f.y1 - tip), Math.abs(f.oy - tip)) < 8) { if ((f.code === FLAG_UP || f.code === FLAG16_UP) === up) fOwn += fl; else fOther += fl; }
+              if (!fl || Math.abs(f.x0 - v[0]) >= 2.5 || Math.abs(f.size - g.size) >= 3) continue;
+              const fUp = f.code === FLAG_UP || f.code === FLAG16_UP;
+              if (Math.min(Math.abs(f.y0 - tip), Math.abs(f.y1 - tip), Math.abs(f.oy - tip)) < 8) { if (fUp === up) fOwn += fl; else fOther += fl; }
+              else if (fUp === up && /Anastasia/i.test(f.font) && encoreAt(f)) fOwn += fl;   // 기둥 끝에서 먼, 머리 자리의 Encore 꼬리(위 설명)
             }
             flags += fOwn && fOther ? fOwn : fOwn + fOther;
           }
