@@ -850,6 +850,9 @@ body { padding: 0 0 calc(var(--dockh) + 8px); background: var(--paper); }
 .dock-btn[aria-pressed="true"] { border-color: var(--hi); color: var(--hi); background: rgba(246, 214, 107, .12); font-weight: 600; }
 .dock-btn.sq { width: 32px; padding: 0; font-size: 18px; line-height: 1; }
 .dock-speed { display: flex; align-items: center; gap: 6px; flex: none; }
+.dock-jump { display: flex; align-items: center; gap: 4px; flex: none; }   /* 마디 이동(183번): ⏪ [n] ⏩ */
+.dock-jump .dock-btn.sq { width: 36px; font-size: 11px; letter-spacing: -2px; }
+.dock-jump input { width: 46px; height: 36px; padding: 0 4px; text-align: center; border: 1px solid var(--dock-line); border-radius: 8px; background: var(--dock-2); color: #ffffff; font-size: 15px; }
 .dock-speed b { min-width: 46px; text-align: center; }
 .dock-lab { color: var(--dock-soft); font-size: 13px; }
 .dock-save { flex: none; height: 38px; padding: 0 14px; border: 0; border-radius: 8px; background: var(--save-bg); color: var(--save-ink); font-weight: 700; white-space: nowrap; }
@@ -915,8 +918,8 @@ body.files-open .lv-inner, body.help-open .hv-inner { max-width: 900px; margin: 
   .dock-stop { order: 0; }
   .dock .transport { order: 1; flex: 1 1 calc(100% - 52px); }
   .dock-range { order: 2; }
-  .dock-speed { order: 4; margin-left: auto; }
-  #dockLoop { order: 3; }
+  .dock-speed { order: 5; margin-left: auto; }
+  #dockLoop { order: 3; } .dock-jump { order: 4; }   /* 휴대폰: 구간·반복 한 줄, 마디 이동·속도 한 줄 */
   .dock-save { display: none; }
   .tb-btn#histBtn, .tb-btn#manualBtn, .tb-btn#reportBtn { display: none; }
   .tb-song { max-width: none; flex: 1; }
@@ -1012,7 +1015,7 @@ body.sv-mode .score-view:not(.sv-full) .sv-wrap { height: calc(100vh - var(--tbh
   .dock .transport { flex: 1 1 auto; min-width: 120px; }
   .dock .play { width: 44px; height: 44px; }
   .dock-stop { width: 34px; height: 34px; }
-  .dock-range { order: 2; } #dockLoop { order: 3; } .dock-speed { order: 4; margin-left: 0; }
+  .dock-range { order: 2; } #dockLoop { order: 3; } .dock-speed { order: 4; margin-left: 0; } .dock-jump { order: 2; } .dock-jump input { width: 38px; }
   .dock-range .range > label, .dock-range .range > span:last-of-type, .dock-lab { display: none; }
   .dock-range .range > span:first-of-type { font-size: 0; } .dock-range .range > span:first-of-type::after { content: '~'; font-size: 13px; }
   .dock-range .range input { width: 52px; }
@@ -1822,6 +1825,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
             <div class="bar-track" id="track" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="처음"><i id="trackFill"></i><b class="track-knob" id="trackKnob" aria-hidden="true"></b><span class="track-tip" id="trackTip" hidden></span></div>
           </div>
         </div>
+      <div class="dock-jump" role="group" aria-label="마디 이동"><button class="dock-btn sq" id="jumpBack" type="button" aria-label="앞으로 마디 이동" title="적은 마디 수만큼 앞으로(연주 순서대로)">◀◀</button><input type="number" id="jumpN" class="num" min="1" max="999" value="4" aria-label="이동할 마디 수" title="이동할 마디 수"><button class="dock-btn sq" id="jumpFwd" type="button" aria-label="뒤로 마디 이동" title="적은 마디 수만큼 뒤로(연주 순서대로)">▶▶</button></div>
       <div class="dock-range"><div class="range">
           <label for="from">마디</label><input type="number" id="from" min="1" value="1" class="num" aria-label="시작 마디">
           <span>부터</span><input type="number" id="to" min="1" value="8" class="num" aria-label="끝 마디"><span>까지</span>
@@ -1837,7 +1841,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 17일</h3>
-    <h4>기능 업데이트 <small>1</small></h4><ul class="hlist">
+    <h4>기능 업데이트 <small>2</small></h4><ul class="hlist">
+      <li><details><summary>연주 막대에 마디 이동 단추</summary><p>연주 막대의 ◀◀ [숫자] ▶▶로 지금 자리에서 적은 마디 수만큼 앞·뒤로 옮겨 재생합니다(예: 4면 네 마디씩, 도돌이표는 연주 순서대로). 적은 숫자는 이 기기에 기억됩니다.</p></details></li>
       <li><details><summary>악보로 보기: 음표 따라가기</summary><p>재생하는 동안 지금 소리 나는 음표 머리가 악기 갈래 색(관악 초록·현악 파랑·타악 주홍·그 밖 보라)으로 바뀌며 따라갑니다. 'OO만' 보기에서는 그 악기만 표시합니다. 악보 보기 도구줄의 '음표 따라가기'로 켜고 끕니다.</p></details></li>
     </ul>
       <details class="hbug"><summary>버그 수정 <small>10건</small></summary><ul class="hlist bug">
@@ -3878,7 +3883,22 @@ $('track').addEventListener('keydown', ev => {
   const cur = barAtT(plan, audio.currentTime || 0), i = cur ? bt.indexOf(cur) : -1;
   const j = ev.key === 'Home' ? 0 : ev.key === 'End' ? bt.length - 1 : Math.max(0, Math.min(bt.length - 1, i + (ev.key === 'ArrowRight' ? 1 : -1)));
   play(ev.key === 'Home' ? 0 : Math.max(0, bt[j].abs - 0.05));
-});// 연습 번호 단추 (A, B, 2악장 …): 누르면 그 마디부터 재생하거나, 다음 번호 전까지를 연주 구간으로
+});
+// 마디 이동(183번): 연주 막대의 ⏪ [n] ⏩ — 지금 자리에서 연주 순서대로 n마디 앞·뒤로 옮겨 재생. 소리를 만들기 전이면 연주 범위 첫 마디 기준
+const JUMP_KEY = 'hapju-jumpN';
+try { const v = +localStorage.getItem(JUMP_KEY); if (v >= 1 && v <= 999) $('jumpN').value = v; } catch (e) {}
+$('jumpN').addEventListener('change', () => { let v = Math.round(+$('jumpN').value); if (!(v >= 1)) v = 1; if (v > 999) v = 999; $('jumpN').value = v; try { localStorage.setItem(JUMP_KEY, v); } catch (e) {} });
+function jumpBars(dir) {
+  if (building || !state.bars.length) return;
+  const n = Math.max(1, Math.min(999, Math.round(+$('jumpN').value) || 1));
+  if (!fresh() || !state.rendered) { const b = Math.max(1, Math.min(lastBar(), (+$('from').value || 1) + dir * n)); playFromBar(b); return; }
+  const { plan } = state.rendered, bt = plan.barTimes; if (!bt.length) return;
+  const cur = barAtT(plan, audio.currentTime || 0), i = cur ? bt.indexOf(cur) : 0;
+  const j = Math.max(0, Math.min(bt.length - 1, i + dir * n));
+  play(j === 0 && dir < 0 ? 0 : Math.max(0, bt[j].abs - 0.05));
+}
+$('jumpBack').addEventListener('click', () => jumpBars(-1));
+$('jumpFwd').addEventListener('click', () => jumpBars(1));// 연습 번호 단추 (A, B, 2악장 …): 누르면 그 마디부터 재생하거나, 다음 번호 전까지를 연주 구간으로
 function renderRehearsal() {
   const list = state.score ? (state.rehearsal || []) : [], box = $('rehBtns');
   $('rehRow').hidden = !list.length; box.textContent = '';
