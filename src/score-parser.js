@@ -1469,7 +1469,9 @@ export function parseScore(pages, opts = {}) {
         const hn = headNotes.filter(n => !n.grace);
         for (const c of cs) {
           if (used.has(c)) continue;
-          const g0 = cs.filter(o => !used.has(o) && Math.abs(o.x0 - c.x0) < 3 && Math.abs(o.x1 - c.x1) < 3);   // (3pt: 위·아래 곡선 시작이 2.3pt 엇갈림 — 소나기 태평소 41마디)
+          // 같은 자리 묶기: 이웃 곡선과 3pt 안이면 이어 붙여 모음(전체 벌어짐 6pt까지) — 3음 화음의 곡선 시작이 2.5pt씩 계단으로 엇갈려(미락흘 syn. 92마디: 495·497.5·500)
+          // 맨 위 곡선이 묶음에서 빠지고 G가 다시 울리던 것. (3pt: 위·아래 곡선 시작이 2.3pt 엇갈림 — 소나기 태평소 41마디)
+          const g0 = [c]; for (let grew = true; grew;) { grew = false; for (const o of cs) if (!used.has(o) && !g0.includes(o) && g0.every(q => Math.abs(o.x0 - q.x0) < 6 && Math.abs(o.x1 - q.x1) < 6) && g0.some(q => Math.abs(o.x0 - q.x0) < 3 && Math.abs(o.x1 - q.x1) < 3)) { g0.push(o); grew = true; } }
           g0.forEach(o => used.add(o));
           // 같은 자리에 두 번 잡힌 곡선(테두리·채움이 따로 곡선 후보가 된 경우)은 하나로 — 소나기 신디 137마디
           const g = []; for (const o of g0.sort((p, q) => (p.y0 + p.y1) - (q.y0 + q.y1))) if (!g.some(q => Math.abs((q.y0 + q.y1) - (o.y0 + o.y1)) < 2)) g.push(o);
