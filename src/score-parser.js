@@ -876,9 +876,10 @@ function pagePrep(pg, layout, pi) {
   const tieRects = rects.filter(tieRect);
   // 여러 마디 쉼표 막대를 고를 때 빼는 붙임줄 채움: 곡선 테두리 안에 들어가는 납작한 사각형 (Microsoft Print to PDF는 크기 차이가 1pt 가까이 남)
   // doPDF는 긴 붙임줄을 반쪽씩(곡선 둘 + 채운 사각형) 그리는데 채움이 곡선 끝까지 닿지 않아 폭 차이가 2pt를 넘기도 한다(판놀음II 태평소 41마디: 곡선 60.3pt, 채움 58.1pt)
-  //  → 한쪽 끝이 곡선 끝과 1pt 안에 맞으면 폭 차이 4pt까지 붙임줄 채움으로 본다
+  //  → 한쪽 끝이 곡선 끝과 1.25pt 안에 맞으면 폭 차이 4pt까지 붙임줄 채움으로 본다
+  //  (윈도 인쇄 Encore 소나기 해금 파트보 307→308마디: 곡선 61.6pt, 채움 59.5pt, 양 끝 1.0·1.1pt — 1pt 기준에 걸려 붙임줄 앞 반쪽이 통째로 빠짐, 186번)
   const looseTie = r => curveStrokes.some(c => c.x0 - 1 <= r.x0 && r.x1 <= c.x1 + 1 && c.y0 - 1 <= r.y0 && r.y1 <= c.y1 + 1
-    && (c.width < r.width + 2 || ((Math.abs(c.x0 - r.x0) < 1 || Math.abs(c.x1 - r.x1) < 1) && c.width < r.width + 4)));
+    && (c.width < r.width + 2 || ((Math.abs(c.x0 - r.x0) < 1.25 || Math.abs(c.x1 - r.x1) < 1.25) && c.width < r.width + 4)));
   const mrRects = rects.filter(r => !tieRects.includes(r) && !looseTie(r));
   const beamList = rects.filter(r => r.height <= 4 && r.width >= 2 && !tieRects.includes(r)).map(r => ({ x0: r.x0, x1: r.x1, yAt: () => (r.y0 + r.y1) / 2 }));
   // 선 4개로 닫아 채운 납작한 가로 사각형(Microsoft Print to PDF의 여러 마디 쉼표 막대: 소나기 대금 124마디 '7'): 여러 마디 쉼표 후보에 함께 넣는다

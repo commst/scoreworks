@@ -1855,7 +1855,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       <li><details><summary>연주 막대에 마디 이동 단추</summary><p>연주 막대의 ◀◀ [숫자] ▶▶로 지금 자리에서 적은 마디 수만큼 앞·뒤로 옮겨 재생합니다(예: 4면 네 마디씩, 도돌이표는 연주 순서대로). 적은 숫자는 이 기기에 기억됩니다.</p></details></li>
       <li><details><summary>악보로 보기: 음표 따라가기</summary><p>재생하는 동안 지금 소리 나는 음표 머리가 악기 갈래 색(관악 초록·현악 파랑·타악 주홍·그 밖 보라)으로 바뀌며 따라갑니다. 'OO만' 보기에서는 그 악기만 표시합니다. 악보 보기 도구줄의 '음표 따라가기'로 켜고 끕니다.</p></details></li>
     </ul>
-      <details class="hbug"><summary>버그 수정 <small>14건</small></summary><ul class="hlist bug">
+      <details class="hbug"><summary>버그 수정 <small>15건</small></summary><ul class="hlist bug">
+      <li><details><summary>소나기 300마디대 붙임줄을 놓쳐 다시 치고 E를 E♭로 내던 문제</summary><p>해금 파트보 308·312·337·341·349마디처럼 온음표에서 다음 마디로 이어지는 긴 붙임줄을 놓쳐 다시 쳤고, 310·314마디는 앞 마디 E♮에서 이어지는 음을 E♭로 냈습니다. 대금·소금·신디와 총보의 같은 곳도 함께 고쳤습니다.</p></details></li>
       <li><details><summary>MusicXML 겹쳐 보기 설명: 반음(♯·♭) 차이는 동그라미로 보이지 않음</summary><p>겹쳐 보기 동그라미는 음 이름과 옥타브로 자리를 정해 ♯·♭ 반음 차이는 나타나지 않습니다. 그런데 설명에는 ✎에서 ♭·♯로 고치면 동그라미가 파래진다고 적혀 있었습니다. 설명과 사용설명서를 바로잡았습니다. 옥타브(↓8·↑8)를 고치면 동그라미가 바로 바뀌고, 반음은 재생 소리나 ✎ 창의 음 이름으로 확인하세요.</p></details></li>
       <li><details><summary>소나기 거문고가 짝수 마디마다 쉬던 문제</summary><p>바로 위 가야금 오선의 붙임줄을 거문고 화음의 붙임줄로 잘못 읽어 6마디 등 짝수 마디를 치지 않았습니다. 다른 악기 오선의 곡선은 이제 읽지 않습니다.</p></details></li>
       <li><details><summary>꾸밈음 기둥 방향이 본음과 다르면 꾸밈음을 빠뜨리던 문제</summary><p>달빛항해 대금 123마디처럼 꾸밈음 기둥은 위, 본음 기둥은 아래인 곳에서 꾸밈음을 치지 않았습니다. 이제 바로 뒤 본음에 붙여 연주합니다(월광 대금 등 여러 곳 함께 고쳐짐).</p></details></li>
@@ -3229,9 +3230,10 @@ function pagePrep(pg, layout, pi) {
   const tieRects = rects.filter(tieRect);
   // 여러 마디 쉼표 막대를 고를 때 빼는 붙임줄 채움: 곡선 테두리 안에 들어가는 납작한 사각형 (Microsoft Print to PDF는 크기 차이가 1pt 가까이 남)
   // doPDF는 긴 붙임줄을 반쪽씩(곡선 둘 + 채운 사각형) 그리는데 채움이 곡선 끝까지 닿지 않아 폭 차이가 2pt를 넘기도 한다(판놀음II 태평소 41마디: 곡선 60.3pt, 채움 58.1pt)
-  //  → 한쪽 끝이 곡선 끝과 1pt 안에 맞으면 폭 차이 4pt까지 붙임줄 채움으로 본다
+  //  → 한쪽 끝이 곡선 끝과 1.25pt 안에 맞으면 폭 차이 4pt까지 붙임줄 채움으로 본다
+  //  (윈도 인쇄 Encore 소나기 해금 파트보 307→308마디: 곡선 61.6pt, 채움 59.5pt, 양 끝 1.0·1.1pt — 1pt 기준에 걸려 붙임줄 앞 반쪽이 통째로 빠짐, 186번)
   const looseTie = r => curveStrokes.some(c => c.x0 - 1 <= r.x0 && r.x1 <= c.x1 + 1 && c.y0 - 1 <= r.y0 && r.y1 <= c.y1 + 1
-    && (c.width < r.width + 2 || ((Math.abs(c.x0 - r.x0) < 1 || Math.abs(c.x1 - r.x1) < 1) && c.width < r.width + 4)));
+    && (c.width < r.width + 2 || ((Math.abs(c.x0 - r.x0) < 1.25 || Math.abs(c.x1 - r.x1) < 1.25) && c.width < r.width + 4)));
   const mrRects = rects.filter(r => !tieRects.includes(r) && !looseTie(r));
   const beamList = rects.filter(r => r.height <= 4 && r.width >= 2 && !tieRects.includes(r)).map(r => ({ x0: r.x0, x1: r.x1, yAt: () => (r.y0 + r.y1) / 2 }));
   // 선 4개로 닫아 채운 납작한 가로 사각형(Microsoft Print to PDF의 여러 마디 쉼표 막대: 소나기 대금 124마디 '7'): 여러 마디 쉼표 후보에 함께 넣는다
@@ -11011,7 +11013,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-17 23:16';
+const APP_VERSION = '2026-11-17 23:22';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();
