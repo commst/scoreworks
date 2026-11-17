@@ -2487,7 +2487,7 @@ export function playbackOrder(bars, { from = 1, to = Infinity, repeats = true } 
       if (!b.volta && !justLanded && pass > 1 && order.length && bars[order[order.length - 1]].volta) { pass = 1; back = i; explicit = false; }
       order.push(i);
       if (b.repeatEnd && !after) {
-        const total = b.volta ? Math.max(2, vmax[i]) : 2;
+        const total = b.volta ? Math.max(2, vmax[i]) : (b.repeatTimes >= 1 ? b.repeatTimes : 2);   // repeatTimes: MusicXML <repeat times> — 그 구간을 모두 몇 번 (1·2번 괄호가 있으면 괄호 번호가 먼저)
         if (pass < total) { pass++; i = back; landed = true; continue; }
       }
       if (b.repeatEnd) { back = i + 1; pass = 1; explicit = false; }

@@ -1839,7 +1839,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
     <h4>기능 업데이트 <small>1</small></h4><ul class="hlist">
       <li><details><summary>악보로 보기: 연주하는 음표에 색 동그라미</summary><p>재생하는 동안 지금 소리 나는 음표 머리에 악기 갈래 색(관악 초록·현악 파랑·타악 주홍·건반 노랑) 동그라미가 겹쳐 따라갑니다. 'OO만' 보기에서는 그 악기만 표시합니다. 악보 보기 도구줄의 '음표 표시'로 켜고 끕니다.</p></details></li>
     </ul>
-      <details class="hbug"><summary>버그 수정 <small>7건</small></summary><ul class="hlist bug">
+      <details class="hbug"><summary>버그 수정 <small>8건</small></summary><ul class="hlist bug">
+      <li><details><summary>MusicXML로 올린 악보의 반복 횟수·박자·이음줄</summary><p>MusicXML 파일을 올릴 때 세 번 이상 반복하는 도돌이표(times)를 두 번만 연주하던 것, 3+2/8 같은 더한 박자를 4/4로 읽던 것, 이음줄이 빠져 다시 내보내면 사라지던 것, 파일 안에서 박자 단위(divisions)가 바뀌면 음 시각·rit. 자리가 어긋나던 것을 고쳤습니다. PDF로 올린 악보와는 관계없습니다.</p></details></li>
       <li><details><summary>미락흘 신디 3음 화음 붙임줄의 맨 위 음을 다시 치던 문제</summary><p>미락흘 92마디처럼 세 음 모두 붙임줄로 이어지는 화음에서 곡선 시작이 조금씩 엇갈려 맨 위 음(솔)만 붙임줄을 놓치고 다시 쳤습니다. 이제 세 음이 모두 이어집니다.</p></details></li>
       <li><details><summary>짧은 붙임줄·화음 아랫음 붙임줄을 놓쳐 다시 치던 문제</summary><p>짧은 붙임줄(소나기 해금 101·152마디 ♩⌒♩.), 화음의 아랫음·가운데 음 붙임줄(신디·피리·가야금·대아쟁·태평소), 다른 악기 음표 기둥이 닿아 음을 두 번 읽던 곳(소나기 태평소 242마디)을 고쳤습니다.</p></details></li>
       <li><details><summary>소나기에서 붙임줄로 이어진 음을 다시 치던 문제</summary><p>소나기 악보 파일은 붙임줄을 다른 방식으로 그려 대부분을 읽지 못하고 있었습니다(해금 91마디, 태평소 22마디 등). 이제 붙임줄로 이어진 음은 다시 치지 않고, 3음 화음 붙임줄과 줄 맨 앞에서 앞 줄로부터 이어지는 화음 붙임줄도 모든 음을 잇습니다.</p></details></li>
@@ -5564,7 +5565,7 @@ function buildMusicXml() {
       // 글로 옮기는 것은 파트를 다 만든 뒤에: 다음 마디로 넘어가는 붙임줄의 시작 표시·짝 없는 이음줄 지우기가 앞 마디 음에 나중에 붙기 때문
       // (예전에는 마디를 바로 써 버려 마디를 넘는 붙임줄의 시작 표시가 빠졌다)
       const ee = endAt[bi], head = m;
-      const tail = (b.repeatEnd || ee ? `<barline location="right">${b.repeatEnd ? '<bar-style>light-heavy</bar-style>' : ''}${ee ? `<ending number="${esc(ee.num)}" type="${ee.type}"/>` : ''}${b.repeatEnd ? '<repeat direction="backward"/>' : ''}</barline>\n` : '') + `</measure>\n`;
+      const tail = (b.repeatEnd || ee ? `<barline location="right">${b.repeatEnd ? '<bar-style>light-heavy</bar-style>' : ''}${ee ? `<ending number="${esc(ee.num)}" type="${ee.type}"/>` : ''}${b.repeatEnd ? `<repeat direction="backward"${b.repeatTimes && b.repeatTimes !== 2 ? ` times="${b.repeatTimes}"` : ''}/>` : ''}</barline>\n` : '') + `</measure>\n`;
       pending.push(() => head + objs.map(noteXml).join('') + tail);
     });
     out += pending.map(f => f()).join('') + `</part>\n`;

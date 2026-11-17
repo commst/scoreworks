@@ -27,6 +27,19 @@ const mxKids = (el, name) => el ? el.children.filter(c => c.name === name) : [];
 const mxKid = (el, name) => el ? el.children.find(c => c.name === name) : null;
 const mxTxt = (el, name) => { const c = name ? mxKid(el, name) : el; return c ? c.text.trim() : ''; };
 const mxNum = (el, name, d = null) => { const t = mxTxt(el, name); return t !== '' && !isNaN(+t) ? +t : d; };
+// 박자표: <beats>3+2</beats>(더한 박자)와 <beats>·<beat-type> 쌍 여럿(2/4+3/8)을 한 박자로 → [분자, 분모] (공통 분모, 실제 마디 길이)
+function mxTimeSig(t) {
+  const kids = t.children.filter(c => c.name === 'beats' || c.name === 'beat-type'), pairs = [];
+  for (let i = 0; i + 1 < kids.length; i++) if (kids[i].name === 'beats' && kids[i + 1].name === 'beat-type') { pairs.push([kids[i].text.trim(), kids[i + 1].text.trim()]); i++; }
+  let num = 0, den = 1;
+  for (const [b, bt] of pairs) {
+    const nb = b.split('+').reduce((s, x) => s + (+x.trim()), 0), d = +bt;
+    if (!(nb > 0) || !(d > 0) || nb !== Math.round(nb) || d !== Math.round(d)) return null;
+    const l = den * d / gcdI(den, d); num = num * (l / den) + nb * (l / d); den = l;
+  }
+  return pairs.length && num > 0 ? [num, den] : null;
+}
+const gcdI = (a, b) => b ? gcdI(b, a % b) : a;
 
 // ---------- .mxl(압축) 풀기 ----------
 async function mxInflateRaw(bytes) {
@@ -91,7 +104,7 @@ export async function loadMusicXml(bytes, fileName = '') {
     const words = []; const seenW = new Set();
     for (const p of parts) for (const w of (p.measures[i] ? p.measures[i].words : [])) if (/^(rit|rall|allarg|slent|accel|string|a tempo|in tempo|tempo i|tempo primo)|점점\s*(느리게|빠르게)|D\.\s?S|D\.\s?C|dal\s*segno|da\s*capo|^fine|to\s*coda/i.test(w.text) && !seenW.has(w.text)) { seenW.add(w.text); words.push(w); }
     const reh = [...new Set(parts.flatMap(p => p.measures[i] ? p.measures[i].rehearsal : []))];
-    const flags = {}; for (const p of parts) { const f = p.measures[i] && p.measures[i].flags; if (f) for (const k of ['segno', 'coda', 'ds', 'dc', 'fine', 'toCoda', 'repeatStart', 'repeatEnd']) if (f[k]) flags[k] = true; if (f && f.volta && !flags.volta) flags.volta = f.volta; }
+    const flags = {}; for (const p of parts) { const f = p.measures[i] && p.measures[i].flags; if (f) for (const k of ['segno', 'coda', 'ds', 'dc', 'fine', 'toCoda', 'repeatStart', 'repeatEnd']) if (f[k]) flags[k] = true; if (f && f.repeatTimes && !flags.repeatTimes) flags.repeatTimes = f.repeatTimes; if (f && f.volta && !flags.volta) flags.volta = f.volta; }
     return { tempo: withT ? withT.measures[i].tempo : [], words, rehearsal: reh, flags };
   });
   // 줄: 파트의 오선마다 하나 (큰보표 = 윗줄·아랫줄)
@@ -115,21 +128,24 @@ function mxReadPart(p, name) {
   for (const me of mxKids(p, 'measure')) {
     const at = mxKid(me, 'attributes');
     const M = { ...mxBlankMeasure(ts), number: measures.length + 1, implicit: me.attrs.implicit === 'yes' };
-    let cur = 0, maxT = 0, lastStart = 0; const graceBuf = {};
+    // 시간은 처음 읽을 때부터 온음표 비율(Fr)로: divisions가 마디 안에서 바뀌거나 파트마다 달라도 어긋나지 않음
+    // (전에는 원래 단위로 쌓은 뒤 마디 마지막 divisions로 한꺼번에 나눔)
+    const W = x => mxF(Math.round(x), div * 4);
+    let cur = mxF(0), maxT = mxF(0), lastStart = mxF(0); const graceBuf = {};
     let tsChanged = false;
     const step = el => {
       if (el.name === 'attributes') {
         div = mxNum(el, 'divisions', div);
-        const t = mxKid(el, 'time'); if (t && mxNum(t, 'beats') && mxNum(t, 'beat-type')) { const nts = [parseInt(mxTxt(t, 'beats')) || 4, mxNum(t, 'beat-type')]; if (nts.join('/') !== ts.join('/') || !measures.length) tsChanged = true; ts = nts; }
+        const t = mxKid(el, 'time'), nts = t && mxTimeSig(t); if (nts) { if (nts.join('/') !== ts.join('/') || !measures.length) tsChanged = true; ts = nts; }
         staves = Math.max(staves, mxNum(el, 'staves', 1));
         const ky = mxKid(el, 'key'); if (ky && mxKid(ky, 'fifths')) fifths = mxNum(ky, 'fifths', 0);
         const tr = mxKid(el, 'transpose'); if (tr) transpose = mxNum(tr, 'chromatic', 0) + 12 * mxNum(tr, 'octave-change', 0);
         for (const c of mxKids(el, 'clef')) if (mxTxt(c, 'sign') === 'percussion') perc = true;
-      } else if (el.name === 'backup') cur -= mxNum(el, 'duration', 0);
-      else if (el.name === 'forward') { cur += mxNum(el, 'duration', 0); maxT = Math.max(maxT, cur); }
+      } else if (el.name === 'backup') cur = cur.sub(W(mxNum(el, 'duration', 0)));
+      else if (el.name === 'forward') { cur = cur.add(W(mxNum(el, 'duration', 0))); if (maxT.lt(cur)) maxT = cur; }
       else if (el.name === 'note') {
         const chord = !!mxKid(el, 'chord'), grace = !!mxKid(el, 'grace'), rest = !!mxKid(el, 'rest');
-        const d = grace ? 0 : mxNum(el, 'duration', 0);
+        const dRaw = grace ? 0 : mxNum(el, 'duration', 0), d = W(dRaw), dPlay = W(Math.max(1, Math.round(dRaw)));
         const start = chord ? lastStart : cur;
         const voice = mxTxt(el, 'voice') || '1', staff = mxNum(el, 'staff', 1);
         let midi = null;
@@ -140,16 +156,18 @@ function mxReadPart(p, name) {
         const nots = mxKids(el, 'notations');
         const has = (grp, n) => nots.some(x => mxKids(x, grp).some(g => mxKid(g, n)));
         const tieStop = mxKids(el, 'tie').some(t => t.attrs.type === 'stop') || nots.some(x => mxKids(x, 'tied').some(t => t.attrs.type === 'stop'));
+        // 이음줄(slur): 시작·끝 표시만 (PDF 해석 결과와 같은 slurS·slurE — 번호·겹친 이음줄은 아직 안 다룸)
+        const slurS = nots.some(x => mxKids(x, 'slur').some(t => t.attrs.type === 'start')), slurE = nots.some(x => mxKids(x, 'slur').some(t => t.attrs.type === 'stop'));
         if (grace) { if (midi != null && !rest) (graceBuf[voice + '|' + staff] = graceBuf[voice + '|' + staff] || []).push(Math.round(midi)); }
-        else if (!rest) M.notes.push({ t: start, d, midi: midi != null ? Math.round(midi) : null, voice, staff, stem: mxTxt(el, 'stem'), disp, chord,
+        else if (!rest) M.notes.push({ t: start, d: dPlay, slurS, slurE, midi: midi != null ? Math.round(midi) : null, voice, staff, stem: mxTxt(el, 'stem'), disp, chord,
           accent: has('articulations', 'accent') || has('articulations', 'strong-accent'), stacc: has('articulations', 'staccato') || has('articulations', 'staccatissimo'),
           ten: has('articulations', 'tenuto'), trill: has('ornaments', 'trill-mark') || has('ornaments', 'wavy-line'), trem: has('ornaments', 'tremolo'),
           xh: mxTxt(el, 'notehead') === 'x', tieStop, kf: fifths == null ? null : (((Math.round(fifths + 7 * transpose) % 12) + 18) % 12) - 6, graces: graceBuf[voice + '|' + staff] || null });
         if (!grace && !rest && graceBuf[voice + '|' + staff]) delete graceBuf[voice + '|' + staff];
         if (nots.some(x => mxKid(x, 'fermata')) || mxKid(el, 'fermata')) M.flags.fermata = true;
-        if (!chord && !grace) { lastStart = cur; cur += d; maxT = Math.max(maxT, cur); }
+        if (!chord && !grace) { lastStart = cur; cur = cur.add(d); if (maxT.lt(cur)) maxT = cur; }
       } else if (el.name === 'direction') {
-        const off = cur + mxNum(el, 'offset', 0), staff = mxNum(el, 'staff', 1);
+        const off = cur.add(mxF(Math.round(mxNum(el, 'offset', 0) * 1000), div * 4000)), staff = mxNum(el, 'staff', 1);
         for (const dt of mxKids(el, 'direction-type')) {
           for (const dy of mxKids(dt, 'dynamics')) for (const c of dy.children) if (DYN_LEVEL[c.name] != null || /^(sfz|sf|fz|sffz|fp|sfp|rfz)$/.test(c.name)) M.dyn.push({ t: off, staff, label: c.name });
           const w = mxKid(dt, 'wedge'); if (w) M.dyn.push({ t: off, staff, wedge: w.attrs.type });
@@ -166,7 +184,7 @@ function mxReadPart(p, name) {
       } else if (el.name === 'sound') {
         if (el.attrs.tempo) M.tempo.push({ t: cur, unit: 'quarter', bpm: +el.attrs.tempo, fromSound: true });
       } else if (el.name === 'barline') {
-        const rp = mxKid(el, 'repeat'); if (rp) { if (rp.attrs.direction === 'forward') M.flags.repeatStart = true; else M.flags.repeatEnd = true; }
+        const rp = mxKid(el, 'repeat'); if (rp) { if (rp.attrs.direction === 'forward') M.flags.repeatStart = true; else { M.flags.repeatEnd = true; const tm = parseInt(rp.attrs.times); if (tm >= 1) M.flags.repeatTimes = tm; } }   // times = 그 구간을 모두 몇 번 연주하는지
         const en = mxKid(el, 'ending'); if (en && en.attrs.type === 'start') M.flags.volta = (en.attrs.number || '1').split(/[,\s]+/).map(Number).filter(x => x > 0);
         if (mxKid(el, 'segno')) M.flags.segno = true; if (mxKid(el, 'coda')) M.flags.coda = true;
       }
@@ -175,7 +193,7 @@ function mxReadPart(p, name) {
     M.div = div; M.ts = ts.slice(); M.tsChanged = tsChanged;
     const tsLen = mxF(ts[0], ts[1]);
     // 못갖춘마디(implicit) 등 박자표보다 짧은 마디는 실제 길이로
-    const contentLen = div > 0 ? mxF(Math.round(maxT), div * 4) : tsLen;
+    const contentLen = maxT;
     M.len = M.implicit && contentLen.v > 0 && contentLen.lt(tsLen) ? contentLen : tsLen;
     M.timesig = ts.slice();
     measures.push(M);
@@ -191,19 +209,20 @@ export function analyzeXmlLine(sc, line = null) {
   // 성부 나누기: 오선 안에서 먼저 나온 성부(보통 1·5) = 윗성부, 나머지 = 아랫성부. 타악은 줄기 방향(위 = 윗성부), 없으면 높이
   const voiceOrder = [];
   P.measures.forEach((M, bi) => {
-    const W = M.div * 4, Gm = (sc.xmlGlobal && sc.xmlGlobal[bi]) || { tempo: [], words: [], rehearsal: [], flags: {} };
+    const Gm = (sc.xmlGlobal && sc.xmlGlobal[bi]) || { tempo: [], words: [], rehearsal: [], flags: {} };
     const ev = [];
     for (const n of M.notes) {
       if (n.staff !== L.staff) continue;
       if (!voiceOrder.includes(n.voice)) voiceOrder.push(n.voice);
       let v = voiceOrder.indexOf(n.voice) === 0 ? 'R' : 'L';
       if (P.perc) v = n.stem === 'down' ? 'L' : n.stem === 'up' ? 'R' : (n.disp != null && n.disp < 35 ? 'L' : 'R');   // 35 = B4
-      const t = mxF(Math.round(n.t), W), d = mxF(Math.max(1, Math.round(n.d)), W);
-      if (n.chord && n.midi != null) { const host = ev.find(e => e.voice === v && e.t.eq(t) && e.midis && !e.tie === !n.tieStop); if (host) { if (!host.midis.includes(n.midi)) host.midis.push(n.midi); continue; } }
+      const t = n.t, d = n.d;
+      if (n.chord && n.midi != null) { const host = ev.find(e => e.voice === v && e.t.eq(t) && e.midis && !e.tie === !n.tieStop); if (host) { if (!host.midis.includes(n.midi)) host.midis.push(n.midi); if (n.slurS) host.slurS = true; if (n.slurE) host.slurE = true; continue; } }
       if (n.chord && n.midi == null && ev.some(e => e.voice === v && e.t.eq(t))) continue;
       const e = { voice: v, t, dur: d, accent: n.accent, grace: n.graces ? n.graces.length : 0, roll: n.trem || (P.perc && n.trill) };
       if (n.midi != null && !P.perc) { e.midis = [n.midi]; if (n.graces) e.graceMidis = n.graces; if (n.kf != null) e.kf = n.kf; if (n.trill) { e.trill = true; e.trillInt = 2; } }
       if (n.tieStop && n.midi != null) e.tie = true;
+      if (n.slurS) e.slurS = true; if (n.slurE) e.slurE = true;
       if (n.stacc) e.stacc = true; if (n.ten) e.ten = true; if (n.xh) e.xh = true;
       if (n.disp != null) e.pos = 35 - n.disp;
       ev.push(e);
@@ -223,7 +242,7 @@ export function analyzeXmlLine(sc, line = null) {
     const f = { ...M.flags, ...Gm.flags };
     const wordsAll = [...Gm.words, ...M.words.filter(w => !Gm.words.some(g => g.text === w.text))];
     for (const w of wordsAll) {
-      const t = w.text, p0 = bi + (W ? w.t / (M.len.v * W) : 0);
+      const t = w.text, p0 = bi + w.t.v / M.len.v;
       if (/^(rit|rall|allarg|slent)|점점\s*느리게/i.test(t)) { tempo.push({ kind: 'rit', p0, p1: p0 + 2, dashed: false }); labels.push('rit.'); }
       else if (/^(accel|string)|점점\s*빠르게/i.test(t)) { tempo.push({ kind: 'accel', p0, p1: p0 + 2, dashed: false }); labels.push('accel.'); }
       else if (/^(a tempo|in tempo|tempo i\b|tempo primo)/i.test(t)) { tempo.push({ kind: 'atempo', p0, p1: p0 }); labels.push('a tempo'); }
@@ -239,7 +258,7 @@ export function analyzeXmlLine(sc, line = null) {
     let wedge = null;
     for (const dmk of M.dyn) {
       if (dmk.staff !== L.staff && P.staves > 1) continue;
-      const p0 = bi + (W ? dmk.t / (M.len.v * W) : 0);
+      const p0 = bi + dmk.t.v / M.len.v;
       if (dmk.label) { const lv = DYN_LEVEL[dmk.label]; if (lv != null) dyn.push({ kind: 'mark', p0, level: lv, label: dmk.label }); }
       else if (dmk.wedge === 'crescendo' || dmk.wedge === 'diminuendo') wedge = { kind: 'ramp', p0, p1: p0 + 1, dir: dmk.wedge === 'crescendo' ? 1 : -1, dashed: true, open: true };
       if (wedge) dyn.push(wedge), wedge = null;
@@ -248,7 +267,7 @@ export function analyzeXmlLine(sc, line = null) {
     if (f.segno) labels.push('Segno'); if (f.ds) labels.push('D.S.'); if (f.dc) labels.push('D.C.'); if (f.fine) labels.push('Fine'); if (f.toCoda) labels.push('To Coda');
     if (f.volta) labels.push(f.volta.join(',') + '.');
     bars.push({ segno: !!f.segno, codaStart: !!f.coda && !f.toCoda, volta: f.volta || null, ds: !!f.ds, dc: !!f.dc, fine: !!f.fine, toCoda: !!f.toCoda, labels,
-      number: bi + 1, timesig: M.timesig.slice(), barLen: M.len, src: bi, repeatStart: !!f.repeatStart, repeatEnd: !!f.repeatEnd, sectionStart: false, fermata: !!f.fermata,
+      number: bi + 1, timesig: M.timesig.slice(), barLen: M.len, src: bi, repeatStart: !!f.repeatStart, repeatEnd: !!f.repeatEnd, repeatTimes: f.repeatEnd && f.repeatTimes ? f.repeatTimes : null, sectionStart: false, fermata: !!f.fermata,
       note: ev.length ? '' : '쉼', kind: ev.length ? 'normal' : 'rest', warnings: [], tempoMarks, timesigChange: prevTs != null && prevTs !== tsKey, tsInferred: false, events: ev });
     prevTs = tsKey;
   });
