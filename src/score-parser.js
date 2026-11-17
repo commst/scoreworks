@@ -918,13 +918,18 @@ function pagePrep(pg, layout, pi) {
     ...rects.filter(r => !tieRects.includes(r) && r.height <= 6 && r.width > 8 && looseTie(r)),   // 곡선 테두리 안 채움(폭이 조금 다른 붙임줄 채움)
     // 윈도 인쇄 Encore(소나기 새 판)는 붙임줄 반쪽의 채움을 사각형 명령이 아닌 선 4개 다각형으로 그린다 — 예전에는 곡선으로 보지 않아
     // 붙임줄이 통째로 빠짐(소나기 해금 파트보 91마디 점2분 화음 ⌒ 점2분 화음)
-    ...fills.filter(d => d.items.length >= 4 && d.items.length <= 5 && d.items.every(i => i.op === 'l') && d.rect.height <= 6 && d.rect.width > 8 && looseTie(d.rect)).map(d => d.rect)];
+    // (폭 3pt 넘으면 — 짧은 붙임줄 반쪽은 6.5pt: 해금 파트보 161마디 ♪⌒♩.)
+    ...fills.filter(d => d.items.length >= 4 && d.items.length <= 5 && d.items.every(i => i.op === 'l') && d.rect.height <= 6 && d.rect.width > 3 && looseTie(d.rect)).map(d => d.rect)];
   // doPDF: 긴 붙임줄을 반쪽 둘로 그린다(판놀음II 태평소 41→42마디). 끝과 끝이 맞닿은 같은 높이의 조각은 하나로 이어 본다
   const curves = [];
   for (const r of [...curves0].sort((a, b) => a.x0 - b.x0)) {
     // 이어지는 두 붙임줄(♩⌒𝅗𝅥.⌒♩.)은 가운데 음표 머리에서 만나므로, 맞닿는 자리에 악보 글자(머리)가 없을 때만 잇는다
+    // 틈 없이 딱 맞닿고(0.4pt 안) 위·아래 끝이 같은 반쪽 둘은 근처 글자와 상관없이 잇는다 — 가운데 머리에서 만나는 두 붙임줄은 머리 폭만큼 틈이 있다
+    // (소나기 신디 아랫줄 217마디: 아래 오선(신디2) 음표 머리가 맞닿는 자리 옆에 있어 잇지 못함)
     const prev = curves.find(c => c._chain && Math.abs(c.x1 - r.x0) < 1.5 && Math.abs((c.y0 + c.y1) / 2 - (r.y0 + r.y1) / 2) < 2.5 && r.height <= 6 && c.height <= 6
-      && !glyphs.some(g => isMusicFont(g.font) && g.x0 - 4 < r.x0 && r.x0 < g.x1 + 4 && Math.abs(g.oy - (r.y0 + r.y1) / 2) < 14));
+      && ((Math.abs(c.x1 - r.x0) < 0.4 && Math.abs(c.y0 - r.y0) < 0.4 && Math.abs(c.y1 - r.y1) < 0.4)
+        || !glyphs.some(g => isMusicFont(g.font) && g.x0 - 4 < r.x0 && r.x0 < g.x1 + 4 && Math.abs(g.oy - (r.y0 + r.y1) / 2) < Math.min(14, (g.size || 20) * 0.6))));
+    // (세로 기준을 글자 크기의 60%로: 빽빽한 총보(소나기 12pt 오선)에서 위 오선의 음표 머리(13pt 위)에 걸려 붙임줄 반쪽을 잇지 못하던 것 — 신디 79마디)
     if (prev) { prev.x1 = Math.max(prev.x1, r.x1); prev.y0 = Math.min(prev.y0, r.y0); prev.y1 = Math.max(prev.y1, r.y1); prev.width = prev.x1 - prev.x0; prev.height = prev.y1 - prev.y0; }
     else curves.push({ x0: r.x0, y0: r.y0, x1: r.x1, y1: r.y1, width: r.width, height: r.height, _chain: true });
   }
@@ -1251,6 +1256,13 @@ export function parseScore(pages, opts = {}) {
         const cand = stemsOf(g);
         const upS = cand.filter(c => c[1] < g.oy - 4 && c[2] <= g.oy + 3), dnS = cand.filter(c => c[2] > g.oy + 4 && c[1] >= g.oy - 3);
         if (twins.length < 2 && upS.length && dnS.length) {
+          // 기둥의 반대쪽 끝이 다른 오선의 음표 머리에 닿아 있으면 그 기둥은 다른 오선 음의 것 — 빽빽한 총보에서 아래 오선 화음의 위 기둥이
+          // 이 오선 덧줄 음 머리까지 올라와 '두 성부가 함께 치는 음'으로 나뉘던 것(소나기 태평소 242마디 C4 ♪⌒𝅗𝅥.: 다시 치고 마디가 넘침)
+          const foreign = (c, up) => { const yE = up ? c[1] : c[2]; return pg.glyphs.some(h => (h.code === HEAD_FILLED || h.code === HEAD_HALF) && h !== g && !heads.includes(h)
+            && Math.abs(h.oy - yE) < staffSp * 1.2 && h.x0 - 2 <= c[0] && c[0] <= h.x1 + 2); };
+          const up2 = upS.filter(c => !foreign(c, true)), dn2 = dnS.filter(c => !foreign(c, false));
+          if (up2.length && !dn2.length) return [makeNote(g, false, up2[0])];
+          if (dn2.length && !up2.length) return [makeNote(g, false, dn2[0])];
           const a = makeNote(g, false, upS[0]);
           return [a, makeNote(g, false, dnS[0], a._dots)];
         }
@@ -1457,16 +1469,24 @@ export function parseScore(pages, opts = {}) {
         const hn = headNotes.filter(n => !n.grace);
         for (const c of cs) {
           if (used.has(c)) continue;
-          const g = cs.filter(o => !used.has(o) && Math.abs(o.x0 - c.x0) < 2 && Math.abs(o.x1 - c.x1) < 2);
+          const g0 = cs.filter(o => !used.has(o) && Math.abs(o.x0 - c.x0) < 3 && Math.abs(o.x1 - c.x1) < 3);   // (3pt: 위·아래 곡선 시작이 2.3pt 엇갈림 — 소나기 태평소 41마디)
+          g0.forEach(o => used.add(o));
+          // 같은 자리에 두 번 잡힌 곡선(테두리·채움이 따로 곡선 후보가 된 경우)은 하나로 — 소나기 신디 137마디
+          const g = []; for (const o of g0.sort((p, q) => (p.y0 + p.y1) - (q.y0 + q.y1))) if (!g.some(q => Math.abs((q.y0 + q.y1) - (o.y0 + o.y1)) < 2)) g.push(o);
           if (g.length < 2) continue;
-          g.forEach(o => used.add(o));
           const ends = hn.filter(n => c.x1 - 6 <= n.x && n.x <= c.x1 + 12 && n.x > c.x0 + 2); if (!ends.length) continue;
-          const ex = Math.min(...ends.map(n => n.x)), en = ends.filter(n => n.x < ex + 2).sort((p, q) => p.y - q.y);
+          // 같은 높이에 두 번 그린 머리(두 성부가 같이 치는 음 — 소나기 태평소 41마디 온음표)는 하나로
+          const uniqY = arr => arr.filter((n, i) => !arr.slice(0, i).some(o => Math.abs(o.y - n.y) < 0.5));
+          const ex = Math.min(...ends.map(n => n.x)), en = uniqY(ends.filter(n => n.x < ex + 2).sort((p, q) => p.y - q.y));
           const sts = hn.filter(n => c.x0 - 10 <= n.x && n.x <= c.x0 + 4); if (!sts.length) continue;
-          const sx = Math.max(...sts.map(n => n.x)), sn = sts.filter(n => n.x > sx - 2).sort((p, q) => p.y - q.y);
-          if (en.length !== g.length || sn.length !== g.length || sn.some((n, i) => Math.abs(n.y - en[i].y) > 1)) continue;
+          const sx = Math.max(...sts.map(n => n.x)), sn = uniqY(sts.filter(n => n.x > sx - 2).sort((p, q) => p.y - q.y));
+          // 화음 높이 범위(위·아래 1.6칸 밖까지) 안의 곡선만 — 큰보표 아래 오선 쪽 곡선까지 세어 개수가 안 맞던 것(소나기 신디 79마디)
+          const hs = (st.bottom - st.top) / 4 || 7, cy = o => (o.y0 + o.y1) / 2, dist = o => Math.min(...en.map(n => Math.abs(cy(o) - n.y)));
+          // 곡선이 머리보다 많으면(위·아래 오선의 곡선·높이 큰 이음줄이 같은 자리에) 화음에 가장 가까운 것을 머리 수만큼(오선 간격 3칸 안) — 소나기 신디 79, 프론티어 대금 80
+          const g2 = g.length === en.length ? g : [...g].sort((p, q) => dist(p) - dist(q)).slice(0, en.length).filter(o => dist(o) < hs * 3);
+          if (en.length !== g2.length || sn.length !== g2.length || sn.some((n, i) => Math.abs(n.y - en[i].y) > 1)) continue;
           if (headNotes.some(o => !o.grace && o.x > sx + 2 && o.x < ex - 2)) continue;   // 사이에 다른 머리 — 이음줄일 수 있음
-          g.sort((p, q) => (p.y0 + p.y1) - (q.y0 + q.y1)).forEach((o, i) => rankTie.set(o, [sn[i], en[i]]));
+          g2.sort((p, q) => (p.y0 + p.y1) - (q.y0 + q.y1)).forEach((o, i) => rankTie.set(o, [sn[i], en[i]]));
         }
       }
       for (const c of curves) {
