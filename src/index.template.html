@@ -1834,7 +1834,9 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 17일</h3>
-      <details class="hbug"><summary>버그 수정 <small>1건</small></summary><ul class="hlist bug">
+      <details class="hbug"><summary>버그 수정 <small>3건</small></summary><ul class="hlist bug">
+      <li><details><summary>꾸밈음 뒤 본음이 소리 나지 않던 문제</summary><p>꾸밈음에서 본음으로 가는 짧은 곡선을 붙임줄로 읽어 본음을 치지 않았습니다(월광 대금 94마디 온음표, 피리 175마디, 장구 74마디 둘째 박 등). 단 맨 앞에서 앞 단으로부터 이어지는 붙임줄은 그대로 둡니다.</p></details></li>
+      <li><details><summary>화음 붙임줄에서 한 음만 이어지고 나머지를 다시 치던 문제</summary><p>음마다 붙임줄이 그려진 화음과 타악기의 ♪⌒♩ 붙임줄을 더 읽습니다(월광·달빛항해·프론티어·미락흘·소나기). 예전에 읽던 붙임줄은 그대로 둡니다.</p></details></li>
       <li><details><summary>소나기 253마디 대아쟁 8분음표가 4분음표로 읽히던 문제</summary><p>소아쟁 음과 같은 자리에 있는 대아쟁 화음은 악보 파일이 꼬리를 기둥 끝이 아닌 음표 머리 자리에 찍어 두어 8분음표 꼬리를 놓쳤습니다. 머리 자리의 꼬리도 세도록 고쳤고, 함께 붙임줄 조각을 빔으로 세어 길이가 반으로 읽히던 마디(소나기 91·191마디 등)도 바로잡았습니다.</p></details></li>
     </ul></details>
   </section>

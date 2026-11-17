@@ -1452,8 +1452,22 @@ export function parseScore(pages, opts = {}) {
         const vn = headNotes.filter(n => n.voice === voice && !n.grace);
         const start = vn.filter(n => c.x0 - 10 <= n.x && n.x <= c.x0 + 4 && Math.abs(n.y - ccy) < 10);
         const end = vn.filter(n => c.x1 - 6 <= n.x && n.x <= c.x1 + 12 && Math.abs(n.y - ccy) < 10 && n.x > c.x0 + 2);
+        // 169번 — 붙임줄 짝짓기는 '예전에 읽던 것은 그대로, 확실히 틀린 경우만 바꾸고, 못 읽던 것은 조심해서 더하기'(159번이 월광을 망가뜨린 뒤 사용자 원칙).
+        // dIn: 머리가 곡선 테두리 안으로 들어간 깊이(밖이면 0 이하). 1pt 넘게 안에 있으면 곡선이 가로지르는 머리 = 이 곡선의 임자가 아님
+        const hd = (st.bottom - st.top) / 4 || 7;
+        const dIn = n => Math.min(n.y - c.y0, c.y1 - n.y), dOut = n => (n.y < c.y0 ? c.y0 - n.y : n.y > c.y1 ? n.y - c.y1 : 0);
+        // 같은 가로 자리의 머리들(화음) 가운데 예전 선택(old)을 바꾸는 것은 ① 예전 머리를 이미 다른 곡선이 잡았거나(뱃노래 피리 166마디 두 곡선이 같은 아랫음)
+        // ② 예전 머리를 곡선이 가로지르고(1pt 넘게 안) 테두리 밖에 다른 머리가 있을 때(방황 피리·신디 화음 붙임줄)만 — 테두리 밖 머리 중 가장 가까운 것
+        const better = (old, arr, flag) => {
+          const same = arr.filter(n => Math.abs(n.x - old.x) < 2 && n !== old);
+          if (!same.length) return old;
+          const out = same.filter(n => dIn(n) <= 1 && !n[flag]).sort((p, q) => dOut(p) - dOut(q));
+          if ((old[flag] || (dIn(old) > 1 && c.y1 - c.y0 <= hd * 1.2)) && out.length && dOut(out[0]) < hd) return out[0];   // ②는 납작한(붙임줄 모양) 곡선만 — 길고 높은 곡선은 여러 머리가 테두리 안에 든다(월광 피리 188마디)
+          return old;
+        };
         // 곡선 높이 쪽 성부에 끝 음이 없으면(한 기둥 화음: 위·아래 음이 같은 성부) 성부와 상관없이 곡선 높이에 가장 가까운 머리
         // (화음 붙임줄 둘 중 하나만 읽혀 나머지 음이 다시 울리던 문제: 바르도 대아쟁·거문고)
+        let added = false;
         if (!end.length && pitchedStaff) {
           const all = headNotes.filter(n => !n.grace && c.x1 - 6 <= n.x && n.x <= c.x1 + 12 && Math.abs(n.y - ccy) < 6 && n.x > c.x0 + 2
             && headNotes.some(o => !o.grace && o !== n && Math.abs(o.y - n.y) < 1 && c.x0 - 10 <= o.x && o.x <= c.x0 + 4));   // 시작 쪽에도 같은 높이 머리
@@ -1463,9 +1477,27 @@ export function parseScore(pages, opts = {}) {
             const sx = st0.length ? Math.max(...st0.map(o => o.x)) : c.x0;
             if (!headNotes.some(o => !o.grace && o.x > sx + 1.5 && o.x < en0.x - 1.5)) { end.push(en0); start.push(...st0); } }
         }
+        // 예전 규칙으로 못 찾았을 때만 더하기: 테두리 밖(1pt 안까지)으로 6pt 안의 머리, 시작 쪽에 같은 높이 머리, 사이 머리는 2도로 비켜 적은 화음(머리 너비 1.4배 안)은 빼고.
+        // 키 큰 곡선(머리 1.2칸 넘게 — 다른 오선에서 올라오는 미끄러짐 선 끝, 월광 가야금 26마디)과 시작 머리에서 멀리 떨어져 시작하는 곡선은 붙임줄로 보지 않음. 타악 줄도(심벌 울림 잇기)
+        if (!end.length && c.y1 - c.y0 <= hd * 1.2) {
+          const all = headNotes.filter(n => !n.grace && c.x1 - 6 <= n.x && n.x <= c.x1 + 12 && dIn(n) <= 1 && dOut(n) < 6 && n.x > c.x0 + 2
+            && headNotes.some(o => !o.grace && o !== n && Math.abs(o.y - n.y) < 1 && c.x0 - 10 <= o.x && o.x <= c.x0 + 4));
+          if (all.length) { const mx = Math.min(...all.map(n => n.x)); const en0 = all.filter(n => n.x < mx + 2).sort((p, q) => dOut(p) - dOut(q))[0];
+            const st0 = headNotes.filter(o => !o.grace && Math.abs(o.y - en0.y) < 1 && c.x0 - 10 <= o.x && o.x <= c.x0 + 4);
+            const sx = st0.length ? Math.max(...st0.map(o => o.x)) : c.x0;
+            if (st0.length && c.x0 - sx < hd * 1.6 && !headNotes.some(o => !o.grace && o.x > sx + hd * 1.4 && o.x < en0.x - hd * 1.4)) { end.push(en0); start.push(...st0); added = true; } }
+        }
+        if (globalThis.__curveLog) globalThis.__curveLog.push({ pi, st: st.top, c: { x0: c.x0, y0: c.y0, x1: c.x1, y1: c.y1 }, voice, added, start: start.map(n => [n.x, n.y, n.voice]), end: end.map(n => [n.x, n.y, n.voice]) });
+        // 시작 음 없이 끝 음만 있는 아주 짧은 곡선(7pt 미만)이 꾸밈음 바로 뒤에 있거나 단 중간(왼쪽 60pt 안에 다른 음표)에 있으면 꾸밈음 이음줄
+        // (장구 '기덕', 선율 꾸밈음 ⌒ 본음) — 예전에는 붙임줄로 보아 꾸밈음 뒤 본음을 치지 않았음(월광 대금 94·피리 175·대아쟁 115, 장구 74·120마디 등).
+        // 단 맨 앞의 짧은 곡선(앞 단에서 넘어오는 붙임줄 끝 — 프론티어 대금 151, 달빛항해 대아쟁 20·145)은 그대로 붙임줄
+        if (end.length && !start.length && c.x1 - c.x0 < 7 &&
+          headNotes.some(o => o.grace ? (o.x < c.x0 + 2 && c.x0 - o.x < 10) : (o.x < c.x0 - 2 && c.x0 - o.x < 60))) end.length = 0;
         if (end.length) {
-          const en = end.reduce((b, n) => n.x < b.x ? n : b); en.tied = true;
-          const sn = start.length ? start.reduce((b, n) => Math.abs(n.x - c.x0) < Math.abs(b.x - c.x0) ? n : b) : null;
+          const en = better(end.reduce((b, n) => n.x < b.x ? n : b), headNotes.filter(n => !n.grace), 'tied'); en.tied = true;
+          const sn0 = start.length ? start.reduce((b, n) => Math.abs(n.x - c.x0) < Math.abs(b.x - c.x0) ? n : b) : null;
+          const sn = sn0 ? better(sn0, headNotes.filter(n => !n.grace && n.x < en.x), '_tieOut') : null;
+          if (sn) sn._tieOut = true;
           if (sn && sn !== en && sn.x < en.x) curvePairs.push([sn, en, voice]);
         }
         else if (start.length && c.x1 > st.x1 - 15) pendingTie[voice] = true;
@@ -1981,6 +2013,11 @@ function timing(m, barLen) {
         }
         else if (prev && prev._lp && prev._lp[0].eq(onset.get(n)) && prev._lp[1].eq(n.dur)) prev._cs.add(n.midi);   // 화음의 다른 음이 같은 조각을 잇는 붙임줄: 이미 이어짐
         else evs.push({ voice: n.voice, t: onset.get(n), dur: n.dur, tie: true, midis: [n.midi], ...(n.dia != null ? { dia: { [n.midi]: n.dia } } : {}), x: n.x, ...(n.kf != null ? { kf: n.kf } : {}), ...(n.cl != null ? { cl: n.cl } : {}), ...(n.slurS ? { slurS: n.slurS } : {}), ...(n.slurE ? { slurE: n.slurE } : {}) });
+      }
+      else {
+        // 타악 줄의 붙임줄(심벌 울림 잇기 등): 같은 자리의 앞 음을 길게 (MusicXML에 적힌 조각대로 이어 내보내기용). 앞 음이 없으면 예전처럼 치지 않는 음으로 둠
+        const prev = evs.filter(e => e.voice === n.voice && !e.midis && e.pos === n.pos && e.t.lt(onset.get(n))).pop();
+        if (prev && prev.t.add(prev.sus || prev.dur).eq(onset.get(n))) { prev.sus = (prev.sus || prev.dur).add(n.dur); prev.pcs = [...(prev.pcs || [prev.dur]), n.dur]; }
       }
       continue;
     }
