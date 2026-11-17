@@ -1855,7 +1855,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       <li><details><summary>연주 막대에 마디 이동 단추</summary><p>연주 막대의 ◀◀ [숫자] ▶▶로 지금 자리에서 적은 마디 수만큼 앞·뒤로 옮겨 재생합니다(예: 4면 네 마디씩, 도돌이표는 연주 순서대로). 적은 숫자는 이 기기에 기억됩니다.</p></details></li>
       <li><details><summary>악보로 보기: 음표 따라가기</summary><p>재생하는 동안 지금 소리 나는 음표 머리가 악기 갈래 색(관악 초록·현악 파랑·타악 주홍·그 밖 보라)으로 바뀌며 따라갑니다. 'OO만' 보기에서는 그 악기만 표시합니다. 악보 보기 도구줄의 '음표 따라가기'로 켜고 끕니다.</p></details></li>
     </ul>
-      <details class="hbug"><summary>버그 수정 <small>15건</small></summary><ul class="hlist bug">
+      <details class="hbug"><summary>버그 수정 <small>16건</small></summary><ul class="hlist bug">
+      <li><details><summary>악보로 보기에서 스크롤하다 보면 쪽이 하얗게 남던 문제</summary><p>일시정지한 채(또는 연주 위치 따라가기를 끄고) 연주 위치에서 멀리 스크롤하면, 메모리를 아끼려고 쪽 그림을 지울 때 지금 보고 있는 쪽을 지워 흰 쪽으로 남았습니다. 이제 화면에 보이는 쪽은 지우지 않습니다.</p></details></li>
       <li><details><summary>소나기 300마디대 붙임줄을 놓쳐 다시 치고 E를 E♭로 내던 문제</summary><p>해금 파트보 308·312·337·341·349마디처럼 온음표에서 다음 마디로 이어지는 긴 붙임줄을 놓쳐 다시 쳤고, 310·314마디는 앞 마디 E♮에서 이어지는 음을 E♭로 냈습니다. 대금·소금·신디와 총보의 같은 곳도 함께 고쳤습니다.</p></details></li>
       <li><details><summary>MusicXML 겹쳐 보기 설명: 반음(♯·♭) 차이는 동그라미로 보이지 않음</summary><p>겹쳐 보기 동그라미는 음 이름과 옥타브로 자리를 정해 ♯·♭ 반음 차이는 나타나지 않습니다. 그런데 설명에는 ✎에서 ♭·♯로 고치면 동그라미가 파래진다고 적혀 있었습니다. 설명과 사용설명서를 바로잡았습니다. 옥타브(↓8·↑8)를 고치면 동그라미가 바로 바뀌고, 반음은 재생 소리나 ✎ 창의 음 이름으로 확인하세요.</p></details></li>
       <li><details><summary>소나기 거문고가 짝수 마디마다 쉬던 문제</summary><p>바로 위 가야금 오선의 붙임줄을 거문고 화음의 붙임줄로 잘못 읽어 6마디 등 짝수 마디를 치지 않았습니다. 다른 악기 오선의 곡선은 이제 읽지 않습니다.</p></details></li>
@@ -7443,7 +7444,7 @@ function buildScoreView() {
 }
 function svLayout(pages, vps, sc, myKey) {
   const wrap = $('svWrap');
-  svIO = 'IntersectionObserver' in window ? new IntersectionObserver(es => { for (const e of es) if (e.isIntersecting) svRender(+e.target.dataset.page); }, { root: wrap, rootMargin: '800px 0px' }) : null;
+  svIO = 'IntersectionObserver' in window ? new IntersectionObserver(es => { for (const e of es) { const k = +e.target.dataset.page, P = svPages.get(k); if (P) P.vis = e.isIntersecting; if (e.isIntersecting) svRender(k); } }, { root: wrap, rootMargin: '800px 0px' }) : null;
   pages.forEach((pi, j) => {
     const vp = vps[j] || { width: 595, height: 842 };
     const d = document.createElement('div'); d.className = 'sv-page'; d.dataset.page = pi;
@@ -7459,7 +7460,7 @@ function svLayout(pages, vps, sc, myKey) {
 // 내 파트만: 그 줄의 오선(단마다 하나)을 쪽에서 잘라 위아래로 이어 붙인다. 띠 = 오선 위 30점 ~ 아래 24점(셈여림·가사 포함), 가로는 오선 왼쪽 끝 ~ 오른쪽 끝
 function svLayoutPart(G, vps, pages) {
   const wrap = $('svWrap');
-  svIO = 'IntersectionObserver' in window ? new IntersectionObserver(es => { for (const e of es) if (e.isIntersecting) svRender(+e.target.dataset.panel); }, { root: wrap, rootMargin: '800px 0px' }) : null;
+  svIO = 'IntersectionObserver' in window ? new IntersectionObserver(es => { for (const e of es) { const k = +e.target.dataset.panel, P = svPages.get(k); if (P) P.vis = e.isIntersecting; if (e.isIntersecting) svRender(k); } }, { root: wrap, rootMargin: '800px 0px' }) : null;
   const seen = new Set(), strips = [];
   G.geo.forEach(g => { if (!g) return; const id = g.page + '.' + g.staff; if (seen.has(id)) return; seen.add(id);
     const L = G.sc.layouts[g.page], st = L && L.staves[g.staff]; if (!st) return;
@@ -7519,7 +7520,7 @@ async function svRender(pi) {
       c.getContext('2d').drawImage(src, P.ox * s, P.oy * s, P.w * s, P.h * s, 0, 0, c.width, c.height);
       P.el.insertBefore(c, P.el.firstChild); P.canvas = c; svOverPanel(P);
       const drawn = [...svPages.entries()].filter(([, q]) => q.canvas);
-      if (drawn.length > 40) { drawn.sort((a, b) => Math.abs(b[0] - pi) - Math.abs(a[0] - pi)); for (const [qi, q] of drawn.slice(0, drawn.length - (SV_LOWMEM ? 24 : 40))) if (qi !== pi) { freeCanvas(q.canvas); q.canvas = null; } }
+      if (drawn.length > 40) { const far = drawn.filter(([, q]) => !q.vis).sort((a, b) => Math.abs(b[0] - pi) - Math.abs(a[0] - pi)); for (const [qi, q] of far.slice(0, drawn.length - (SV_LOWMEM ? 24 : 40))) if (qi !== pi) { freeCanvas(q.canvas); q.canvas = null; } }
     } catch (e) { console.warn('악보 보기', e); }
     finally { P.busy = false; }
     return;
@@ -7535,10 +7536,10 @@ async function svRender(pi) {
     if (svKey !== myKey) return;
     P.el.insertBefore(c, P.el.firstChild); P.canvas = c; svOverPanel(P);
     const drawn = [...svPages.entries()].filter(([, q]) => q.canvas);
-    if (drawn.length > SV_KEEP) {   // 지금 쪽에서 먼 것부터 지운다
-      const G2 = svGeo(), ref = svCurrent >= 0 && G2 && G2.geo[svCurrent] ? G2.geo[svCurrent].page : pi;
-      drawn.sort((a, b) => Math.abs(b[0] - ref) - Math.abs(a[0] - ref));
-      for (const [qi, q] of drawn.slice(0, drawn.length - SV_KEEP)) if (qi !== pi) { freeCanvas(q.canvas); q.canvas = null; }
+    if (drawn.length > SV_KEEP) {   // 화면(앞뒤 800px 안)에 걸린 쪽은 남기고, 방금 그린 쪽에서 먼 것부터 지운다
+      // (예전에는 연주 위치 쪽에서 먼 것부터 지워, 일시정지한 채 멀리 스크롤하면 보고 있는 쪽 그림을 지우고 — 관찰자는 이미 보이는 쪽에 다시 알리지 않아 — 흰 쪽으로 남았다, 187번)
+      const far = drawn.filter(([, q]) => !q.vis).sort((a, b) => Math.abs(b[0] - pi) - Math.abs(a[0] - pi));
+      for (const [qi, q] of far.slice(0, drawn.length - SV_KEEP)) if (qi !== pi) { freeCanvas(q.canvas); q.canvas = null; }
     }
   } catch (e) { console.warn('악보 보기', e); }
   finally { P.busy = false; }
@@ -11013,7 +11014,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-17 23:22';
+const APP_VERSION = '2026-11-17 23:54';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();
