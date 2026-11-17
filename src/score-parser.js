@@ -1460,12 +1460,33 @@ export function parseScore(pages, opts = {}) {
         }
       }
       const curvePairs = [];   // 곡선의 시작 음·끝 음 (음높이를 정한 뒤 이음줄인지 가린다 — MusicXML 내보내기용)
+      // 곡선 주인 가리기(184번): 빽빽한 총보에서 위 오선 화음의 아래쪽 붙임줄이 아래 오선 머리 가까이 지나 이 오선 음의 붙임줄로 읽히던 것
+      // (소나기 거문고 6·8·10…마디: 가야금 붙임줄이 거문고 C3·C2에 붙어 짝수 마디 첫 박을 치지 않음 — 173번부터). 곡선 양 끝 가로 자리에
+      // 다른 오선의 머리가 있고, 그 머리가 이 오선의 머리보다 곡선에 더 가까우면(양 끝 모두) 그 곡선은 이 오선 것이 아니다
+      const headCodes = new Set([HEAD_FILLED, HEAD_HALF, HEAD_WHOLE]), myHeads = new Set(heads);
+      const pageHeads = pg.glyphs.filter(h => headCodes.has(h.code) && isMaestro(h));
+      const nearAt = (arr, x, lo, hi, y) => { let d = 1e9; for (const h of arr) { const hx = (h.x0 + h.x1) / 2; if (hx >= x + lo && hx <= x + hi) d = Math.min(d, Math.abs(h.oy - y)); } return d; };
+      const foreignCurve = c => {
+        const ccy = (c.y0 + c.y1) / 2;
+        const oth = pageHeads.filter(h => !myHeads.has(h) && Math.abs(h.oy - ccy) < 14);
+        if (!oth.length) return false;
+        const mine = pageHeads.filter(h => myHeads.has(h));
+        const o0 = nearAt(oth, c.x0, -10, 6, ccy), o1 = nearAt(oth, c.x1, -6, 12, ccy);
+        if (o0 > 12 || o1 > 12) return false;
+        const m0 = nearAt(mine, c.x0, -10, 6, ccy), m1 = nearAt(mine, c.x1, -6, 12, ccy);
+        const spc = (st.bottom - st.top) / 4 || 3;   // 확실할 때만: 이 오선 머리가 다른 오선 머리보다 오선 간격 3칸 넘게 더 멀 때(애매한 곡선은 예전대로)
+        if (!(m0 > o0 + spc * 3 && m1 > o1 + spc * 3)) return false;
+        // 이 오선에도 같은 자리(양 끝 ±8pt)에 곡선이 있으면 예전대로 둔다 — 그 곡선이 이음줄 모양이라 붙임줄로 못 잡던 것을
+        // 남의 곡선이 대신 잡아 주던 마디(9203ad49 소금 79: 같은 음 E.~E)를 깨지 않게
+        return !curves.some(o => o !== c && Math.abs(o.x0 - c.x0) < 8 && Math.abs(o.x1 - c.x1) < 8 && (o.y0 + o.y1) / 2 > st.top - 25 && (o.y0 + o.y1) / 2 < st.bottom + 25);
+      };
+      const scurves = curves.filter(c => !(st.top - 40 < c.y0 && c.y0 < st.bottom + 40) || !foreignCurve(c));
       // 화음 붙임줄 차례 짝짓기(172번): 같은 자리(양 끝 ±2pt)의 곡선 수가 양 끝 화음의 머리 수와 같고 양 끝 머리 높이가 하나하나 같으면,
       // 곡선을 위에서부터 머리에 차례로 짝짓는다 — '가장 가까운 머리'로 고르면 두 곡선이 같은 음을 잡고 한 음이 남아 다시 울림
       // (소나기 피리 169·가야금2 159·신디2 260마디: 3음 화음의 맨 위 음). 화음의 모든 음이 이어지므로 예전 붙임줄은 그대로 남는다
       const rankTie = new Map();
       {
-        const cs = curves.filter(c => st.top - 30 < c.y0 && c.y0 < st.bottom + 30 && c.width >= 4), used = new Set();
+        const cs = scurves.filter(c => st.top - 30 < c.y0 && c.y0 < st.bottom + 30 && c.width >= 4), used = new Set();
         const hn = headNotes.filter(n => !n.grace);
         for (const c of cs) {
           if (used.has(c)) continue;
@@ -1491,7 +1512,7 @@ export function parseScore(pages, opts = {}) {
           g2.sort((p, q) => (p.y0 + p.y1) - (q.y0 + q.y1)).forEach((o, i) => rankTie.set(o, [sn[i], en[i]]));
         }
       }
-      for (const c of curves) {
+      for (const c of scurves) {
         if (!(st.top - 30 < c.y0 && c.y0 < st.bottom + 30) || c.width < 4) continue;
         const ccy = (c.y0 + c.y1) / 2;
         const voice = ccy < st.mid ? 'R' : 'L';
@@ -1562,7 +1583,7 @@ export function parseScore(pages, opts = {}) {
       // 소리에는 쓰지 않고 MusicXML 내보내기에서만 쓴다 (붙임줄 처리와 무관)
       {
         const taken = new Set(curvePairs.map(p => p[1])), sp = (st.bottom - st.top) / 4 || 7;
-        for (const c of curves) {
+        for (const c of scurves) {
           if (!(st.top - 40 < c.y0 && c.y1 < st.bottom + 40) || c.width < 8) continue;
           const near = (x, y, dir) => headNotes.filter(n => !n.grace && !n.rest && Math.abs(n.x - x) < sp * 1.6 && (dir > 0 ? n.y - y > -sp * 0.8 && n.y - y < sp * 4 : y - n.y > -sp * 0.8 && y - n.y < sp * 4))
             .sort((p, q) => Math.abs(p.x - x) + Math.abs(p.y - y) * 0.3 - Math.abs(q.x - x) - Math.abs(q.y - y) * 0.3)[0];
@@ -2048,10 +2069,14 @@ function timing(m, barLen) {
     else m.warnings.push(`${v === 'R' ? '윗' : '아랫'}성부 쉼표 일부 숨김 → 위치로 추정`);
   }
   const gcount = new Map();
-  for (const g of graces) {
-    const c = main.filter(n => n.voice === g.voice && !n.rest && n.x >= g.x - 4);
-    if (c.length) { const tgt = c.reduce((b, n) => n.x < b.x ? n : b); gcount.set(tgt, (gcount.get(tgt) || 0) + 1); }
-  }
+  // 꾸밈음이 붙을 본음: 같은 성부의 바로 뒤 음. 선율 오선에서 같은 성부에 뒤 음이 없으면(꾸밈음 기둥은 위, 본음 기둥은 아래 — 달빛항해 대금 123마디)
+  // 바로 뒤(25pt 안)의 다른 성부 음에 — 예전에는 꾸밈음이 통째로 빠졌다(184번)
+  const graceTgt = g => {
+    let c = main.filter(n => n.voice === g.voice && !n.rest && n.x >= g.x - 4);
+    if (!c.length && m.pitched) c = main.filter(n => !n.rest && n.x > g.x + 1 && n.x <= g.x + 25);
+    return c.length ? c.reduce((b, n) => n.x < b.x ? n : b) : null;
+  };
+  for (const g of graces) { const tgt = graceTgt(g); if (tgt) gcount.set(tgt, (gcount.get(tgt) || 0) + 1); }
   const evs = [];
   for (const n of chordMembers) if (onset.has(n.chordOf)) { onset.set(n, onset.get(n.chordOf)); main.push(n); }
   for (const n of main) n.onset = onset.get(n);
@@ -2060,8 +2085,7 @@ function timing(m, barLen) {
   const graceMidi = new Map();
   for (const g of graces) {
     if (g.midi == null) continue;
-    const c = main.filter(n => n.voice === g.voice && !n.rest && n.x >= g.x - 4);
-    if (c.length) { const tgt = c.reduce((b, n) => n.x < b.x ? n : b); if (!graceMidi.has(tgt)) graceMidi.set(tgt, []); graceMidi.get(tgt).push(g.midi); }
+    const tgt = graceTgt(g); if (tgt) { if (!graceMidi.has(tgt)) graceMidi.set(tgt, []); graceMidi.get(tgt).push(g.midi); }
   }
   for (const n of [...main].sort((a, b) => a.x - b.x)) {
     if (n.rest) continue;
@@ -2134,7 +2158,11 @@ function mergeFlippedStems(m, main, chordMembers, graces, barLen) {
   if (vs.size !== 2) return;
   const sum = (arr, sc) => frSum(arr.map(n => sc && n.tuplet ? n.dur.mul(n.tuplet === true ? F(2, 3) : n.tuplet) : n.dur));
   const fits = arr => sum(arr, false).eq(barLen) || sum(arr, true).eq(barLen);
-  if (fits(main.filter(n => n.voice === 'R')) || fits(main.filter(n => n.voice === 'L')) || !fits(main)) return;
+  // 잇단음표가 있는 마디(184번): 한 성부가 잇단음표를 빼고 더한 길이로 우연히 마디와 같아도(프론티어 가야금 90마디 — 아래 기둥 A♯4 ♩가 다른 성부로 빠지고
+  // ♩♪ 셋잇단 둘을 보통 길이로 세면 5/4), 어느 성부도 잇단음표로 줄인 길이가 마디와 맞지 않고 모두 합쳐 줄인 길이가 마디와 꼭 맞으면 한 성부로 합친다
+  const R0 = main.filter(n => n.voice === 'R'), L0 = main.filter(n => n.voice === 'L');
+  const tupOnly = main.some(n => n.tuplet) && sum(main, true).eq(barLen) && !sum(R0, true).eq(barLen) && !sum(L0, true).eq(barLen);
+  if ((!tupOnly && (fits(R0) || fits(L0))) || !fits(main)) return;
   const s = [...main].sort((a, b) => a.x - b.x);
   for (let i = 1; i < s.length; i++) if (s[i].voice !== s[i - 1].voice && s[i].x - s[i - 1].x < 2.0) return;   // 같은 때 두 성부 = 진짜 두 성부
   const heads = s.filter(n => !n.rest);

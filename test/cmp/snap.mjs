@@ -79,7 +79,7 @@ if (cmd === 'make') {
     const { c, t } = compare(g, s); T.files++;
     for (const x in t) T[x] += t[x]; for (const x of ['FILL', 'EMPTIED', 'OTHER', 'NEW', 'LOST', 'NEWWARN', 'LINES']) T[x] += c[x].length;
     if (Object.entries(c).some(([x, v]) => x !== 'STEMS' && v.length) || t.barsA !== t.barsB)
-      console.log(k, 'bars', t.barsA, '->', t.barsB, 'warn', t.wa, '->', t.wb, Object.entries(c).filter(([, v]) => v.length).map(([x, v]) => x + ' ' + v.length + ' [' + v.slice(0, 10).join(' ') + ']').join(' | '));
+      console.log(k, 'bars', t.barsA, '->', t.barsB, 'warn', t.wa, '->', t.wb, Object.entries(c).filter(([, v]) => v.length).map(([x, v]) => x + ' ' + v.length + ' [' + v.slice(0, +(process.env.SHOWN || 10)).join(' ') + ']').join(' | '));
   }
   console.log('TOTAL', JSON.stringify(T), ((Date.now() - T0) / 1000).toFixed(1) + '초');
 }
