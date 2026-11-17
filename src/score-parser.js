@@ -915,7 +915,10 @@ function pagePrep(pg, layout, pi) {
   // 곡선(붙임줄·이음줄). 피날레 PDF 가운데에는 곡선을 짧은 직선 수십 개로 펴서 그린 것도 있다(채운 다각형, 납작하고 가로로 긴 모양)
   const polyCurve = d => d.type.includes('f') && d.items.length >= 12 && d.items.every(i => i.op === 'l') && d.rect.width > 6 && d.rect.width > d.rect.height * 2.2 && d.rect.height < 30;
   const curves0 = [...fills.filter(d => d.items.some(i => i.op === 'c')).map(d => d.rect), ...drawings.filter(polyCurve).map(d => d.rect), ...tieRects,
-    ...rects.filter(r => !tieRects.includes(r) && r.height <= 6 && r.width > 8 && looseTie(r))];   // 곡선 테두리 안 채움(폭이 조금 다른 붙임줄 채움)
+    ...rects.filter(r => !tieRects.includes(r) && r.height <= 6 && r.width > 8 && looseTie(r)),   // 곡선 테두리 안 채움(폭이 조금 다른 붙임줄 채움)
+    // 윈도 인쇄 Encore(소나기 새 판)는 붙임줄 반쪽의 채움을 사각형 명령이 아닌 선 4개 다각형으로 그린다 — 예전에는 곡선으로 보지 않아
+    // 붙임줄이 통째로 빠짐(소나기 해금 파트보 91마디 점2분 화음 ⌒ 점2분 화음)
+    ...fills.filter(d => d.items.length >= 4 && d.items.length <= 5 && d.items.every(i => i.op === 'l') && d.rect.height <= 6 && d.rect.width > 8 && looseTie(d.rect)).map(d => d.rect)];
   // doPDF: 긴 붙임줄을 반쪽 둘로 그린다(판놀음II 태평소 41→42마디). 끝과 끝이 맞닿은 같은 높이의 조각은 하나로 이어 본다
   const curves = [];
   for (const r of [...curves0].sort((a, b) => a.x0 - b.x0)) {
@@ -1445,6 +1448,27 @@ export function parseScore(pages, opts = {}) {
         }
       }
       const curvePairs = [];   // 곡선의 시작 음·끝 음 (음높이를 정한 뒤 이음줄인지 가린다 — MusicXML 내보내기용)
+      // 화음 붙임줄 차례 짝짓기(172번): 같은 자리(양 끝 ±2pt)의 곡선 수가 양 끝 화음의 머리 수와 같고 양 끝 머리 높이가 하나하나 같으면,
+      // 곡선을 위에서부터 머리에 차례로 짝짓는다 — '가장 가까운 머리'로 고르면 두 곡선이 같은 음을 잡고 한 음이 남아 다시 울림
+      // (소나기 피리 169·가야금2 159·신디2 260마디: 3음 화음의 맨 위 음). 화음의 모든 음이 이어지므로 예전 붙임줄은 그대로 남는다
+      const rankTie = new Map();
+      {
+        const cs = curves.filter(c => st.top - 30 < c.y0 && c.y0 < st.bottom + 30 && c.width >= 4), used = new Set();
+        const hn = headNotes.filter(n => !n.grace);
+        for (const c of cs) {
+          if (used.has(c)) continue;
+          const g = cs.filter(o => !used.has(o) && Math.abs(o.x0 - c.x0) < 2 && Math.abs(o.x1 - c.x1) < 2);
+          if (g.length < 2) continue;
+          g.forEach(o => used.add(o));
+          const ends = hn.filter(n => c.x1 - 6 <= n.x && n.x <= c.x1 + 12 && n.x > c.x0 + 2); if (!ends.length) continue;
+          const ex = Math.min(...ends.map(n => n.x)), en = ends.filter(n => n.x < ex + 2).sort((p, q) => p.y - q.y);
+          const sts = hn.filter(n => c.x0 - 10 <= n.x && n.x <= c.x0 + 4); if (!sts.length) continue;
+          const sx = Math.max(...sts.map(n => n.x)), sn = sts.filter(n => n.x > sx - 2).sort((p, q) => p.y - q.y);
+          if (en.length !== g.length || sn.length !== g.length || sn.some((n, i) => Math.abs(n.y - en[i].y) > 1)) continue;
+          if (headNotes.some(o => !o.grace && o.x > sx + 2 && o.x < ex - 2)) continue;   // 사이에 다른 머리 — 이음줄일 수 있음
+          g.sort((p, q) => (p.y0 + p.y1) - (q.y0 + q.y1)).forEach((o, i) => rankTie.set(o, [sn[i], en[i]]));
+        }
+      }
       for (const c of curves) {
         if (!(st.top - 30 < c.y0 && c.y0 < st.bottom + 30) || c.width < 4) continue;
         const ccy = (c.y0 + c.y1) / 2;
@@ -1493,10 +1517,12 @@ export function parseScore(pages, opts = {}) {
         // 단 맨 앞의 짧은 곡선(앞 단에서 넘어오는 붙임줄 끝 — 프론티어 대금 151, 달빛항해 대아쟁 20·145)은 그대로 붙임줄
         if (end.length && !start.length && c.x1 - c.x0 < 7 &&
           headNotes.some(o => o.grace ? (o.x < c.x0 + 2 && c.x0 - o.x < 10) : (o.x < c.x0 - 2 && c.x0 - o.x < 60))) end.length = 0;
+        const rk = rankTie.get(c);
+        if (rk) { end.length = 0; end.push(rk[1]); start.length = 0; start.push(rk[0]); }
         if (end.length) {
-          const en = better(end.reduce((b, n) => n.x < b.x ? n : b), headNotes.filter(n => !n.grace), 'tied'); en.tied = true;
+          const en = rk ? rk[1] : better(end.reduce((b, n) => n.x < b.x ? n : b), headNotes.filter(n => !n.grace), 'tied'); en.tied = true;
           const sn0 = start.length ? start.reduce((b, n) => Math.abs(n.x - c.x0) < Math.abs(b.x - c.x0) ? n : b) : null;
-          const sn = sn0 ? better(sn0, headNotes.filter(n => !n.grace && n.x < en.x), '_tieOut') : null;
+          const sn = rk ? rk[0] : sn0 ? better(sn0, headNotes.filter(n => !n.grace && n.x < en.x), '_tieOut') : null;
           if (sn) sn._tieOut = true;
           if (sn && sn !== en && sn.x < en.x) curvePairs.push([sn, en, voice]);
         }
@@ -2605,9 +2631,13 @@ function carryTieAccidentals(bars) {
     for (const e of b.events) {
       if (!e.tie || !e.t || e.t.v !== 0 || !e.midis || e.midis.length !== 1 || !e.dia) continue;
       const m = e.midis[0], d = e.dia[m]; if (d == null) continue;
-      const ends = p.events.filter(o => o.voice === e.voice && o.midis && o.dia && o.t.add(o.sus || o.dur).eq(p.barLen));
-      if (ends.some(o => o.midis.includes(m))) continue;
-      const cand = [...new Set(ends.flatMap(o => o.midis.filter(x => o.dia[x] === d && Math.abs(x - m) <= 2)))];
+      const endAll = p.events.filter(o => o.midis && o.dia && o.t.add(o.sus || o.dur).eq(p.barLen));
+      if (endAll.some(o => o.midis.includes(m))) continue;
+      // 같은 성부를 먼저 보고, 없으면 성부와 상관없이(기둥 방향만 바뀐 한 성부 — 소나기 해금 33마디 E♮ 온음표(윗성부) ⌒ 34마디 2분음표(아랫성부)가
+      // 조표대로 E♭로 읽혀 붙임줄이 끊기고 E♭를 다시 침)
+      const pick = ends => [...new Set(ends.flatMap(o => o.midis.filter(x => o.dia[x] === d && Math.abs(x - m) <= 2)))];
+      let cand = pick(endAll.filter(o => o.voice === e.voice));
+      if (!cand.length) cand = pick(endAll);
       if (cand.length !== 1) continue;
       e.midis = [cand[0]]; e.dia = { [cand[0]]: d };
     }
