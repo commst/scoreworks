@@ -425,6 +425,7 @@ python3 tools/gen_outline_templates.py <fonts 폴더> src/outline-templates.js
 | `node test/alignv.mjs <이전 score-parser.js 절대경로> 총보.pdf …` | 세로 맞춤까지 한 결과를 이전 해석기와 비교(성부 빼고) |
 | `node test/crop.mjs <샘플 접두어> <줄 번호> <마디 번호…>` | 그 마디를 PDF에서 잘라 /tmp/crop-…png로(그림과 대조) |
 | `node test/regdyn.mjs <이전 score-parser.js> 악보.pdf …` | 셈여림 글자 회귀: 줄마다 셈여림 수 변화, 새로 생긴·없어진 셈여림(마디:종류) |
+| `node test/cmp/snap.mjs check` / `make` | **회귀 기준 스냅숏**(181번): 받아들인 해석 결과를 기준 파일(비공개 샘플 저장소 golden/)로 두고 새 해석기 결과만 만들어 견줌(다섯 곡 101파일 약 27초, 옛 해석기 필요 없음). 결과를 받아들이면 `make`로 기준을 새로. PDF 해석은 test/cmp/opcache.mjs로 캐시(같은 결과인지 test/cmp/_opverify.mjs로 확인) |
 | `node test/regrn.mjs <이전 score-parser.js> 악보.pdf …` | 마디 번호로 맞대는 회귀 검사: 빈 마디→음(FILL), 음→빈 마디, 음이 바뀜(경고 변화별), 마디가 생김·없어짐. 마디 수가 바뀌는 수정에 |
 | `node test/dumpbars.mjs <폴더> 악보.pdf …`, `test/cmp/` | 총보↔파트보 대조: 마디 서명 뽑기 → 줄 짝짓기·마디 정렬 → 다른 마디 분류·그림 대조 (자세한 것은 test/cmp/README.md) |
 | `S=<출력 폴더> node test/vis.mjs <샘플 접두어> [개수]` | 다시 읽은 마디를 PDF에서 잘라 그림으로(눈으로 대조) |

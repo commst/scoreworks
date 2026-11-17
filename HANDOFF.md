@@ -65,6 +65,7 @@
   4. **프로젝트 문서 동기화** — Projects 도구 project_write로 `claude/CHANGELOG.md`, `claude/README.md`에 local_path로 올림
 - **토큰 절약(사용자 11-12)**: 꼭 필요한 시험만 한다 — 고친 부분에 직접 닿는 시험 + pwboot 정도. 전체 화면 시험·전체 회귀는 해석기를 고칠 때만, 그림 대조는 바뀐 유형마다 대표 마디만
 - 목표는 **무결점 프로그램**: 고칠 때 기존 기능을 깨지 않는다
+- **회귀 검사는 기준 스냅숏으로(181번)**: `node test/cmp/snap.mjs check`(다섯 곡 101파일, 약 27초) — 기준(지금 받아들인 해석 결과)과 새 해석기 결과를 마디 번호로 맞대 FILL·EMPTIED·OTHER(TIE/STEM)·NEW·LOST·NEWWARN을 보여 줌. 옛 해석기를 따로 둘 필요 없음. 바뀐 마디를 그림 대조로 받아들였으면 **커밋 전에 `GITREV=$(git rev-parse --short HEAD) node test/cmp/snap.mjs make`로 기준을 새로 씀**(안 쓰면 다음 검사에 이번 변화가 또 나옴). 기준은 비공개 샘플 저장소 `/home/claude/scoreplay_sample/golden/`(악보 내용이라 공개 저장소에 두지 않음), PDF 해석 캐시는 `/home/claude/opcache/`(test/cmp/opcache.mjs — 해석기가 pdf.js에서 새 명령·글자 속성을 읽게 되면 OPCACHE_VER를 올릴 것). 새 작업 공간에서 기준이 없으면 `PARSER=<git show 지금 main의 score-parser.js를 outline-*.js와 같은 폴더에 둔 경로> node test/cmp/snap.mjs make`. 한 마디 기준 보기 `node test/cmp/snap.mjs show <접두어> <줄> <마디…>`
 - **회귀 범위(사용자 11-17)**: 해석기를 고치면 전체 샘플이 아니라 **소나기·월광·프론티어·미락흘·달빛항해**의 총보·파트보(test/cmp/samples5.txt, 101파일)만 비교한다 — `ls /home/claude/samples | grep -f <(grep -v '^#' test/cmp/samples5.txt) | sed 's#^#/home/claude/samples/#' > /tmp/readable5; LIST=/tmp/readable5 bash test/cmp/reg2.sh /home/claude/prev test/regrn.mjs`(약 2분). 나머지 곡은 필요할 때 git 이력의 옛 해석기(`git show <커밋>:src/score-parser.js`)와 전체 비교하면 누적된 변화가 한꺼번에 나온다
 - **MusicXML 내보내기가 매우 중요**: 사용자는 내보낸 MusicXML을 피날레·뮤즈스코어에서 열어 새 악보를 편집하는 일이 많다. 읽어 들인 PDF와 최대한 같아야 함
 - 디자인: A안(가운데 악보, 아래 연주 막대, 왼쪽 탭 설정). 다크 테마 안 씀(시스템 어두운 모드에서 글씨는 보여야 함)
