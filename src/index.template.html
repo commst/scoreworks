@@ -1840,7 +1840,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
     <h4>기능 업데이트 <small>1</small></h4><ul class="hlist">
       <li><details><summary>악보로 보기: 음표 따라가기</summary><p>재생하는 동안 지금 소리 나는 음표 머리가 악기 갈래 색(관악 초록·현악 파랑·타악 주홍·그 밖 보라)으로 바뀌며 따라갑니다. 'OO만' 보기에서는 그 악기만 표시합니다. 악보 보기 도구줄의 '음표 따라가기'로 켜고 끕니다.</p></details></li>
     </ul>
-      <details class="hbug"><summary>버그 수정 <small>8건</small></summary><ul class="hlist bug">
+      <details class="hbug"><summary>버그 수정 <small>9건</small></summary><ul class="hlist bug">
+      <li><details><summary>가야금 등 위·아래 오선을 번갈아 치는 음이 마디 절반만 나던 문제</summary><p>두 오선을 넘나들며 번갈아 치는 8분음표(달빛항해 가야금 13~20마디 등)를 오선마다 따로 읽어 마디 앞 절반에 몰아 치고 쉬던 것을, 두 오선의 가로 자리 순서대로 번갈아 치도록 고쳤습니다(월광 가야금 일부 마디도 함께 맞춰짐).</p></details></li>
       <li><details><summary>MusicXML로 올린 악보의 반복 횟수·박자·이음줄</summary><p>MusicXML 파일을 올릴 때 세 번 이상 반복하는 도돌이표(times)를 두 번만 연주하던 것, 3+2/8 같은 더한 박자를 4/4로 읽던 것, 이음줄이 빠져 다시 내보내면 사라지던 것, 파일 안에서 박자 단위(divisions)가 바뀌면 음 시각·rit. 자리가 어긋나던 것을 고쳤습니다. PDF로 올린 악보와는 관계없습니다.</p></details></li>
       <li><details><summary>미락흘 신디 3음 화음 붙임줄의 맨 위 음을 다시 치던 문제</summary><p>미락흘 92마디처럼 세 음 모두 붙임줄로 이어지는 화음에서 곡선 시작이 조금씩 엇갈려 맨 위 음(솔)만 붙임줄을 놓치고 다시 쳤습니다. 이제 세 음이 모두 이어집니다.</p></details></li>
       <li><details><summary>짧은 붙임줄·화음 아랫음 붙임줄을 놓쳐 다시 치던 문제</summary><p>짧은 붙임줄(소나기 해금 101·152마디 ♩⌒♩.), 화음의 아랫음·가운데 음 붙임줄(신디·피리·가야금·대아쟁·태평소), 다른 악기 음표 기둥이 닿아 음을 두 번 읽던 곳(소나기 태평소 242마디)을 고쳤습니다.</p></details></li>
@@ -4575,6 +4576,14 @@ const ALIGN_NEED = /박자보다 김|마디 길이를 넘음|마디선이 보이
 const ALIGN_SHORT = new Set(['3f32a068c87af148-564918']);
 function alignRaw(sc, lineId, raw) {
   try {
+    // 큰보표 두 오선을 번갈아 치는 음(오선을 넘나드는 빔): 짝 오선(윗줄·아랫줄)과 가로 자리 순으로 시각을 다시 읽음 — 총보·파트보 모두(180번)
+    if (sc && sc.lines && lineId != null && raw && raw.bars) {
+      const L = sc.lines[lineId], pid = L && /\(윗줄\)/.test(L.label || '') ? lineId + 1 : L && /\(아랫줄\)/.test(L.label || '') ? lineId - 1 : null, PL = pid != null ? sc.lines[pid] : null;
+      if (PL && PL.name === L.name) {   // 짝 오선은 손대기 전 해석 결과로(_rawOrig) — 고친 결과끼리 견주면 두 번째 줄은 짧은 마디를 못 찾음
+        const orig = sc._rawOrig || (sc._rawOrig = {}); if (!orig[lineId]) orig[lineId] = raw;
+        raw = alignCrossStaff(raw, orig[pid] || (orig[pid] = analyzeLine(sc, pid)));
+      }
+    }
     const short = !!(sc && ALIGN_SHORT.has(sc.fp));
     if (!sc || !sc.lines || sc.lines.length < 2 || lineId == null || !raw || !raw.bars.some(b => b.warnings.some(w => ALIGN_NEED.test(w) || (short && /쉼표 일부 숨김/.test(w))))) return raw;
     const cache = sc._rawCache || (sc._rawCache = {});

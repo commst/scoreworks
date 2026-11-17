@@ -2776,6 +2776,42 @@ function alignFreeBars(res, others) {
   });
   return changed ? { ...res, bars } : res;
 }
+// 큰보표(윗줄·아랫줄) 두 오선을 번갈아 치는 음(오선을 넘나드는 빔 — 달빛항해 가야금 13~20마디 ♪ 위·아래 번갈아): 오선마다 따로 읽으면
+// 두 줄 모두 마디 처음부터 음을 붙여 마디 절반만 치고 쉰다. 두 오선 모두 마디보다 짧고, 두 오선의 음을 가로 자리 순으로 이어 붙이면
+// 마디 길이와 꼭 같으며, 같은 가로 자리(3pt 안)에 두 오선 음이 함께 있지 않을 때만, 가로 순으로 차례로 시각을 다시 준다
+export function alignCrossStaff(res, partner) {
+  if (!res || !res.bars || !partner || !partner.bars) return res;
+  const byNum = new Map(partner.bars.map(b => [b.number, b]));
+  const endOf = b => b.events.reduce((m, e) => frMax(m, e.t.add(e.dur)), ZERO);
+  // 오선 하나의 치는 자리: 같은 시각의 음(화음·두 성부)은 한 자리. 가로 자리가 없거나 시각 순서와 가로 순서가 다르면 null
+  const slots = b => {
+    const m = new Map();
+    for (const e of b.events) { if (e.x == null) return null; const k = e.t.toString(); const s = m.get(k); if (s) { s.x = Math.min(s.x, e.x); if (!s.dur.eq(e.dur)) s.mixed = true; s.evs.push(e); } else m.set(k, { t: e.t, x: e.x, dur: e.dur, evs: [e] }); }
+    const arr = [...m.values()].sort((p, q) => p.t.v - q.t.v);
+    for (let i = 1; i < arr.length; i++) if (arr[i].x <= arr[i - 1].x + 1 || arr[i - 1].t.add(arr[i - 1].dur).gt(arr[i].t)) return null;   // 겹치는 음(앞 음이 끝나기 전에 다음 음)
+    return arr.some(s => s.mixed) ? null : arr;
+  };
+  let changed = 0;
+  const bars = res.bars.map(b => {
+    const o = byNum.get(b.number); if (!o || !b.events.length || !o.events.length || !b.barLen || !o.barLen || !b.barLen.eq(o.barLen)) return b;
+    const L = b.barLen; if (!endOf(b).lt(L) || !endOf(o).lt(L)) return b;
+    const A = slots(b), B = slots(o); if (!A || !B) return b;
+    const all = [...A.map(s => ({ ...s, mine: true })), ...B.map(s => ({ ...s, mine: false }))].sort((p, q) => p.x - q.x);
+    for (let i = 1; i < all.length; i++) if (all[i].x - all[i - 1].x < 3) return b;   // 같은 때 치는 두 오선(번갈아 치는 것이 아님)
+    if (!all.some((s, i) => i && s.mine !== all[i - 1].mine)) return b;
+    let cur = ZERO; const nt = new Map();
+    for (const s of all) { if (s.mine) nt.set(s, cur); cur = cur.add(s.dur); }
+    if (!cur.eq(L)) return b;
+    // 원래 시각 그대로인 마디(한 오선이 앞쪽 음만, 다른 오선이 뒤쪽 음만)면 바꾸지 않음
+    const map = new Map(); for (const s of all) if (s.mine) for (const e of s.evs) map.set(e, nt.get(s));
+    if ([...map].every(([e, t]) => e.t.eq(t))) return b;
+    changed++;
+    const events = b.events.map(e => map.has(e) ? { ...e, t: map.get(e) } : e).sort((p, q) => p.t.v - q.t.v);
+    const warnings = b.warnings.filter(w => !/쉼표 일부 숨김/.test(w)).concat(['큰보표 두 오선을 번갈아 치는 음: 가로 자리로 시각을 다시 읽음']);
+    return { ...b, events, warnings };
+  });
+  return changed ? { ...res, bars } : res;
+}
 export function alignToSystem(res, others, opts) {
   const allowShort = !!(opts && opts.short);   // 숨은 쉼표 마디 다시 읽기는 앱이 고른 악보만(169번)
   if (!res || !res.bars || !res.geo) return res;
