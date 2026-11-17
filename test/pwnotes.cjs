@@ -1,4 +1,4 @@
-// 악보 보기 '음표 표시' 시험: 총보를 열고 악보로 보기에서 n마디부터 재생 → 지금 소리 나는 음의 PDF 머리에 동그라미(.sv-note)가 그려지는지,
+// 악보 보기 '음표 따라가기' 시험: 총보를 열고 악보로 보기에서 n마디부터 재생 → 지금 소리 나는 음의 PDF 머리에 색 칸(.sv-note, 밝은 쪽 섞기로 머리만 색이 바뀜)이 겹치는지,
 // 'OO만' 보기·끄기·정지 때 사라지는지, 그림(/tmp/pwnotes-*.png)
 // NODE_PATH=/opt/npm-tools/node_modules node test/pwnotes.cjs <접두어> <마디> [phone]
 const { chromium, devices } = require('playwright'); const fs = require('fs'); const path = require('path');
@@ -6,7 +6,7 @@ const [pre, bar, mode] = process.argv.slice(2), SM = '/home/claude/samples/'; co
 fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
 let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
 (async () => {
-  const b = await chromium.launch(); const ctx = await b.newContext(mode === 'phone' ? { ...devices['iPhone 13'] } : { viewport: { width: 1366, height: 900 } });
+  const b = await chromium.launch(); const ctx = await b.newContext(mode === 'phone' ? { ...devices['iPhone 13'] } : { viewport: { width: 1366, height: 900 }, deviceScaleFactor: +(process.env.DSF || 1) });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept());
   await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route(/^https:\/\/(?!cdn\.jsdelivr).*/, r => r.abort());
@@ -27,9 +27,13 @@ let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); i
   });
   console.log(JSON.stringify(info));
   ok(info.marks > 0, 'plan.marks 있음 ' + info.marks);
-  ok(info.n > 0, '재생 중 음표 동그라미 ' + info.n + '개');
+  ok(info.n > 0, '재생 중 음표 색 칸 ' + info.n + '개');
   await p.evaluate(() => { const w = document.getElementById('svWrap'); w.scrollIntoView(); });
   await p.screenshot({ path: `/tmp/pwnotes-${pre}-${mode || 'desk'}.png` });
+  { await p.evaluate(() => { const v = [...document.querySelectorAll('.sv-note')].find(e => !e.hidden && e.isConnected); if (v) v.scrollIntoView({ block: 'center' }); });
+    const bx = await p.evaluate(() => { const v = [...document.querySelectorAll('.sv-note')].filter(e => !e.hidden && e.isConnected).map(e => e.getBoundingClientRect()); if (!v.length) return null;
+      const x0 = Math.min(...v.map(r => r.left)), y0 = Math.min(...v.map(r => r.top)); return { x: Math.max(0, x0 - 60), y: Math.max(0, y0 - 60), width: 360, height: 260 }; });
+    if (bx) await p.screenshot({ path: `/tmp/pwnotes-${pre}-${mode || 'desk'}-zoom.png`, clip: bx }); }   // 머리 색이 바뀌는지 가까이
   // 한 줄만 보기
   const opt = await p.evaluate(() => { const s = document.getElementById('svPartSel'); const o = [...s.options].find(x => x.value); if (!o) return null; s.value = o.value; s.dispatchEvent(new Event('change')); return o.value; });
   if (opt) {
@@ -43,7 +47,7 @@ let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); i
   // 끄기
   await p.evaluate(() => { const c = document.getElementById('svNotes'); c.checked = false; c.dispatchEvent(new Event('change')); });
   await p.waitForTimeout(500);
-  ok(await p.evaluate(() => [...document.querySelectorAll('.sv-note')].every(e => e.hidden)), '음표 표시 끄면 모두 숨김');
+  ok(await p.evaluate(() => [...document.querySelectorAll('.sv-note')].every(e => e.hidden)), '음표 따라가기 끄면 모두 숨김');
   await p.evaluate(() => { const c = document.getElementById('svNotes'); c.checked = true; c.dispatchEvent(new Event('change')); });
   await p.waitForTimeout(1200);
   ok(await p.evaluate(() => [...document.querySelectorAll('.sv-note')].some(e => !e.hidden)), '다시 켜면 다시 보임');

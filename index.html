@@ -264,7 +264,8 @@ body.picking .b, body.picking .sv-page, body.picking #svPages > * { cursor: cros
 .xchk-bars button:focus-visible { outline: 3px solid var(--now, #f5c400); }
 .xchk-more { font-size: 13px; opacity: .75; align-self: center; }
 .xchk-legend { font-size: 13px; opacity: .85; margin: 6px 0 0; }
-.sv-note { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 3; background: color-mix(in srgb, var(--c, #d22) 30%, transparent); box-shadow: 0 0 0 2px var(--c, #d22), 0 0 6px 1px color-mix(in srgb, var(--c, #d22) 60%, transparent); }
+.sv-note { position: absolute; border-radius: 45%; transform: translate(-50%, -50%); pointer-events: none; z-index: 3; background: var(--c, #e0442a); mix-blend-mode: lighten; }   /* 음표 따라가기: 색 칸을 '밝은 쪽' 섞기로 겹쳐 검은 잉크(음표 머리)만 그 색이 되고 흰 종이는 그대로 */
+:root { --nf-wind: #14a050; --nf-string: #2a52e0; --nf-perc: #e8401f; --nf-etc: #9a3fe0; }   /* 악보 종이는 늘 흰색이라 화면 모드와 상관없이 진한 색 */
 .sv-cur { position: absolute; width: 2px; margin-left: -1px; background: #d22; box-shadow: 0 0 0 1px #fff8; pointer-events: none; z-index: 3; }
 .sv-hl b { position: absolute; left: 0; top: -18px; padding: 0 5px; border-radius: 4px; background: #e0a100; color: #fff; font: 700 11px/16px var(--font-body); white-space: nowrap; }
 /* 화면 가득 보기: 악보 칸을 화면 전체로 */
@@ -1788,7 +1789,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
         <div class="sv-tools">
           <button type="button" class="btn sv-only-full" id="svPlay">▶ 재생 · 일시정지</button>
           <label class="chk"><input type="checkbox" id="svFollow" checked>연주 위치 따라가기</label>
-          <label class="chk" title="재생하는 동안 지금 소리 나는 음표에 악기 갈래 색 동그라미를 겹쳐 그립니다(켠 줄, 'OO만' 보기면 그 줄)"><input type="checkbox" id="svNotes" checked>음표 표시</label>
+          <label class="chk" title="재생하는 동안 지금 소리 나는 음표 머리를 악기 갈래 색으로 칠하며 따라갑니다(켠 줄, 'OO만' 보기면 그 줄)"><input type="checkbox" id="svNotes" checked>음표 따라가기</label>
           <label class="sv-part">보기 <select id="svPartSel" aria-label="악보 보기에서 볼 줄"><option value="">총보 전체</option></select></label>
           <button type="button" class="btn" id="svFull">전체화면 보기</button>
           <label class="chk" id="svOverLbl" title="내보낼 MusicXML의 음을 악보 위에 동그라미로 겹쳐 그립니다. PDF 음표 머리와 맞으면 파랑, 맞지 않으면 빨강, 맞는 음이 없는 PDF 머리는 빨간 네모"><input type="checkbox" id="svOver">MusicXML 겹쳐 보기</label>
@@ -1845,7 +1846,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 <template id="histTpl">
   <section class="hday"><h3>11월 17일</h3>
     <h4>기능 업데이트 <small>1</small></h4><ul class="hlist">
-      <li><details><summary>악보로 보기: 연주하는 음표에 색 동그라미</summary><p>재생하는 동안 지금 소리 나는 음표 머리에 악기 갈래 색(관악 초록·현악 파랑·타악 주홍·건반 노랑) 동그라미가 겹쳐 따라갑니다. 'OO만' 보기에서는 그 악기만 표시합니다. 악보 보기 도구줄의 '음표 표시'로 켜고 끕니다.</p></details></li>
+      <li><details><summary>악보로 보기: 음표 따라가기</summary><p>재생하는 동안 지금 소리 나는 음표 머리가 악기 갈래 색(관악 초록·현악 파랑·타악 주홍·그 밖 보라)으로 바뀌며 따라갑니다. 'OO만' 보기에서는 그 악기만 표시합니다. 악보 보기 도구줄의 '음표 따라가기'로 켜고 끕니다.</p></details></li>
     </ul>
       <details class="hbug"><summary>버그 수정 <small>8건</small></summary><ul class="hlist bug">
       <li><details><summary>MusicXML로 올린 악보의 반복 횟수·박자·이음줄</summary><p>MusicXML 파일을 올릴 때 세 번 이상 반복하는 도돌이표(times)를 두 번만 연주하던 것, 3+2/8 같은 더한 박자를 4/4로 읽던 것, 이음줄이 빠져 다시 내보내면 사라지던 것, 파일 안에서 박자 단위(divisions)가 바뀌면 음 시각·rit. 자리가 어긋나던 것을 고쳤습니다. PDF로 올린 악보와는 관계없습니다.</p></details></li>
@@ -7502,8 +7503,8 @@ function svLineInfo(key) {
   if (!v || v.r !== r) {
     const item = state.lineList.find(l => cfgKey(l.id) === key), sc = (item && item.sourceScore) || state.score;
     const map = new Map(); r.bars.forEach((b, i) => { if (r.geo[i]) map.set(b.number, r.geo[i]); });
-    const famC = { wind: 'var(--fam-wind)', string: 'var(--fam-string)', perc: 'var(--fam-perc)', etc: 'var(--fam-etc)' }[familyOf(item, state.lineCfg[key] || state.lineCfg.p || {})];
-    v = { r, sc, map, color: famC || 'var(--fam-etc)' }; svLineGeo.set(key, v);
+    const famC = { wind: 'var(--nf-wind)', string: 'var(--nf-string)', perc: 'var(--nf-perc)', etc: 'var(--nf-etc)' }[familyOf(item, state.lineCfg[key] || state.lineCfg.p || {})];
+    v = { r, sc, map, color: famC || 'var(--nf-etc)' }; svLineGeo.set(key, v);
   }
   return v;
 }
@@ -7526,13 +7527,13 @@ function svNotesAt(t) {
   let k = 0;
   for (const [page, staff, x, y, color] of out) {
     const P = svPanelOf({ page, staff }); if (!P || !P.w) { svNoteKey = ''; continue; }   // 쪽 칸이 아직 준비 전이면 다음 화면에서 다시
-    const st = sc.layouts[page] && sc.layouts[page].staves[staff], sp = st ? Math.max(4, (st.bottom - st.top) / 4) : 6, d = sp * 1.7;
+    const st = sc.layouts[page] && sc.layouts[page].staves[staff], sp = st ? Math.max(4, (st.bottom - st.top) / 4) : 6, dw = sp * 1.6, dh = sp * 1.15;   // 음표 머리 크기만큼(머리 폭 ≈ 오선 간격 1.3배)
     let el = svNoteDivs[k]; if (!el) { el = document.createElement('div'); el.className = 'sv-note'; svNoteDivs.push(el); }
     k++;
     if (el.parentNode !== P.el) P.el.appendChild(el);
     el.hidden = false; el.style.setProperty('--c', color);
     el.style.left = svPct(x, P.ox, P.w); el.style.top = svPct(y, P.oy, P.h);
-    el.style.width = (d / P.w * 100) + '%'; el.style.height = (d / P.h * 100) + '%';
+    el.style.width = (dw / P.w * 100) + '%'; el.style.height = (dh / P.h * 100) + '%';
   }
   for (; k < svNoteDivs.length; k++) svNoteDivs[k].hidden = true;
 }
@@ -10901,7 +10902,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-17 17:33';
+const APP_VERSION = '2026-11-17 17:38';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();
