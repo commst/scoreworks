@@ -1578,7 +1578,14 @@ export function parseScore(pages, opts = {}) {
       }
       const ferm = sg.filter(g => g.code === FERMATA);
       const trills = sg.filter(g => g.code === TRILL_EXT).sort((a, b) => a.x0 - b.x0);
-      const rollSpan = trills.length ? [trills[0].x0, trills[trills.length - 1].x1] : null;
+      // 물결선 묶음(182번): 예전에는 한 단의 첫 물결선 시작 ~ 마지막 물결선 끝을 한 구간으로 보아, 둘째 물결선 아래 음은 표시를 못 받고(달빛항해 가야금 93마디)
+      // 그 사이 빈 마디가 굴림 연장(rollExt)이 됐다 → 이어진 물결선 글자(사이 8pt 안, 높이 4pt 안)를 묶음마다 따로. 앞에 'tr'가 붙은 묶음은 트릴,
+      // 'tr' 없는 물결선만은 농현(vib) — 국악 악보의 농현 표시(가야금 C♪⌒C♩.~~~). 타악 오선은 예전처럼 굴림
+      const rollSpans = [];
+      // 비스듬한 물결선(글리산도 — 'Glissando' 글자가 함께, 프론티어 가야금 87마디·달빛항해 가야금 75마디)은 트릴도 농현도 아님: 글자 높이가 4pt 넘게 오르내리면 뺌
+      for (const g of trills) { const s0 = rollSpans[rollSpans.length - 1]; if (s0 && g.x0 - s0.x1 < 8 && Math.abs(g.oy - s0.yl) < 6) { s0.x1 = Math.max(s0.x1, g.x1); s0.yl = g.oy; s0.ymin = Math.min(s0.ymin, g.oy); s0.ymax = Math.max(s0.ymax, g.oy); } else rollSpans.push({ x0: g.x0, x1: g.x1, y: g.oy, yl: g.oy, ymin: g.oy, ymax: g.oy }); }
+      if (pitchedStaff) for (let k = rollSpans.length - 1; k >= 0; k--) if (rollSpans[k].ymax - rollSpans[k].ymin > 4) rollSpans.splice(k, 1);   // 타악 굴림 물결선은 그대로(달빛항해 장구 137마디)
+      for (const sp0 of rollSpans) sp0.tr = sg.some(g => g.code === 217 && isMaestro(g) && sp0.x0 - g.x1 < 6 && sp0.x0 > g.x0 && Math.abs(g.oy - sp0.y) < 12);
       const trSyms = sg.filter(g => g.code === 217 && isMaestro(g) && !trills.some(w => w.x0 - g.x1 < 6 && w.x0 > g.x0));   // 물결선이 이어지는 tr는 위에서
 
       const staffStart = measures.length;
@@ -1754,7 +1761,7 @@ export function parseScore(pages, opts = {}) {
         const rightIsDouble = bounds.slice(1).some(bb => Math.abs(bb[0] - rx1) < 1 && bb[2] >= 2);
         m.fermata = ferm.some(g => rx0 - 3 <= cx(g) && cx(g) <= rx1 + 3);
         m.fermataX = ferm.filter(g => rx0 - 3 <= cx(g) && cx(g) <= rx1 + 3).map(cx);   // 늘임표 가로 자리 (어느 음 위인지)
-        const inRoll = rollSpan && rollSpan[0] < rx0 && rollSpan[1] > rx0 + 5;
+        const inRoll = rollSpans.some(sp0 => sp0.x0 < rx0 && sp0.x1 > rx0 + 5);
         const isFirst = ri === 0;
         const isTrailing = ri === regions.length - 1 && (!groups.length || rx0 >= groups[groups.length - 1][groups[groups.length - 1].length - 1][0] - 0.5) && rx1 >= st.x1 - 0.5;
         if (pendingTwoBar && isFirst && !content) content = true;
@@ -1797,7 +1804,7 @@ export function parseScore(pages, opts = {}) {
           delete pendingTie[v];
         }
         if (pendingTimesig) { m.timesig = pendingTimesig; pendingTimesig = null; }
-        if (rollSpan) m.notes.forEach(n => { if (!n.rest && rollSpan[0] - n.x > 0 && rollSpan[0] - n.x < 20) n.roll = true; });
+        for (const sp0 of rollSpans) m.notes.forEach(n => { if (!n.rest && sp0.x0 - n.x > 0 && sp0.x0 - n.x < 20) { if (sp0.tr || !pitchedStaff) n.roll = true; else n.vib = true; } });
         // 물결선 없이 'tr' 글자만 음표 위·아래에 적은 트릴(판놀음II 마지막 마디 온음표 tr + 늘임표)
         if (trSyms.length) m.notes.forEach(n => { if (!n.rest && !n.grace && !n.roll && trSyms.some(g => Math.abs(cx(g) - n.x) < 6 && Math.abs(g.oy - n.y) < staffSp * 6)) n.roll = true; });
         if (inRoll && !m.notes.length) m.rollExt = true;
@@ -2079,7 +2086,7 @@ function timing(m, barLen) {
     }
     const key = n.voice + onset.get(n).toString();
     const ex = seen.get(key);
-    if (ex) { if (n.xh) ex.xh = true; ex.accent = ex.accent || n.accent; ex.roll = ex.roll || n.roll || !!n.tremolo; if (n.staccato) ex.stacc = true; if (n.tenuto) ex.ten = true; if (n.roll && n.midi != null) { ex.trill = true; if (!ex.trillInt) ex.trillInt = n.upInt; } if (n.midi != null && ex.midis && !ex.midis.includes(n.midi)) { ex.midis.push(n.midi); if (n.dia != null) (ex.dia = ex.dia || {})[n.midi] = n.dia; } if (n.slurS) ex.slurS = Math.max(ex.slurS || 0, n.slurS); if (n.slurE) ex.slurE = Math.max(ex.slurE || 0, n.slurE); continue; }
+    if (ex) { if (n.xh) ex.xh = true; ex.accent = ex.accent || n.accent; ex.roll = ex.roll || n.roll || !!n.tremolo; if (n.staccato) ex.stacc = true; if (n.tenuto) ex.ten = true; if (n.roll && n.midi != null) { ex.trill = true; if (!ex.trillInt) ex.trillInt = n.upInt; } if (n.vib) ex.vib = true; if (n.midi != null && ex.midis && !ex.midis.includes(n.midi)) { ex.midis.push(n.midi); if (n.dia != null) (ex.dia = ex.dia || {})[n.midi] = n.dia; } if (n.slurS) ex.slurS = Math.max(ex.slurS || 0, n.slurS); if (n.slurE) ex.slurE = Math.max(ex.slurE || 0, n.slurE); continue; }
     const ev = { voice: n.voice, t: onset.get(n), dur: n.dur, accent: n.accent, grace: gcount.get(n) || 0, roll: n.roll || !!n.tremolo, x: n.x };   // x: 음표 가로 자리 (다른 줄과 세로로 맞춰 시각을 다시 읽을 때)
     if (n.pos != null) ev.pos = n.pos;
     if (n.xh) ev.xh = true;   // X 머리 음표   // 오선 가운데에서 몇 칸(반 칸 단위, 위가 -) — 모듬북처럼 자리마다 다른 북을 칠 때 음높이로
@@ -2088,7 +2095,8 @@ function timing(m, barLen) {
     if (n.slurS) ev.slurS = n.slurS; if (n.slurE) ev.slurE = n.slurE;   // 이음줄 (MusicXML 내보내기용)
     if (n.staccato) ev.stacc = true;   // 스타카토: 선율은 짧게 끊어 낸다
     if (n.tenuto) ev.ten = true;   // 테누토: 길이를 꽉 채우고 조금 무게 있게
-    if (n.roll && n.midi != null) { ev.trill = true; ev.trillInt = n.upInt || 2; }   // 선율의 트릴(물결선): 위 음과 빠르게 오간다
+    if (n.roll && n.midi != null) { ev.trill = true; ev.trillInt = n.upInt || 2; }   // 선율의 트릴(tr + 물결선): 위 음과 빠르게 오간다
+    if (n.vib) ev.vib = true;   // 'tr' 없는 물결선 = 농현(182번)
     seen.set(key, ev); evs.push(ev);
   }
   // 화음 가운데 일부 음만 붙임줄로 이어졌으면 이어진 음만 길게 두고 나머지 음은 떼어 낸다

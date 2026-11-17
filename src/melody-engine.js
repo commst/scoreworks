@@ -225,7 +225,7 @@ function extend(src, need) {
 function nearest(list, midi) { let best = null; for (const c of list) if (!best || Math.abs(c.m - midi) < Math.abs(best.m - midi)) best = c; return best; }
 // 녹음에서 쓸 음 고르기: 트레몰로 / (긴 음) 농현 / 기본음
 function pickClip(bank, midi, dur, opt) {
-  const trem = !!(opt.trem && bank.t.length), nong = !trem && opt.nong !== false && dur >= NONG_MIN && bank.n.length > 0;
+  const trem = !!(opt.trem && bank.t.length), nong = !trem && opt.nong !== false && (opt.nong === 'force' || dur >= NONG_MIN) && bank.n.length > 0;
   let c = nearest(trem ? bank.t : nong ? bank.n : bank.p, midi);
   // 고른 종류에 가까운 음이 없으면(3반음 넘게 떨어짐) 다른 종류에서 더 가까운 음을 쓴다 (음을 많이 옮기면 소리가 어색해짐)
   if (Math.abs(c.m - midi) > 3) for (const alt of [bank.p, bank.n]) { const d = alt.length && nearest(alt, midi); if (d && Math.abs(d.m - midi) + 2 <= Math.abs(c.m - midi)) c = d; }
@@ -389,11 +389,11 @@ export function mixNotes(buf, notes, onProgress, bufR = null) {
     const voices = nt.midis.length;
     const bank = ins.bank && BANKS[ins.bank];
     for (const m of nt.midis) {
-      if (bank) { addSampled(buf, ins, bank, m, Math.max(0.05, nt.dur), nt.gain * lv / Math.sqrt(voices), nt.t, { trem: !!nt.trem, nong: nt.nong !== false }); continue; }
+      if (bank) { addSampled(buf, ins, bank, m, Math.max(0.05, nt.dur), nt.gain * lv / Math.sqrt(voices), nt.t, { trem: !!nt.trem, nong: nt.nong === 'force' ? 'force' : nt.nong !== false }); continue; }
       // 뜯는 악기는 길이와 상관없이 비슷하므로 길이를 묶어 재사용
       const dk = ins.kind === 'pluck' || ins.kind === 'piano' ? Math.min(40, Math.round(nt.dur * 8)) / 8 : Math.round(nt.dur * 40) / 40;
-      const opt = { trem: !!nt.trem, nong: nt.nong !== false };
-      const ck = nt.inst + '|' + m + '|' + dk + (opt.trem ? 't' : '') + (opt.nong ? '' : 'x') + (ins.bank && BANKS[ins.bank] ? 'b' : '');
+      const opt = { trem: !!nt.trem, nong: nt.nong === 'force' ? 'force' : nt.nong !== false };
+      const ck = nt.inst + '|' + m + '|' + dk + (opt.trem ? 't' : '') + (opt.nong === 'force' ? 'f' : opt.nong ? '' : 'x') + (ins.bank && BANKS[ins.bank] ? 'b' : '');
       let s = cache.get(ck);
       if (!s) {
         s = synthNote(nt.inst, m, Math.max(0.05, opt.trem ? Math.round(nt.dur * 40) / 40 : dk), 1, opt);

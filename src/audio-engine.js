@@ -261,6 +261,7 @@ export function renderPlan(bars, order, opts) {
             if (rest.length) { const other = { ...prev, midis: rest, graces: null }; notes.splice(notes.indexOf(prev) + 1, 0, other); prev.midis = keep;
               for (const m of rest) if (lastOf.get(e.line + '|' + m) === prev) lastOf.set(e.line + '|' + m, other); }   // 떼어 낸 음은 새 조각을 가리키게(같은 화음의 다른 음 붙임줄이 따로 적혀 있으면 그 조각을 늘림)   // 앞 음 바로 뒤에 (notes는 마디 순)
             prev.dur += dsec; for (const m of keep) lastOf.set(e.line + '|' + m, prev);
+            if (e.vib && prev.nong !== false) prev.nong = 'force';   // 붙임줄 뒤 음에 적힌 농현 표시(가야금 C♪⌒C♩.~~~)는 이어진 음 전체에
             continue;
           }
         }
@@ -276,7 +277,7 @@ export function renderPlan(bars, order, opts) {
         const sdur = e.stacc && !e.ten && opts.stacc !== false ? Math.max(0.06, Math.min(dsec * 0.5, 0.35)) : dsec;
         const nt = { t: tsH, inst: mel.inst, midis, dur: sdur, gain: (e.accent ? ACC_MEL : 0.75) * dl * lg, line: e.line, voice: e.voice, bi,
           dynL: e.dynL || null, dynOff: e.dynOff || 0,
-          trem: !!e.roll && !e.trill, trill: e.trill && opts.trill !== false ? (e.trillInt || 2) : 0, nong: mel.nong !== false,
+          trem: !!e.roll && !e.trill, trill: e.trill && opts.trill !== false ? (e.trillInt || 2) : 0, nong: mel.nong === false ? false : e.vib ? 'force' : true,   // 'force': 농현 표시(물결선, 182번) — 길이와 상관없이 농현
           graces: e.graceMidis ? e.graceMidis.map(m => m + 12 * (mel.oct || 0) + (opts.shift || 0)) : null };
         notes.push(nt); for (const m of midis) lastOf.set(e.line + '|' + m, nt);
         continue;

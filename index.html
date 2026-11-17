@@ -1848,7 +1848,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
     <h4>기능 업데이트 <small>1</small></h4><ul class="hlist">
       <li><details><summary>악보로 보기: 음표 따라가기</summary><p>재생하는 동안 지금 소리 나는 음표 머리가 악기 갈래 색(관악 초록·현악 파랑·타악 주홍·그 밖 보라)으로 바뀌며 따라갑니다. 'OO만' 보기에서는 그 악기만 표시합니다. 악보 보기 도구줄의 '음표 따라가기'로 켜고 끕니다.</p></details></li>
     </ul>
-      <details class="hbug"><summary>버그 수정 <small>9건</small></summary><ul class="hlist bug">
+      <details class="hbug"><summary>버그 수정 <small>10건</small></summary><ul class="hlist bug">
+      <li><details><summary>물결선(농현 표시)을 트릴로 읽거나 빠뜨리던 문제</summary><p>음표 위 물결선을 한 단에서 첫 것만 읽어 같은 단의 다른 물결선은 무시하고(달빛항해 가야금 93마디), 'tr' 없는 물결선도 트릴로 연주해 이상한 농음처럼 들렸습니다. 이제 물결선마다 따로 읽고, 'tr'가 없는 물결선은 농현으로 연주합니다. 비스듬한 글리산도 선은 트릴로 치지 않습니다.</p></details></li>
       <li><details><summary>가야금 등 위·아래 오선을 번갈아 치는 음이 마디 절반만 나던 문제</summary><p>두 오선을 넘나들며 번갈아 치는 8분음표(달빛항해 가야금 13~20마디 등)를 오선마다 따로 읽어 마디 앞 절반에 몰아 치고 쉬던 것을, 두 오선의 가로 자리 순서대로 번갈아 치도록 고쳤습니다(월광 가야금 일부 마디도 함께 맞춰짐).</p></details></li>
       <li><details><summary>MusicXML로 올린 악보의 반복 횟수·박자·이음줄</summary><p>MusicXML 파일을 올릴 때 세 번 이상 반복하는 도돌이표(times)를 두 번만 연주하던 것, 3+2/8 같은 더한 박자를 4/4로 읽던 것, 이음줄이 빠져 다시 내보내면 사라지던 것, 파일 안에서 박자 단위(divisions)가 바뀌면 음 시각·rit. 자리가 어긋나던 것을 고쳤습니다. PDF로 올린 악보와는 관계없습니다.</p></details></li>
       <li><details><summary>미락흘 신디 3음 화음 붙임줄의 맨 위 음을 다시 치던 문제</summary><p>미락흘 92마디처럼 세 음 모두 붙임줄로 이어지는 화음에서 곡선 시작이 조금씩 엇갈려 맨 위 음(솔)만 붙임줄을 놓치고 다시 쳤습니다. 이제 세 음이 모두 이어집니다.</p></details></li>
@@ -3919,7 +3920,14 @@ function parseScore(pages, opts = {}) {
       }
       const ferm = sg.filter(g => g.code === FERMATA);
       const trills = sg.filter(g => g.code === TRILL_EXT).sort((a, b) => a.x0 - b.x0);
-      const rollSpan = trills.length ? [trills[0].x0, trills[trills.length - 1].x1] : null;
+      // 물결선 묶음(182번): 예전에는 한 단의 첫 물결선 시작 ~ 마지막 물결선 끝을 한 구간으로 보아, 둘째 물결선 아래 음은 표시를 못 받고(달빛항해 가야금 93마디)
+      // 그 사이 빈 마디가 굴림 연장(rollExt)이 됐다 → 이어진 물결선 글자(사이 8pt 안, 높이 4pt 안)를 묶음마다 따로. 앞에 'tr'가 붙은 묶음은 트릴,
+      // 'tr' 없는 물결선만은 농현(vib) — 국악 악보의 농현 표시(가야금 C♪⌒C♩.~~~). 타악 오선은 예전처럼 굴림
+      const rollSpans = [];
+      // 비스듬한 물결선(글리산도 — 'Glissando' 글자가 함께, 프론티어 가야금 87마디·달빛항해 가야금 75마디)은 트릴도 농현도 아님: 글자 높이가 4pt 넘게 오르내리면 뺌
+      for (const g of trills) { const s0 = rollSpans[rollSpans.length - 1]; if (s0 && g.x0 - s0.x1 < 8 && Math.abs(g.oy - s0.yl) < 6) { s0.x1 = Math.max(s0.x1, g.x1); s0.yl = g.oy; s0.ymin = Math.min(s0.ymin, g.oy); s0.ymax = Math.max(s0.ymax, g.oy); } else rollSpans.push({ x0: g.x0, x1: g.x1, y: g.oy, yl: g.oy, ymin: g.oy, ymax: g.oy }); }
+      if (pitchedStaff) for (let k = rollSpans.length - 1; k >= 0; k--) if (rollSpans[k].ymax - rollSpans[k].ymin > 4) rollSpans.splice(k, 1);   // 타악 굴림 물결선은 그대로(달빛항해 장구 137마디)
+      for (const sp0 of rollSpans) sp0.tr = sg.some(g => g.code === 217 && isMaestro(g) && sp0.x0 - g.x1 < 6 && sp0.x0 > g.x0 && Math.abs(g.oy - sp0.y) < 12);
       const trSyms = sg.filter(g => g.code === 217 && isMaestro(g) && !trills.some(w => w.x0 - g.x1 < 6 && w.x0 > g.x0));   // 물결선이 이어지는 tr는 위에서
 
       const staffStart = measures.length;
@@ -4095,7 +4103,7 @@ function parseScore(pages, opts = {}) {
         const rightIsDouble = bounds.slice(1).some(bb => Math.abs(bb[0] - rx1) < 1 && bb[2] >= 2);
         m.fermata = ferm.some(g => rx0 - 3 <= cx(g) && cx(g) <= rx1 + 3);
         m.fermataX = ferm.filter(g => rx0 - 3 <= cx(g) && cx(g) <= rx1 + 3).map(cx);   // 늘임표 가로 자리 (어느 음 위인지)
-        const inRoll = rollSpan && rollSpan[0] < rx0 && rollSpan[1] > rx0 + 5;
+        const inRoll = rollSpans.some(sp0 => sp0.x0 < rx0 && sp0.x1 > rx0 + 5);
         const isFirst = ri === 0;
         const isTrailing = ri === regions.length - 1 && (!groups.length || rx0 >= groups[groups.length - 1][groups[groups.length - 1].length - 1][0] - 0.5) && rx1 >= st.x1 - 0.5;
         if (pendingTwoBar && isFirst && !content) content = true;
@@ -4138,7 +4146,7 @@ function parseScore(pages, opts = {}) {
           delete pendingTie[v];
         }
         if (pendingTimesig) { m.timesig = pendingTimesig; pendingTimesig = null; }
-        if (rollSpan) m.notes.forEach(n => { if (!n.rest && rollSpan[0] - n.x > 0 && rollSpan[0] - n.x < 20) n.roll = true; });
+        for (const sp0 of rollSpans) m.notes.forEach(n => { if (!n.rest && sp0.x0 - n.x > 0 && sp0.x0 - n.x < 20) { if (sp0.tr || !pitchedStaff) n.roll = true; else n.vib = true; } });
         // 물결선 없이 'tr' 글자만 음표 위·아래에 적은 트릴(판놀음II 마지막 마디 온음표 tr + 늘임표)
         if (trSyms.length) m.notes.forEach(n => { if (!n.rest && !n.grace && !n.roll && trSyms.some(g => Math.abs(cx(g) - n.x) < 6 && Math.abs(g.oy - n.y) < staffSp * 6)) n.roll = true; });
         if (inRoll && !m.notes.length) m.rollExt = true;
@@ -4420,7 +4428,7 @@ function timing(m, barLen) {
     }
     const key = n.voice + onset.get(n).toString();
     const ex = seen.get(key);
-    if (ex) { if (n.xh) ex.xh = true; ex.accent = ex.accent || n.accent; ex.roll = ex.roll || n.roll || !!n.tremolo; if (n.staccato) ex.stacc = true; if (n.tenuto) ex.ten = true; if (n.roll && n.midi != null) { ex.trill = true; if (!ex.trillInt) ex.trillInt = n.upInt; } if (n.midi != null && ex.midis && !ex.midis.includes(n.midi)) { ex.midis.push(n.midi); if (n.dia != null) (ex.dia = ex.dia || {})[n.midi] = n.dia; } if (n.slurS) ex.slurS = Math.max(ex.slurS || 0, n.slurS); if (n.slurE) ex.slurE = Math.max(ex.slurE || 0, n.slurE); continue; }
+    if (ex) { if (n.xh) ex.xh = true; ex.accent = ex.accent || n.accent; ex.roll = ex.roll || n.roll || !!n.tremolo; if (n.staccato) ex.stacc = true; if (n.tenuto) ex.ten = true; if (n.roll && n.midi != null) { ex.trill = true; if (!ex.trillInt) ex.trillInt = n.upInt; } if (n.vib) ex.vib = true; if (n.midi != null && ex.midis && !ex.midis.includes(n.midi)) { ex.midis.push(n.midi); if (n.dia != null) (ex.dia = ex.dia || {})[n.midi] = n.dia; } if (n.slurS) ex.slurS = Math.max(ex.slurS || 0, n.slurS); if (n.slurE) ex.slurE = Math.max(ex.slurE || 0, n.slurE); continue; }
     const ev = { voice: n.voice, t: onset.get(n), dur: n.dur, accent: n.accent, grace: gcount.get(n) || 0, roll: n.roll || !!n.tremolo, x: n.x };   // x: 음표 가로 자리 (다른 줄과 세로로 맞춰 시각을 다시 읽을 때)
     if (n.pos != null) ev.pos = n.pos;
     if (n.xh) ev.xh = true;   // X 머리 음표   // 오선 가운데에서 몇 칸(반 칸 단위, 위가 -) — 모듬북처럼 자리마다 다른 북을 칠 때 음높이로
@@ -4429,7 +4437,8 @@ function timing(m, barLen) {
     if (n.slurS) ev.slurS = n.slurS; if (n.slurE) ev.slurE = n.slurE;   // 이음줄 (MusicXML 내보내기용)
     if (n.staccato) ev.stacc = true;   // 스타카토: 선율은 짧게 끊어 낸다
     if (n.tenuto) ev.ten = true;   // 테누토: 길이를 꽉 채우고 조금 무게 있게
-    if (n.roll && n.midi != null) { ev.trill = true; ev.trillInt = n.upInt || 2; }   // 선율의 트릴(물결선): 위 음과 빠르게 오간다
+    if (n.roll && n.midi != null) { ev.trill = true; ev.trillInt = n.upInt || 2; }   // 선율의 트릴(tr + 물결선): 위 음과 빠르게 오간다
+    if (n.vib) ev.vib = true;   // 'tr' 없는 물결선 = 농현(182번)
     seen.set(key, ev); evs.push(ev);
   }
   // 화음 가운데 일부 음만 붙임줄로 이어졌으면 이어진 음만 길게 두고 나머지 음은 떼어 낸다
@@ -5850,6 +5859,7 @@ function renderPlan(bars, order, opts) {
             if (rest.length) { const other = { ...prev, midis: rest, graces: null }; notes.splice(notes.indexOf(prev) + 1, 0, other); prev.midis = keep;
               for (const m of rest) if (lastOf.get(e.line + '|' + m) === prev) lastOf.set(e.line + '|' + m, other); }   // 떼어 낸 음은 새 조각을 가리키게(같은 화음의 다른 음 붙임줄이 따로 적혀 있으면 그 조각을 늘림)   // 앞 음 바로 뒤에 (notes는 마디 순)
             prev.dur += dsec; for (const m of keep) lastOf.set(e.line + '|' + m, prev);
+            if (e.vib && prev.nong !== false) prev.nong = 'force';   // 붙임줄 뒤 음에 적힌 농현 표시(가야금 C♪⌒C♩.~~~)는 이어진 음 전체에
             continue;
           }
         }
@@ -5865,7 +5875,7 @@ function renderPlan(bars, order, opts) {
         const sdur = e.stacc && !e.ten && opts.stacc !== false ? Math.max(0.06, Math.min(dsec * 0.5, 0.35)) : dsec;
         const nt = { t: tsH, inst: mel.inst, midis, dur: sdur, gain: (e.accent ? ACC_MEL : 0.75) * dl * lg, line: e.line, voice: e.voice, bi,
           dynL: e.dynL || null, dynOff: e.dynOff || 0,
-          trem: !!e.roll && !e.trill, trill: e.trill && opts.trill !== false ? (e.trillInt || 2) : 0, nong: mel.nong !== false,
+          trem: !!e.roll && !e.trill, trill: e.trill && opts.trill !== false ? (e.trillInt || 2) : 0, nong: mel.nong === false ? false : e.vib ? 'force' : true,   // 'force': 농현 표시(물결선, 182번) — 길이와 상관없이 농현
           graces: e.graceMidis ? e.graceMidis.map(m => m + 12 * (mel.oct || 0) + (opts.shift || 0)) : null };
         notes.push(nt); for (const m of midis) lastOf.set(e.line + '|' + m, nt);
         continue;
@@ -6547,7 +6557,7 @@ function extend(src, need) {
 function nearest(list, midi) { let best = null; for (const c of list) if (!best || Math.abs(c.m - midi) < Math.abs(best.m - midi)) best = c; return best; }
 // 녹음에서 쓸 음 고르기: 트레몰로 / (긴 음) 농현 / 기본음
 function pickClip(bank, midi, dur, opt) {
-  const trem = !!(opt.trem && bank.t.length), nong = !trem && opt.nong !== false && dur >= NONG_MIN && bank.n.length > 0;
+  const trem = !!(opt.trem && bank.t.length), nong = !trem && opt.nong !== false && (opt.nong === 'force' || dur >= NONG_MIN) && bank.n.length > 0;
   let c = nearest(trem ? bank.t : nong ? bank.n : bank.p, midi);
   // 고른 종류에 가까운 음이 없으면(3반음 넘게 떨어짐) 다른 종류에서 더 가까운 음을 쓴다 (음을 많이 옮기면 소리가 어색해짐)
   if (Math.abs(c.m - midi) > 3) for (const alt of [bank.p, bank.n]) { const d = alt.length && nearest(alt, midi); if (d && Math.abs(d.m - midi) + 2 <= Math.abs(c.m - midi)) c = d; }
@@ -6711,11 +6721,11 @@ function mixNotes(buf, notes, onProgress, bufR = null) {
     const voices = nt.midis.length;
     const bank = ins.bank && BANKS[ins.bank];
     for (const m of nt.midis) {
-      if (bank) { addSampled(buf, ins, bank, m, Math.max(0.05, nt.dur), nt.gain * lv / Math.sqrt(voices), nt.t, { trem: !!nt.trem, nong: nt.nong !== false }); continue; }
+      if (bank) { addSampled(buf, ins, bank, m, Math.max(0.05, nt.dur), nt.gain * lv / Math.sqrt(voices), nt.t, { trem: !!nt.trem, nong: nt.nong === 'force' ? 'force' : nt.nong !== false }); continue; }
       // 뜯는 악기는 길이와 상관없이 비슷하므로 길이를 묶어 재사용
       const dk = ins.kind === 'pluck' || ins.kind === 'piano' ? Math.min(40, Math.round(nt.dur * 8)) / 8 : Math.round(nt.dur * 40) / 40;
-      const opt = { trem: !!nt.trem, nong: nt.nong !== false };
-      const ck = nt.inst + '|' + m + '|' + dk + (opt.trem ? 't' : '') + (opt.nong ? '' : 'x') + (ins.bank && BANKS[ins.bank] ? 'b' : '');
+      const opt = { trem: !!nt.trem, nong: nt.nong === 'force' ? 'force' : nt.nong !== false };
+      const ck = nt.inst + '|' + m + '|' + dk + (opt.trem ? 't' : '') + (opt.nong === 'force' ? 'f' : opt.nong ? '' : 'x') + (ins.bank && BANKS[ins.bank] ? 'b' : '');
       let s = cache.get(ck);
       if (!s) {
         s = synthNote(nt.inst, m, Math.max(0.05, opt.trem ? Math.round(nt.dur * 40) / 40 : dk), 1, opt);
@@ -9852,7 +9862,7 @@ function buildMusicXml() {
         const pc = !snap && !perc && e.midis && e.pcs && e.pcs.length > 1 ? e.pcs.map(f => Math.round(f.v * W)) : null;
         if (pc && pc.every(v => v > 0) && pc.reduce((a, c) => a + c, 0) === nat) {
           let p = st;
-          pc.forEach((d, k) => { evs.push({ st: p, nat: d, e: k === 0 ? { ...e, pcs: null, stacc: false } : { ...e, pcs: null, tie: true, accent: false, ten: false, trill: false, slurS: 0, slurE: 0, graceMidis: null, stacc: k === pc.length - 1 && e.stacc } }); p += d; });
+          pc.forEach((d, k) => { evs.push({ st: p, nat: d, e: k === 0 ? { ...e, pcs: null, stacc: false } : { ...e, pcs: null, tie: true, accent: false, ten: false, trill: false, vib: false, slurS: 0, slurE: 0, graceMidis: null, stacc: k === pc.length - 1 && e.stacc } }); p += d; });
         } else evs.push({ e, st, nat });
       }
       const R = evs.filter(x => x.e.voice !== 'L'), Lv = evs.filter(x => x.e.voice === 'L');
@@ -9866,7 +9876,7 @@ function buildMusicXml() {
             for (const n of ms) { const o = h.ms.find(o => o.m === n.m); if (!o) h.ms.push(n); else if (!n.tie) o.tie = false; }   // 같은 음을 한 성부는 잇고 다른 성부는 새로 치면 새로 치는 쪽
             for (const n of hs) if (!h.hs.some(o => o.pos === n.pos)) h.hs.push(n);
             h.nat = Math.min(h.nat, x.nat);
-            if (!x.e.tie) { h.e = { ...h.e, accent: h.e.accent || x.e.accent, stacc: h.e.stacc || x.e.stacc, ten: h.e.ten || x.e.ten, trill: h.e.trill || x.e.trill, roll: h.e.roll || x.e.roll, graceMidis: h.e.graceMidis || x.e.graceMidis, tie: false }; }
+            if (!x.e.tie) { h.e = { ...h.e, accent: h.e.accent || x.e.accent, stacc: h.e.stacc || x.e.stacc, ten: h.e.ten || x.e.ten, trill: h.e.trill || x.e.trill, vib: h.e.vib || x.e.vib, roll: h.e.roll || x.e.roll, graceMidis: h.e.graceMidis || x.e.graceMidis, tie: false }; }
             if (x.e.slurS || x.e.slurE) h.e = { ...h.e, slurS: h.e.slurS || x.e.slurS, slurE: h.e.slurE || x.e.slurE };
           } else out.push({ ...x, ms, hs });
         }
@@ -9925,7 +9935,7 @@ function buildMusicXml() {
             let p = st, prevPiece = null;
             const fresh = !e.tie;   // 꾸밈·셈여림 표시는 새로 치는 음에만
             ps.forEach((pd, pi) => {
-              const piece = ms.map((mm, j) => ({ d: pd, voice, st: p, midi: mm, dia: diaOf[mm], K, chord: j > 0, accent: fresh && pi === 0 && e.accent, stacc: fresh && pi === ps.length - 1 && e.stacc, ten: fresh && pi === 0 && e.ten, trill: fresh && pi === 0 && e.trill, twoV,
+              const piece = ms.map((mm, j) => ({ d: pd, voice, st: p, midi: mm, dia: diaOf[mm], K, chord: j > 0, accent: fresh && pi === 0 && e.accent, stacc: fresh && pi === ps.length - 1 && e.stacc, ten: fresh && pi === 0 && e.ten, trill: fresh && pi === 0 && e.trill, vib: j === 0 && pi === 0 && !!e.vib, twoV,
                 slurS: j === 0 && pi === 0 && !!e.slurS, slurE: j === 0 && pi === ps.length - 1 && !!e.slurE }));
               piece.forEach((o, j) => {
                 if (pi === 0) {   // 이을 앞 음이 바로 앞에서 끝날 때만 붙임줄 (사이에 다른 음이 있으면 새 음 — 재생과 같게)
@@ -10129,7 +10139,7 @@ function buildMusicXml() {
         if (o.tupS) nots.push('<tuplet type="start" bracket="yes"/>'); if (o.tupE) nots.push('<tuplet type="stop"/>');
         const art = (o.accent ? '<accent/>' : '') + (o.stacc ? '<staccato/>' : '') + (o.ten ? '<tenuto/>' : '');
         if (art) nots.push(`<articulations>${art}</articulations>`);
-        const orn = (o.trill ? '<trill-mark/>' : '') + (o.roll ? '<tremolo type="single">3</tremolo>' : '');
+        const orn = (o.trill ? '<trill-mark/>' : '') + (o.vib && !o.trill ? '<wavy-line type="start" number="1"/><wavy-line type="stop" number="1"/>' : '') + (o.roll ? '<tremolo type="single">3</tremolo>' : '');
         if (orn) nots.push(`<ornaments>${orn}</ornaments>`);
         if (o.fermata) nots.push('<fermata type="upright"/>');
         if (nots.length) x += `<notations>${nots.join('')}</notations>`;
@@ -10947,7 +10957,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-17 17:56';
+const APP_VERSION = '2026-11-17 18:13';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();
