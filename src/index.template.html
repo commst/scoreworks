@@ -359,6 +359,15 @@ body.sv-lock #mini { display: none; }
 .pill { display: inline-block; font-size: 11.5px; padding: 1px 7px; border-radius: 999px; background: var(--paper); border: 1px solid var(--line); color: var(--muted); margin-left: 6px; vertical-align: 1px; }
 .b .tag .lab { color: var(--ink); font-weight: 600; }
 .warnlist { display: grid; gap: 4px; font-size: 13.5px; }
+.warnlist .msg { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; padding: 7px 10px 7px 14px; }
+.warnlist .msg > span { flex: 1 1 260px; min-width: 0; }
+.warnlist .wgo { display: flex; gap: 4px; flex: 0 0 auto; }
+.warnlist .wgo button, .warnlist .wmore, .summary .wnum { font: inherit; font-size: 12.5px; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--accent-soft); color: var(--ink); cursor: pointer; }
+.warnlist .wgo button:hover, .warnlist .wmore:hover, .summary .wnum:hover { border-color: var(--accent); }
+.warnlist .wmore { justify-self: start; }
+.summary .wnum { padding: 0 6px; margin: 1px 2px; font-weight: 700; }
+.b.flash { animation: bflash 1.8s ease-out; }
+@keyframes bflash { 0%, 35% { box-shadow: 0 0 0 3px var(--warn); border-color: var(--warn); } 100% { box-shadow: 0 0 0 0 transparent; } }
 .busy { color: var(--muted); font-size: 13.5px; }
 /* 총보 줄 선택 */
 .linelist { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
@@ -1843,7 +1852,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 17일</h3>
-    <h4>기능 업데이트 <small>2</small></h4><ul class="hlist">
+    <h4>기능 업데이트 <small>3</small></h4><ul class="hlist">
+      <li><details><summary>확인 필요 마디 바로가기</summary><p>마디맵 위 경고 목록의 줄마다 [마디로]·[▶ 여기부터]·[✎ 고치기] 단추가 생겼습니다. [마디로]는 그 마디 칸으로 옮겨 잠깐 깜빡여 보여 줍니다. 처음엔 6줄만 보이고 [나머지 더 보기]로 모두 펼치며, 위 요약의 '확인 필요' 마디 번호를 눌러도 그 마디로 갑니다.</p></details></li>
       <li><details><summary>연주 막대에 마디 이동 단추</summary><p>연주 막대의 ◀◀ [숫자] ▶▶로 지금 자리에서 적은 마디 수만큼 앞·뒤로 옮겨 재생합니다(예: 4면 네 마디씩, 도돌이표는 연주 순서대로). 적은 숫자는 이 기기에 기억됩니다.</p></details></li>
       <li><details><summary>악보로 보기: 음표 따라가기</summary><p>재생하는 동안 지금 소리 나는 음표 머리가 악기 갈래 색(관악 초록·현악 파랑·타악 주홍·그 밖 보라)으로 바뀌며 따라갑니다. 'OO만' 보기에서는 그 악기만 표시합니다. 악보 보기 도구줄의 '음표 따라가기'로 켜고 끕니다.</p></details></li>
     </ul>
@@ -3411,14 +3421,34 @@ function renderBars() {
   const warnBars = state.bars.filter(b => b.warnings.length);
   $('summary').innerHTML = '';
   const add = (k, v) => { const s = document.createElement('span'); s.innerHTML = `${k} <b class="num"></b>`; s.querySelector('b').textContent = v; $('summary').appendChild(s); };
-  add('마디', state.bars.length); add('박자', ts.join(' · ')); add('확인 필요', warnBars.length ? warnBars.map(b => b.number).join(', ') : '없음');
+  add('마디', state.bars.length); add('박자', ts.join(' · ')); add('확인 필요', warnBars.length ? '' : '없음');
+  if (warnBars.length) {   // 확인 필요 마디 번호를 눌러 그 마디로 바로 가기(188번)
+    const box = $('summary').lastChild.querySelector('b');
+    for (const b of warnBars) { const k = document.createElement('button'); k.type = 'button'; k.className = 'wnum'; k.textContent = b.number; k.title = `${b.number}마디로 가기: ${b.warnings.join(' / ')}`; k.addEventListener('click', () => warnGo(b.number)); box.appendChild(k); }
+  }
   const cnt = {};
   for (const b of state.bars) for (const l of (b.labels || [])) cnt[l] = (cnt[l] || 0) + 1;
   const keys = Object.keys(cnt);
   add('악상기호', keys.length ? keys.map(k => cnt[k] > 1 ? `${k}×${cnt[k]}` : k).join(' ') : '없음');
   if (viewMode === 'score') { buildScoreView(); svMarks(); }
   $('warnList').textContent = '';
-  for (const b of warnBars.slice(0, 6)) { const d = document.createElement('div'); d.className = 'msg'; d.textContent = `${b.number}마디: ${b.warnings.join(' / ')}`; $('warnList').appendChild(d); }
+  // 확인 필요 마디: 줄마다 바로가기(마디로 · ▶ 여기부터 · ✎ 고치기), 처음엔 6개만 보이고 [나머지 더 보기](188번)
+  const wrow = b => {
+    const d = document.createElement('div'); d.className = 'msg';
+    const t = document.createElement('span'); t.textContent = `${b.number}마디: ${b.warnings.join(' / ')}`; d.appendChild(t);
+    const g = document.createElement('span'); g.className = 'wgo';
+    const mk = (label, title, fn) => { const k = document.createElement('button'); k.type = 'button'; k.textContent = label; k.title = title; k.addEventListener('click', fn); g.appendChild(k); };
+    mk('마디로', `${b.number}마디로 가서 표시`, () => warnGo(b.number));
+    mk('▶ 여기부터', `${b.number}마디부터 재생`, () => { unlockAudio(); playFromBar(b.number); });
+    if (loadedSources().length) mk('✎ 고치기', `${b.number}마디 음정·음 길이 고치기`, () => openEditor(b.number));
+    d.appendChild(g); return d;
+  };
+  for (const b of warnBars.slice(0, 6)) $('warnList').appendChild(wrow(b));
+  if (warnBars.length > 6) {
+    const more = document.createElement('button'); more.type = 'button'; more.className = 'wmore'; more.textContent = `나머지 ${warnBars.length - 6}마디 더 보기`;
+    more.addEventListener('click', () => { for (const b of warnBars.slice(6)) $('warnList').insertBefore(wrow(b), more); more.remove(); });
+    $('warnList').appendChild(more);
+  }
   updateOut();
 }
 function updateOut() {
@@ -3923,6 +3953,14 @@ function renderRehearsal() {
     });
     box.appendChild(b);
   });
+}
+// 확인 필요 마디로 바로 가기: 마디맵이면 그 칸으로 스크롤해 깜빡, 악보로 보기면 그 마디 자리로(재생은 하지 않음)
+function warnGo(n) {
+  if (viewMode === 'score') { const k = state.bars.findIndex(b => b.number === n); if (k >= 0) { svPlace(k, true); return; } }
+  const el = document.querySelector(`.b[data-n="${n}"]`); if (!el) return;
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1900);
+  try { el.focus({ preventScroll: true }); } catch (e) {}
 }
 function playFromBar(n) {
   const to = +$('to').value;
