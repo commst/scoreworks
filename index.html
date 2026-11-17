@@ -264,6 +264,7 @@ body.picking .b, body.picking .sv-page, body.picking #svPages > * { cursor: cros
 .xchk-bars button:focus-visible { outline: 3px solid var(--now, #f5c400); }
 .xchk-more { font-size: 13px; opacity: .75; align-self: center; }
 .xchk-legend { font-size: 13px; opacity: .85; margin: 6px 0 0; }
+.sv-note { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 3; background: color-mix(in srgb, var(--c, #d22) 30%, transparent); box-shadow: 0 0 0 2px var(--c, #d22), 0 0 6px 1px color-mix(in srgb, var(--c, #d22) 60%, transparent); }
 .sv-cur { position: absolute; width: 2px; margin-left: -1px; background: #d22; box-shadow: 0 0 0 1px #fff8; pointer-events: none; z-index: 3; }
 .sv-hl b { position: absolute; left: 0; top: -18px; padding: 0 5px; border-radius: 4px; background: #e0a100; color: #fff; font: 700 11px/16px var(--font-body); white-space: nowrap; }
 /* 화면 가득 보기: 악보 칸을 화면 전체로 */
@@ -1787,6 +1788,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
         <div class="sv-tools">
           <button type="button" class="btn sv-only-full" id="svPlay">▶ 재생 · 일시정지</button>
           <label class="chk"><input type="checkbox" id="svFollow" checked>연주 위치 따라가기</label>
+          <label class="chk" title="재생하는 동안 지금 소리 나는 음표에 악기 갈래 색 동그라미를 겹쳐 그립니다(켠 줄, 'OO만' 보기면 그 줄)"><input type="checkbox" id="svNotes" checked>음표 표시</label>
           <label class="sv-part">보기 <select id="svPartSel" aria-label="악보 보기에서 볼 줄"><option value="">총보 전체</option></select></label>
           <button type="button" class="btn" id="svFull">전체화면 보기</button>
           <label class="chk" id="svOverLbl" title="내보낼 MusicXML의 음을 악보 위에 동그라미로 겹쳐 그립니다. PDF 음표 머리와 맞으면 파랑, 맞지 않으면 빨강, 맞는 음이 없는 PDF 머리는 빨간 네모"><input type="checkbox" id="svOver">MusicXML 겹쳐 보기</label>
@@ -1842,6 +1844,9 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 17일</h3>
+    <h4>기능 업데이트 <small>1</small></h4><ul class="hlist">
+      <li><details><summary>악보로 보기: 연주하는 음표에 색 동그라미</summary><p>재생하는 동안 지금 소리 나는 음표 머리에 악기 갈래 색(관악 초록·현악 파랑·타악 주홍·건반 노랑) 동그라미가 겹쳐 따라갑니다. 'OO만' 보기에서는 그 악기만 표시합니다. 악보 보기 도구줄의 '음표 표시'로 켜고 끕니다.</p></details></li>
+    </ul>
       <details class="hbug"><summary>버그 수정 <small>5건</small></summary><ul class="hlist bug">
       <li><details><summary>소나기에서 붙임줄로 이어진 음을 다시 치던 문제</summary><p>소나기 악보 파일은 붙임줄을 다른 방식으로 그려 대부분을 읽지 못하고 있었습니다(해금 91마디, 태평소 22마디 등). 이제 붙임줄로 이어진 음은 다시 치지 않고, 3음 화음 붙임줄과 줄 맨 앞에서 앞 줄로부터 이어지는 화음 붙임줄도 모든 음을 잇습니다.</p></details></li>
       <li><details><summary>소나기 해금 34마디 '미'가 E♭로 나던 문제</summary><p>앞 마디의 제자리표(E♮) 음이 줄을 넘어 붙임줄로 이어지는데, 이어진 음을 조표대로 E♭로 읽었습니다. 붙임줄로 이어진 음은 앞 음의 임시표를 따릅니다.</p></details></li>
@@ -5674,6 +5679,7 @@ function renderPlan(bars, order, opts) {
   const rowFor = n => { let r = rows[0]; for (const x of rows) if (x.start <= n) r = x; return r; };
   const spw = n => { const r = rowFor(n); const bpm = r && r.bpm > 0 ? r.bpm : DEFAULT_BPM; return 60 / bpm / UNIT_FRAC[r ? r.unit : 'q'] / opts.speed; };
   const hits = []; // [time, soundKey, gain]
+  const marks = []; // 악보 보기 음표 표시용(소리에는 쓰지 않음): { t, e: 끝(초), bi, line, x(악보 위 머리 가로 자리) } — 붙임줄로 이어진 머리도 따로
   const notes = []; // 선율 악기 음 (melody-engine.mixNotes로 합성)
   const lastOf = new Map();   // 줄|음높이 → 그 음을 마지막으로 낸 음 (붙임줄로 이을 앞 음 찾기)
   const barTimes = [];
@@ -5750,6 +5756,7 @@ function renderPlan(bars, order, opts) {
         const d = (e.sus || e.dur).v;
         const dsec = e.t.v + d <= L + 1e-9 ? clk(e.t.v + d) - clk(e.t.v) : d * s;
         const midis = e.midis.map(m => m + 12 * (mel.oct || 0) + (opts.shift || 0));   // shift: 조옮김(반음) + 기준음 높이(소수)
+        if (e.x != null) marks.push({ t: ts, e: ts + dsec, bi, line: e.line, x: e.x });
         if (e.tie) {
           // 마디를 넘는 붙임줄: 앞 음을 늘린다. 붙임줄 곡선 높이로 성부를 정해 앞 음과 성부가 다르게 읽히기도 하므로 성부는 따지지 않는다.
           // 이을 앞 음이 없으면(이음줄을 붙임줄로 읽은 경우 등) 버리지 않고 새 음으로 친다 (예전에는 그 음이 통째로 빠졌다)
@@ -5785,6 +5792,7 @@ function renderPlan(bars, order, opts) {
       let key = (e.line != null ? opts.sounds[e.line + ':' + e.voice] : undefined) ?? opts.sounds[e.voice];
       if (!key || key === 'off' || lg <= 0) continue;
       let ts = cur + clk(e.t.v);
+      if (e.x != null) { const pd = (e.sus || e.dur).v; marks.push({ t: ts, e: ts + (e.t.v + pd <= L + 1e-9 ? clk(e.t.v + pd) - clk(e.t.v) : pd * s), bi, line: e.line, x: e.x }); }
       let dl = (opts.useLvl && e.lvl != null ? e.lvl / 0.75 : dynAt(bi + e.t.v / L)) * lg;
       let sh = 0;
       if (e.ten && opts.stacc !== false) dl *= 1.08;   // 타악 테누토: 조금 세게
@@ -5824,6 +5832,7 @@ function renderPlan(bars, order, opts) {
       const extra = fb > 0 ? fb * UNIT_FRAC[rowFor(b.number).unit] * s : 0;
       if (extra) {
         for (let q = notes.length - 1; q >= 0 && notes[q].bi === bi; q--) if (notes[q].t + notes[q].dur >= cur - 0.08) notes[q].dur += extra;
+        for (let q = marks.length - 1; q >= 0 && marks[q].bi === bi; q--) if (marks[q].e >= cur - 0.08) marks[q].e += extra;
         cur += extra;
       }
     }
@@ -5854,7 +5863,8 @@ function renderPlan(bars, order, opts) {
     }
   }
   for (const h of hits) if (h[4] && h[4].roll) { delete h[4].dynL; delete h[4].dynOff; }
-  return { hits, notes, barTimes, total: cur + (notes.length ? 2.2 : 1.2), t0 };
+  marks.sort((a, b) => a.t - b.t);
+  return { hits, notes, barTimes, marks, total: cur + (notes.length ? 2.2 : 1.2), t0 };
 }
 
 // 북 높이 바꾸기(반음 sh개): 녹음을 빠르게/느리게 읽는다. 한 번 만든 것은 다시 쓴다
@@ -7171,11 +7181,13 @@ function hideBarTip(delay = 350) {
 }
 // ---------- 악보 보기: 올린 PDF 쪽을 그대로 보여 주고 연주 중인 마디를 표시 ----------
 let svCur = null;
+const svNoteDivs = []; let svNoteKey = '';   // 음표 표시 동그라미(svNotesAt) — 시작할 때 악보 보기를 펼치므로 여기서 선언(113번)
+const svLineGeo = new Map();   // 줄 열쇠 → { r, sc, map: 마디 번호 → geo, color }
 let viewMode = 'map', svZoom = 1, svKey = null, svIO = null, svHl = null, svPages = new Map(), svCurrent = -1;
 let overTimer = null;   // 겹쳐 보기 다시 그리기 지연(overStale)
 let svOverData = null;   // MusicXML 겹쳐 보기 자료 — 시작할 때 악보로 보기를 펼치며(svKey 바꿀 때) 쓰므로 여기서 선언(113번)
-try { const v = JSON.parse(localStorage.getItem(PREF_VIEW) || '{}'); if (v.mode === 'score') viewMode = 'score'; if (v.zoom >= 1 && v.zoom <= 3) svZoom = v.zoom; if (v.follow === false) $('svFollow').checked = false; } catch (e) {}
-function saveViewPref() { try { localStorage.setItem(PREF_VIEW, JSON.stringify({ mode: viewMode, zoom: svZoom, follow: $('svFollow').checked })); } catch (e) {} }
+try { const v = JSON.parse(localStorage.getItem(PREF_VIEW) || '{}'); if (v.mode === 'score') viewMode = 'score'; if (v.zoom >= 1 && v.zoom <= 3) svZoom = v.zoom; if (v.follow === false) $('svFollow').checked = false; if (v.notes === false) $('svNotes').checked = false; } catch (e) {}
+function saveViewPref() { try { localStorage.setItem(PREF_VIEW, JSON.stringify({ mode: viewMode, zoom: svZoom, follow: $('svFollow').checked, notes: $('svNotes').checked })); } catch (e) {} }
 function setView(mode) {
   viewMode = mode === 'score' ? 'score' : 'map';
   for (const id of ['viewMap', 'viewMap2']) $(id).setAttribute('aria-pressed', String(viewMode === 'map'));
@@ -7194,6 +7206,7 @@ $('viewMap').addEventListener('click', () => setView('map'));
 for (const [id, mode] of [['viewScore2', 'score'], ['viewMap2', 'map']]) $(id).addEventListener('click', () => { setView(mode); $('tBars').closest('section').scrollIntoView({ block: 'start', behavior: 'smooth' }); });
 $('viewScore').addEventListener('click', () => { setView('score'); try { $('scoreView').scrollIntoView({ block: 'start' }); } catch (e) {} });
 $('svFollow').addEventListener('change', saveViewPref);
+$('svNotes').addEventListener('change', () => { saveViewPref(); if (!$('svNotes').checked) svNotesClear(); });
 // 화면 가득 보기 (휴대폰·아이패드에서도 되게 브라우저 전체 화면 대신 화면을 덮는 칸으로)
 function setFull(on) {
   const v = $('scoreView'); const k = svCurrent;
@@ -7281,7 +7294,7 @@ function buildScoreView() {
   if (key === svKey && wrap.firstChild) return;
   svKey = key; svCurrent = -1; svOverData = null;
   if (svIO) { svIO.disconnect(); svIO = null; }
-  svPages.clear(); wrap.textContent = ''; svHl = null; svCur = null; svEhl = null;
+  svPages.clear(); wrap.textContent = ''; svHl = null; svCur = null; svEhl = null; svNoteKey = ''; svLineGeo.clear();
   if (!G) { wrap.appendChild(tipNode('div', 'sv-empty', state.score ? (state.score.xml || (state.sourceScores || []).some(x => x && x.xml) ? 'MusicXML 악보는 쪽 그림이 없어 악보로 보기를 할 수 없습니다. 마디맵으로 보기를 써 주세요. (같은 곡의 PDF를 올리면 악보로 볼 수 있습니다)' : '이 악보는 마디 위치를 읽지 못해 악보로 보기를 할 수 없습니다. 마디맵으로 보기를 써 주세요.') : '예시 장단에는 악보 그림이 없습니다. 악보 PDF를 올리면 그 악보를 보면서 연주 위치를 따라갈 수 있습니다.')); return; }
   const pages = [...new Set(G.geo.filter(Boolean).map(g => g.page))].sort((a, b) => a - b);
   const sc = G.sc, myKey = key;
@@ -7435,6 +7448,49 @@ function svCursor(k, f) {
   if (svCur.parentNode !== P.el) P.el.appendChild(svCur);
   svCur.hidden = false;
   svCur.style.left = svPct(x, P.ox, P.w); svCur.style.top = svPct(r.y0, P.oy, P.h); svCur.style.height = ((r.y1 - r.y0) / P.h * 100) + '%';
+}
+// 음표 표시: 재생 계획의 marks(음마다 시작·끝 시각, 마디, 줄, 머리 가로 자리)에서 지금 소리 나는 음을 골라, 그 줄의 PDF 음표 머리(geo.heads)에
+// 갈래 색 동그라미를 겹친다. 'OO만' 보기면 그 줄만, 총보 전체면 보이는 PDF와 같은 악보의 켠 줄들(추가한 악보는 다른 PDF라 뺌)
+function svNotesClear() { for (const d of svNoteDivs) d.hidden = true; svNoteKey = ''; }
+function svLineInfo(key) {
+  const r = state.lineRes[key]; if (!r || !r.geo) return null;
+  let v = svLineGeo.get(key);
+  if (!v || v.r !== r) {
+    const item = state.lineList.find(l => cfgKey(l.id) === key), sc = (item && item.sourceScore) || state.score;
+    const map = new Map(); r.bars.forEach((b, i) => { if (r.geo[i]) map.set(b.number, r.geo[i]); });
+    const famC = { wind: 'var(--fam-wind)', string: 'var(--fam-string)', perc: 'var(--fam-perc)', etc: 'var(--fam-etc)' }[familyOf(item, state.lineCfg[key] || state.lineCfg.p || {})];
+    v = { r, sc, map, color: famC || 'var(--fam-etc)' }; svLineGeo.set(key, v);
+  }
+  return v;
+}
+function svNotesAt(t) {
+  const plan = state.rendered && state.rendered.plan, M = plan && plan.marks;
+  if (!M || !M.length || viewMode !== 'score' || !$('svNotes').checked || !state.scoreGeo) { if (svNoteKey) svNotesClear(); return; }
+  let lo = 0, hi = M.length;   // marks는 시작 시각 순: t 이하인 마지막 + 1
+  while (lo < hi) { const m = (lo + hi) >> 1; if (M[m].t <= t + 0.005) lo = m + 1; else hi = m; }
+  const only = svPartRes() ? svPart : null, sc = state.scoreGeo.sc, out = [];
+  for (let i = lo - 1, n = 0; i >= 0 && n < 3000; i--, n++) {
+    const m = M[i]; if (m.t < t - 30) break;
+    if (m.e <= t || (only && m.line !== only)) continue;
+    const L = svLineInfo(m.line), b = state.bars[m.bi]; if (!L || L.sc !== sc || !b) continue;
+    const g = L.map.get(b.number); if (!g || !g.heads) continue;
+    for (const h of g.heads) if (Math.abs(h[0] - m.x) < 1.6) out.push([g.page, g.staff, h[0], h[1], L.color]);
+  }
+  const key = out.map(o => o.join(',')).join(';');
+  if (key === svNoteKey) return;
+  svNoteKey = key;
+  let k = 0;
+  for (const [page, staff, x, y, color] of out) {
+    const P = svPanelOf({ page, staff }); if (!P || !P.w) { svNoteKey = ''; continue; }   // 쪽 칸이 아직 준비 전이면 다음 화면에서 다시
+    const st = sc.layouts[page] && sc.layouts[page].staves[staff], sp = st ? Math.max(4, (st.bottom - st.top) / 4) : 6, d = sp * 1.7;
+    let el = svNoteDivs[k]; if (!el) { el = document.createElement('div'); el.className = 'sv-note'; svNoteDivs.push(el); }
+    k++;
+    if (el.parentNode !== P.el) P.el.appendChild(el);
+    el.hidden = false; el.style.setProperty('--c', color);
+    el.style.left = svPct(x, P.ox, P.w); el.style.top = svPct(y, P.oy, P.h);
+    el.style.width = (d / P.w * 100) + '%'; el.style.height = (d / P.h * 100) + '%';
+  }
+  for (; k < svNoteDivs.length; k++) svNoteDivs[k].hidden = true;
 }
 // 악보를 누르면 그 자리의 마디부터 재생
 // 누른 곳과 같은 가로 자리의 마디 중 위아래로 가장 가까운 단 (단 사이 빈 곳을 눌러도 가까운 단으로, 너무 멀면 무시)
@@ -8195,7 +8251,7 @@ function stop(silent) {
   try { audio.pause(); } catch (e) {}
   cancelAnimationFrame(raf);
   state.playing = false; setPlayIcon(false);
-  if (!silent) { svShow(-1); tick.html = null; lastNow = null; $('nowText').innerHTML = '<b>정지</b>'; document.querySelectorAll('.b.now').forEach(e => e.classList.remove('now')); }   // lastNow도 지워야 같은 마디부터 다시 재생할 때 노란 표시가 나온다
+  if (!silent) { svShow(-1); svNotesClear(); tick.html = null; lastNow = null; $('nowText').innerHTML = '<b>정지</b>'; document.querySelectorAll('.b.now').forEach(e => e.classList.remove('now')); }   // lastNow도 지워야 같은 마디부터 다시 재생할 때 노란 표시가 나온다
 }
 // 반복할 때마다 빠르게: 소리는 연습 속도로 한 번 만들고, 재생 빠르기(playbackRate, 음 높이는 그대로)를 반복마다 올린다
 const rampOn = () => $('optRamp').checked && $('optLoop').checked;
@@ -8231,6 +8287,7 @@ function tick() {
   const w = Math.min(100, t / plan.total * 100).toFixed(1) + '%';
   if (!trackDrag && w !== tick.w) { $('trackFill').style.width = w; $('trackKnob').style.left = w; tick.w = w; const tr = $('track'); tr.setAttribute('aria-valuenow', Math.round(parseFloat(w))); tr.setAttribute('aria-valuetext', cur ? `${n}마디 · ${fmt(t / spdRate())}` : '카운트인'); }
   if (viewMode === 'score' && cur) { const nx = bt[k + 1], end = nx ? nx.abs : plan.total; svCursor(cur.idx, Math.max(0, Math.min(1, (t - cur.abs) / Math.max(0.01, end - cur.abs)))); }
+  if (viewMode === 'score') svNotesAt(t);
   if (n !== lastNow) {
     document.querySelectorAll('.b.now').forEach(e => e.classList.remove('now'));
     if (n) { const el = document.querySelector(`.b[data-n="${n}"]`); if (el) el.classList.add('now'); }
@@ -10800,7 +10857,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-17 13:20';
+const APP_VERSION = '2026-11-17 13:35';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();

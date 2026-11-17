@@ -172,6 +172,7 @@ export function renderPlan(bars, order, opts) {
   const rowFor = n => { let r = rows[0]; for (const x of rows) if (x.start <= n) r = x; return r; };
   const spw = n => { const r = rowFor(n); const bpm = r && r.bpm > 0 ? r.bpm : DEFAULT_BPM; return 60 / bpm / UNIT_FRAC[r ? r.unit : 'q'] / opts.speed; };
   const hits = []; // [time, soundKey, gain]
+  const marks = []; // 악보 보기 음표 표시용(소리에는 쓰지 않음): { t, e: 끝(초), bi, line, x(악보 위 머리 가로 자리) } — 붙임줄로 이어진 머리도 따로
   const notes = []; // 선율 악기 음 (melody-engine.mixNotes로 합성)
   const lastOf = new Map();   // 줄|음높이 → 그 음을 마지막으로 낸 음 (붙임줄로 이을 앞 음 찾기)
   const barTimes = [];
@@ -248,6 +249,7 @@ export function renderPlan(bars, order, opts) {
         const d = (e.sus || e.dur).v;
         const dsec = e.t.v + d <= L + 1e-9 ? clk(e.t.v + d) - clk(e.t.v) : d * s;
         const midis = e.midis.map(m => m + 12 * (mel.oct || 0) + (opts.shift || 0));   // shift: 조옮김(반음) + 기준음 높이(소수)
+        if (e.x != null) marks.push({ t: ts, e: ts + dsec, bi, line: e.line, x: e.x });
         if (e.tie) {
           // 마디를 넘는 붙임줄: 앞 음을 늘린다. 붙임줄 곡선 높이로 성부를 정해 앞 음과 성부가 다르게 읽히기도 하므로 성부는 따지지 않는다.
           // 이을 앞 음이 없으면(이음줄을 붙임줄로 읽은 경우 등) 버리지 않고 새 음으로 친다 (예전에는 그 음이 통째로 빠졌다)
@@ -283,6 +285,7 @@ export function renderPlan(bars, order, opts) {
       let key = (e.line != null ? opts.sounds[e.line + ':' + e.voice] : undefined) ?? opts.sounds[e.voice];
       if (!key || key === 'off' || lg <= 0) continue;
       let ts = cur + clk(e.t.v);
+      if (e.x != null) { const pd = (e.sus || e.dur).v; marks.push({ t: ts, e: ts + (e.t.v + pd <= L + 1e-9 ? clk(e.t.v + pd) - clk(e.t.v) : pd * s), bi, line: e.line, x: e.x }); }
       let dl = (opts.useLvl && e.lvl != null ? e.lvl / 0.75 : dynAt(bi + e.t.v / L)) * lg;
       let sh = 0;
       if (e.ten && opts.stacc !== false) dl *= 1.08;   // 타악 테누토: 조금 세게
@@ -322,6 +325,7 @@ export function renderPlan(bars, order, opts) {
       const extra = fb > 0 ? fb * UNIT_FRAC[rowFor(b.number).unit] * s : 0;
       if (extra) {
         for (let q = notes.length - 1; q >= 0 && notes[q].bi === bi; q--) if (notes[q].t + notes[q].dur >= cur - 0.08) notes[q].dur += extra;
+        for (let q = marks.length - 1; q >= 0 && marks[q].bi === bi; q--) if (marks[q].e >= cur - 0.08) marks[q].e += extra;
         cur += extra;
       }
     }
@@ -352,7 +356,8 @@ export function renderPlan(bars, order, opts) {
     }
   }
   for (const h of hits) if (h[4] && h[4].roll) { delete h[4].dynL; delete h[4].dynOff; }
-  return { hits, notes, barTimes, total: cur + (notes.length ? 2.2 : 1.2), t0 };
+  marks.sort((a, b) => a.t - b.t);
+  return { hits, notes, barTimes, marks, total: cur + (notes.length ? 2.2 : 1.2), t0 };
 }
 
 // 북 높이 바꾸기(반음 sh개): 녹음을 빠르게/느리게 읽는다. 한 번 만든 것은 다시 쓴다
