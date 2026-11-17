@@ -4,7 +4,7 @@
  "title": "아름다운인생",
  "titleRead": "아름다운인생",
  "file": "총보.pdf",
- "saved": "2026-11-17T14:49:57.405Z",
+ "saved": "2026-11-17T14:51:40.830Z",
  "lastBar": 250,
  "lines": {
   "main:0": {
@@ -42,7 +42,7 @@
    "role": "melody",
    "inst": "taepyeongso",
    "oct": 1,
-   "vol": 1,
+   "vol": 3.1622776601683795,
    "R": "따",
    "L": "궁",
    "nong": false
