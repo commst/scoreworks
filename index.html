@@ -373,6 +373,9 @@ body.sv-lock #mini { display: none; }
 .warnlist .wmore { justify-self: start; }
 .summary .wnum { padding: 0 6px; margin: 1px 2px; font-weight: 700; }
 .b.flash { animation: bflash 1.8s ease-out; }
+.sv-flash { position: absolute; pointer-events: none; z-index: 4; border-radius: 4px; opacity: 0; }
+.sv-flash.on { animation: svflash 2.4s ease-out forwards; }
+@keyframes svflash { 0%, 50% { opacity: 1; box-shadow: 0 0 0 3px var(--warn); background: color-mix(in srgb, var(--warn) 18%, transparent); } 100% { opacity: 0; box-shadow: 0 0 0 3px var(--warn); } }
 @keyframes bflash { 0%, 35% { box-shadow: 0 0 0 3px var(--warn); border-color: var(--warn); } 100% { box-shadow: 0 0 0 0 transparent; } }
 .busy { color: var(--muted); font-size: 13.5px; }
 /* 총보 줄 선택 */
@@ -1861,7 +1864,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 <template id="histTpl">
   <section class="hday"><h3>11월 17일</h3>
     <h4>기능 업데이트 <small>3</small></h4><ul class="hlist">
-      <li><details><summary>확인 필요 마디 바로가기</summary><p>마디맵 위 경고 목록의 줄마다 [마디로]·[▶ 여기부터]·[✎ 고치기] 단추가 생겼습니다. [마디로]는 그 마디 칸으로 옮겨 잠깐 깜빡여 보여 줍니다. 처음엔 6줄만 보이고 [나머지 더 보기]로 모두 펼치며, 위 요약의 '확인 필요' 마디 번호를 눌러도 그 마디로 갑니다.</p></details></li>
+      <li><details><summary>확인 필요 마디 바로가기</summary><p>마디맵 위 경고 목록의 줄마다 [마디로]·[▶ 여기부터]·[✎ 고치기] 단추가 생겼습니다. [마디로]는 그 마디로 옮겨 잠깐 깜빡여 보여 줍니다(악보로 보기에서는 연주 위치 따라가기를 꺼 두어도 악보 칸이 그 마디로). 처음엔 6줄만 보이고 [나머지 더 보기]로 모두 펼치고 [접기]로 다시 접으며, 위 요약의 '확인 필요' 마디 번호를 눌러도 그 마디로 갑니다.</p></details></li>
       <li><details><summary>연주 막대에 마디 이동 단추</summary><p>연주 막대의 ◀◀ [숫자] ▶▶로 지금 자리에서 적은 마디 수만큼 앞·뒤로 옮겨 재생합니다(예: 4면 네 마디씩, 도돌이표는 연주 순서대로). 적은 숫자는 이 기기에 기억됩니다.</p></details></li>
       <li><details><summary>악보로 보기: 음표 따라가기</summary><p>재생하는 동안 지금 소리 나는 음표 머리가 악기 갈래 색(관악 초록·현악 파랑·타악 주홍·그 밖 보라)으로 바뀌며 따라갑니다. 'OO만' 보기에서는 그 악기만 표시합니다. 악보 보기 도구줄의 '음표 따라가기'로 켜고 끕니다.</p></details></li>
     </ul>
@@ -8047,7 +8050,12 @@ function renderBars() {
   for (const b of warnBars.slice(0, 6)) $('warnList').appendChild(wrow(b));
   if (warnBars.length > 6) {
     const more = document.createElement('button'); more.type = 'button'; more.className = 'wmore'; more.textContent = `나머지 ${warnBars.length - 6}마디 더 보기`;
-    more.addEventListener('click', () => { for (const b of warnBars.slice(6)) $('warnList').insertBefore(wrow(b), more); more.remove(); });
+    // 펼치기 ↔ 접기(189번: 펼친 뒤 접을 수 없었음)
+    more.addEventListener('click', () => {
+      const open = more.dataset.open === '1', L = $('warnList');
+      if (!open) { for (const b of warnBars.slice(6)) { const r = wrow(b); r.dataset.extra = '1'; L.insertBefore(r, more); } more.dataset.open = '1'; more.textContent = '접기 (처음 6마디만)'; }
+      else { L.querySelectorAll('.msg[data-extra]').forEach(e => e.remove()); more.dataset.open = ''; more.textContent = `나머지 ${warnBars.length - 6}마디 더 보기`; if (more.getBoundingClientRect().top < 0) L.scrollIntoView({ block: 'start' }); }
+    });
     $('warnList').appendChild(more);
   }
   updateOut();
@@ -8555,9 +8563,25 @@ function renderRehearsal() {
     box.appendChild(b);
   });
 }
+// 악보로 보기에서 마디로 가기: '연주 위치 따라가기'와 상관없이 악보 칸을 그 마디로 옮기고(화면도 악보 칸으로), 그 마디를 노란 테두리로 잠깐 깜빡
+// (예전에는 연주 위치 칸(svPlace)을 옮겨 따라가기를 끈 채면 움직이지 않았다, 189번)
+let svFlashEl = null;
+function svGoBar(k) {
+  const r = svRect(k), P = svPanelOf(r); if (!P || !P.w) return false;
+  const wrap = $('svWrap');
+  try { const sv = $('scoreView').getBoundingClientRect(); if (sv.top < 0 || sv.top > innerHeight * 0.3) $('scoreView').scrollIntoView({ block: 'start' }); } catch (e) {}
+  const y = P.el.offsetTop + (r.y0 - P.oy) / P.h * P.el.offsetHeight, x = P.el.offsetLeft + (r.x0 - P.ox) / P.w * P.el.offsetWidth;
+  wrap.scrollTo({ top: Math.max(0, y - wrap.clientHeight * 0.22), left: Math.max(0, x - 30), behavior: 'smooth' });
+  if (!svFlashEl) { svFlashEl = document.createElement('div'); svFlashEl.className = 'sv-flash'; }
+  if (svFlashEl.parentNode !== P.el) P.el.appendChild(svFlashEl);
+  svFlashEl.style.left = svPct(r.x0, P.ox, P.w); svFlashEl.style.width = ((r.x1 - r.x0) / P.w * 100) + '%';
+  svFlashEl.style.top = svPct(r.y0, P.oy, P.h); svFlashEl.style.height = ((r.y1 - r.y0) / P.h * 100) + '%';
+  svFlashEl.classList.remove('on'); void svFlashEl.offsetWidth; svFlashEl.classList.add('on');
+  return true;
+}
 // 확인 필요 마디로 바로 가기: 마디맵이면 그 칸으로 스크롤해 깜빡, 악보로 보기면 그 마디 자리로(재생은 하지 않음)
 function warnGo(n) {
-  if (viewMode === 'score') { const k = state.bars.findIndex(b => b.number === n); if (k >= 0) { svPlace(k, true); return; } }
+  if (viewMode === 'score') { const k = state.bars.findIndex(b => b.number === n); if (k >= 0 && svGoBar(k)) return; }
   const el = document.querySelector(`.b[data-n="${n}"]`); if (!el) return;
   el.scrollIntoView({ block: 'center', behavior: 'smooth' });
   el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1900);
@@ -11052,7 +11076,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-17 23:58';
+const APP_VERSION = '2026-11-18 00:10';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();

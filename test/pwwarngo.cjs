@@ -33,7 +33,23 @@ const mode = process.argv[2]; let fail = 0; const ok = (c, m) => { console.log((
   await p.waitForFunction(() => window.__st.playing, null, { timeout: 200000 }); await p.waitForTimeout(800);
   const now = await p.evaluate(() => { const m = /(\d+)마디/.exec(document.getElementById('nowText').textContent); return m ? +m[1] : null; });
   ok(now >= first && now <= first + 2, '▶ 여기부터 → ' + now + '마디 (' + first + ')');
+  // 접기
+  await p.evaluate(() => document.querySelector('#warnList .wmore').click()); await p.waitForTimeout(300);
+  ok(await p.$$eval('#warnList .msg', r => r.length) === 6, '접기 → 6줄');
+  await p.evaluate(() => document.querySelector('#warnList .wmore').click()); await p.waitForTimeout(300);
+  ok(await p.$$eval('#warnList .msg', r => r.length) === sumN, '다시 펼치기 → ' + sumN + '줄');
   ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), '가로 넘침 없음');
+  // 악보로 보기, 연주 위치 따라가기 끔: [마디로] → 악보 칸이 그 마디로
+  await p.keyboard.press('Space'); await p.waitForTimeout(300);
+  await p.evaluate(() => { document.getElementById('viewScore').click(); const c = document.getElementById('svFollow'); if (c.checked) { c.checked = false; c.dispatchEvent(new Event('change')); } }); await p.waitForTimeout(2000);
+  const wl = await p.evaluate(() => getComputedStyle(document.getElementById('warnList')).display);
+  if (wl !== 'none') {
+    const tgt = await p.evaluate(() => { const rows = [...document.querySelectorAll('#warnList .msg')]; const r = rows[rows.length - 1]; r.querySelector('.wgo button').click(); return +/^(\d+)/.exec(r.querySelector('span').textContent)[1]; });
+    await p.waitForTimeout(2500);
+    const sv = await p.evaluate(() => { const f = document.querySelector('.sv-flash'), w = document.getElementById('svWrap'); if (!f) return null; const a = f.getBoundingClientRect(), b = w.getBoundingClientRect(); return { fa: [a.top, a.bottom], wb: [b.top, b.bottom], max: w.scrollHeight - w.clientHeight, on: f.classList.contains('on'), inWrap: a.top >= b.top - 2 && a.top < b.bottom - 40 && a.height > 0, wrapInView: b.top >= 0 && b.top < innerHeight / 2, top: w.scrollTop }; });
+    ok(sv && sv.on && sv.inWrap && sv.wrapInView, '악보로 보기(따라가기 끔) 마디로 ' + tgt + ' → ' + JSON.stringify(sv));
+    await p.screenshot({ path: '/tmp/pwwarngo-sv-' + (mode || 'desk') + '.png' });
+  } else console.log('     (휴대폰 악보로 보기에서는 경고 목록이 숨겨짐)');
   await p.evaluate(() => document.getElementById('warnList').scrollIntoView()); await p.screenshot({ path: '/tmp/pwwarngo-' + (mode || 'desk') + '.png' });
   ok(!errs.length, '페이지 오류 없음 ' + errs.join(' | '));
   console.log(fail ? 'FAIL ' + fail : 'ALL OK'); await b.close(); process.exit(fail ? 1 : 0); })();
