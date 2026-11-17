@@ -1512,6 +1512,14 @@ export function parseScore(pages, opts = {}) {
             if (st0.length && c.x0 - sx < hd * 1.6 && !headNotes.some(o => !o.grace && o.x > sx + hd * 1.4 && o.x < en0.x - hd * 1.4)) { end.push(en0); start.push(...st0); added = true; } }
         }
         if (globalThis.__curveLog) globalThis.__curveLog.push({ pi, st: st.top, c: { x0: c.x0, y0: c.y0, x1: c.x1, y1: c.y1 }, voice, added, start: start.map(n => [n.x, n.y, n.voice]), end: end.map(n => [n.x, n.y, n.voice]) });
+        // 단 맨 앞(왼쪽에 음표가 하나도 없음)에서 앞 단으로부터 넘어오는 붙임줄 끝: 성부와 상관없이 곡선 테두리 바로 바깥 머리에 잇는다
+        // (소나기 피리·태평소 파트보 22마디: 화음 두 음이 모두 윗성부로 읽혀 아래 곡선이 아랫성부에서 끝 음을 못 찾고 C4를 다시 침)
+        // 단 맨 앞 = 곡선이 오선 왼쪽 끝에서 70pt 안(음자리표·조표 자리)에서 시작하고 그 왼쪽에 음표·꾸밈음이 없음
+        // (단 첫머리 꾸밈음 ⌒ 본음은 제외 — 월광 대금 148마디)
+        if (!end.length && !start.length && c.y1 - c.y0 <= hd * 1.2 && c.x0 - st.x0 < 70 && !headNotes.some(o => o.x < c.x0 + 2)) {
+          const all = headNotes.filter(n => !n.grace && c.x1 - 6 <= n.x && n.x <= c.x1 + 12 && dIn(n) <= 1 && dOut(n) < 6 && !n.tied);
+          if (all.length) { const mx = Math.min(...all.map(n => n.x)); end.push(all.filter(n => n.x < mx + 2).sort((p, q) => dOut(p) - dOut(q))[0]); added = true; }
+        }
         // 시작 음 없이 끝 음만 있는 아주 짧은 곡선(7pt 미만)이 꾸밈음 바로 뒤에 있거나 단 중간(왼쪽 60pt 안에 다른 음표)에 있으면 꾸밈음 이음줄
         // (장구 '기덕', 선율 꾸밈음 ⌒ 본음) — 예전에는 붙임줄로 보아 꾸밈음 뒤 본음을 치지 않았음(월광 대금 94·피리 175·대아쟁 115, 장구 74·120마디 등).
         // 단 맨 앞의 짧은 곡선(앞 단에서 넘어오는 붙임줄 끝 — 프론티어 대금 151, 달빛항해 대아쟁 20·145)은 그대로 붙임줄

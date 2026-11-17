@@ -1843,7 +1843,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 <template id="histTpl">
   <section class="hday"><h3>11월 17일</h3>
       <details class="hbug"><summary>버그 수정 <small>5건</small></summary><ul class="hlist bug">
-      <li><details><summary>소나기에서 붙임줄로 이어진 음을 다시 치던 문제</summary><p>소나기 악보 파일은 붙임줄을 다른 방식으로 그려 대부분을 읽지 못하고 있었습니다(해금 91마디 등). 이제 붙임줄로 이어진 음은 다시 치지 않고, 3음 화음 붙임줄도 모든 음을 잇습니다.</p></details></li>
+      <li><details><summary>소나기에서 붙임줄로 이어진 음을 다시 치던 문제</summary><p>소나기 악보 파일은 붙임줄을 다른 방식으로 그려 대부분을 읽지 못하고 있었습니다(해금 91마디, 태평소 22마디 등). 이제 붙임줄로 이어진 음은 다시 치지 않고, 3음 화음 붙임줄과 줄 맨 앞에서 앞 줄로부터 이어지는 화음 붙임줄도 모든 음을 잇습니다.</p></details></li>
       <li><details><summary>소나기 해금 34마디 '미'가 E♭로 나던 문제</summary><p>앞 마디의 제자리표(E♮) 음이 줄을 넘어 붙임줄로 이어지는데, 이어진 음을 조표대로 E♭로 읽었습니다. 붙임줄로 이어진 음은 앞 음의 임시표를 따릅니다.</p></details></li>
       <li><details><summary>꾸밈음 뒤 본음이 소리 나지 않던 문제</summary><p>꾸밈음에서 본음으로 가는 짧은 곡선을 붙임줄로 읽어 본음을 치지 않았습니다(월광 대금 94마디 온음표, 피리 175마디, 장구 74마디 둘째 박 등). 단 맨 앞에서 앞 단으로부터 이어지는 붙임줄은 그대로 둡니다.</p></details></li>
       <li><details><summary>화음 붙임줄에서 한 음만 이어지고 나머지를 다시 치던 문제</summary><p>음마다 붙임줄이 그려진 화음과 타악기의 ♪⌒♩ 붙임줄을 더 읽습니다(월광·달빛항해·프론티어·미락흘·소나기). 예전에 읽던 붙임줄은 그대로 둡니다.</p></details></li>
@@ -3843,6 +3843,14 @@ function parseScore(pages, opts = {}) {
             if (st0.length && c.x0 - sx < hd * 1.6 && !headNotes.some(o => !o.grace && o.x > sx + hd * 1.4 && o.x < en0.x - hd * 1.4)) { end.push(en0); start.push(...st0); added = true; } }
         }
         if (globalThis.__curveLog) globalThis.__curveLog.push({ pi, st: st.top, c: { x0: c.x0, y0: c.y0, x1: c.x1, y1: c.y1 }, voice, added, start: start.map(n => [n.x, n.y, n.voice]), end: end.map(n => [n.x, n.y, n.voice]) });
+        // 단 맨 앞(왼쪽에 음표가 하나도 없음)에서 앞 단으로부터 넘어오는 붙임줄 끝: 성부와 상관없이 곡선 테두리 바로 바깥 머리에 잇는다
+        // (소나기 피리·태평소 파트보 22마디: 화음 두 음이 모두 윗성부로 읽혀 아래 곡선이 아랫성부에서 끝 음을 못 찾고 C4를 다시 침)
+        // 단 맨 앞 = 곡선이 오선 왼쪽 끝에서 70pt 안(음자리표·조표 자리)에서 시작하고 그 왼쪽에 음표·꾸밈음이 없음
+        // (단 첫머리 꾸밈음 ⌒ 본음은 제외 — 월광 대금 148마디)
+        if (!end.length && !start.length && c.y1 - c.y0 <= hd * 1.2 && c.x0 - st.x0 < 70 && !headNotes.some(o => o.x < c.x0 + 2)) {
+          const all = headNotes.filter(n => !n.grace && c.x1 - 6 <= n.x && n.x <= c.x1 + 12 && dIn(n) <= 1 && dOut(n) < 6 && !n.tied);
+          if (all.length) { const mx = Math.min(...all.map(n => n.x)); end.push(all.filter(n => n.x < mx + 2).sort((p, q) => dOut(p) - dOut(q))[0]); added = true; }
+        }
         // 시작 음 없이 끝 음만 있는 아주 짧은 곡선(7pt 미만)이 꾸밈음 바로 뒤에 있거나 단 중간(왼쪽 60pt 안에 다른 음표)에 있으면 꾸밈음 이음줄
         // (장구 '기덕', 선율 꾸밈음 ⌒ 본음) — 예전에는 붙임줄로 보아 꾸밈음 뒤 본음을 치지 않았음(월광 대금 94·피리 175·대아쟁 115, 장구 74·120마디 등).
         // 단 맨 앞의 짧은 곡선(앞 단에서 넘어오는 붙임줄 끝 — 프론티어 대금 151, 달빛항해 대아쟁 20·145)은 그대로 붙임줄
@@ -10792,7 +10800,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-17 12:57';
+const APP_VERSION = '2026-11-17 13:20';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();
