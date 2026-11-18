@@ -1,10 +1,10 @@
 # ScoreWorks(옛 이름 합주연습기) 인수인계 메모
 
-새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-17, CHANGELOG 178번까지)
+새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-18, CHANGELOG 191번까지)
 
 ## 다음 할 일 (11-17 사용자)
 
-- **MusicXML 불러오기 남은 것(178번, 외부 리뷰)**: 붙임줄 `time-only`(반복 회차별 붙임줄)는 미룸 — 할 때는 renderPlan 안에서 같은 마디가 연주 순서에 몇 번째로 나오는지 세어 회차를 구할 것(playbackOrder 반환 형태는 바꾸지 말 것, PDF 재생도 씀). 이음줄 번호 보존·겹친 이음줄은 내보내기 slurOpen(오선마다 하나)을 번호별로 바꿔야 함. MusicXML 불러오기를 고치면 `node test/musicxml-import.mjs` + 예전 판과 `PREV=<옛 musicxml.js> node test/_xmlcmp.mjs xmlout/*.musicxml`(pwxml.cjs로 만든 실제 파일) + 되읽기 `node test/pwxmlrt.cjs <파일>`
+- **MusicXML 불러오기 남은 것 — 191번에서 끝남**(이음줄 번호·겹친 이음줄, 붙임줄 time-only 재생). 남은 것: time-only 붙임줄을 내보내기에 적기. MusicXML 불러오기를 고치면 `node test/musicxml-import.mjs` + 예전 판과 `PREV=<옛 musicxml.js> node test/_xmlcmp.mjs xmlout/*.musicxml` + 되읽기 `node test/pwxmlrt.cjs <파일>`
 
 - **MusicXML 겹쳐 보기 확장**: 음 위치에 더해 성부·기둥 방향, 꼬리·빔·점(음가 표기), 아티큘레이션(1단계) / 셈여림·꺾쇠·붙임줄·이음줄(2단계)의 일치 여부 표시 — 175번(음표 표시)이 끝나면 진행할지 사용자에게 다시 묻기로 함. 방안: 해석기 geo에 머리마다 기둥 방향·꼬리/빔 수·점·기호를 더하고(소리 그대로), xmlReadBack이 <stem>·<type>·<dot>·<beam>·<articulations>를 읽어 svOverPanel·xmlCheck에서 비교
 

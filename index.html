@@ -1882,7 +1882,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 18일</h3>
-    <h4>기능 업데이트 <small>3</small></h4><ul class="hlist">
+    <h4>기능 업데이트 <small>4</small></h4><ul class="hlist">
+      <li><details><summary>MusicXML 불러오기: 겹친 이음줄, 반복 회차별 붙임줄</summary><p>피날레·뮤즈스코어에서 만든 MusicXML을 불러올 때 이음줄 번호를 기억해, 한 이음줄 안에 다른 이음줄이 겹쳐 있어도 다시 MusicXML로 내보낼 때 모두 남습니다(전에는 겹친 것 중 하나가 빠짐). 도돌이 구간에서 '두 번째에만' 같은 회차 지정이 붙은 붙임줄은 그 회차에만 이어서 연주합니다. PDF 악보의 내보내기는 그대로입니다.</p></details></li>
       <li><details><summary>전체화면 보기 아래 연주 막대</summary><p>전체화면 보기 아래에 기본 화면과 같은 연주 막대가 생겼습니다. ■ 정지, 노란 ▶ 재생·일시정지, 지금 마디와 진행 막대(누르면 그 자리로), 마디 이동 ◀◀ [숫자] ▶▶, 속도 −·+를 전체화면에서 바로 씁니다.</p></details></li>
       <li><details><summary>악보를 다시 불러오면 처음부터 새로</summary><p>다른 악보나 같은 악보를 다시 올리면 앞 악보의 정보('○○만' 보기, 겹쳐 보기, 음 고치기 모드, 스크롤, 연주 범위 등)를 모두 지우고 새로 읽습니다. 이 악보에 저장해 둔 설정과 음 수정은 예전처럼 다시 불러옵니다. 읽을 수 없는 악보를 올리면 이유를 보여 주고 첫 화면으로 돌아갑니다.</p></details></li>
       <li><details><summary>사용설명서·사용법 새로</summary><p>사용설명서(PDF)의 그림을 지금 화면으로 모두 다시 찍고, 음표 따라가기·마디 이동·확인 필요 바로가기·전체화면 연주 막대·못 읽는 악보 안내를 더했습니다. 앱 안 사용법도 함께 고쳤습니다.</p></details></li>
@@ -5554,11 +5555,19 @@ function mxReadPart(p, name) {
         const disp = un ? (mxNum(un, 'display-octave', 4) + 1) * 7 + 'CDEFGAB'.indexOf(mxTxt(un, 'display-step')) : null;   // 타악 음표 높이(성부 나누기용)
         const nots = mxKids(el, 'notations');
         const has = (grp, n) => nots.some(x => mxKids(x, grp).some(g => mxKid(g, n)));
-        const tieStop = mxKids(el, 'tie').some(t => t.attrs.type === 'stop') || nots.some(x => mxKids(x, 'tied').some(t => t.attrs.type === 'stop'));
-        // 이음줄(slur): 시작·끝 표시만 (PDF 해석 결과와 같은 slurS·slurE — 번호·겹친 이음줄은 아직 안 다룸)
-        const slurS = nots.some(x => mxKids(x, 'slur').some(t => t.attrs.type === 'start')), slurE = nots.some(x => mxKids(x, 'slur').some(t => t.attrs.type === 'stop'));
+        const tieStops = [...mxKids(el, 'tie'), ...nots.flatMap(x => mxKids(x, 'tied'))].filter(t => t.attrs.type === 'stop');
+        const tieStop = tieStops.length > 0;
+        // time-only="2" 등: 반복 구간에서 그 회차에만 붙임줄 (renderPlan이 회차를 세어 봄). 붙임줄 표시마다 다르면 모두 합침, 하나라도 없으면 늘 이음
+        //  (time-only는 <tie>에 적힘 — <tied>는 그림 표시라 보지 않음)
+        const tieEl = mxKids(el, 'tie').filter(t => t.attrs.type === 'stop');
+        const tieTimes = tieEl.length && tieEl.every(t => t.attrs['time-only']) ? [...new Set(tieEl.flatMap(t => t.attrs['time-only'].split(/[,\s]+/).map(Number).filter(x => x > 0)))] : null;
+        // 이음줄(slur): 시작·끝 수(PDF 해석 결과와 같은 slurS·slurE) + 번호(slurNs·slurNe — 겹친 이음줄을 번호로 짝지음, 내보내기에서 씀)
+        const slurNo = t => { const k = parseInt(t.attrs.number || '1'); return k >= 1 && k <= 16 ? k : 1; };
+        const slurs = nots.flatMap(x => mxKids(x, 'slur'));
+        const slurNs = slurs.filter(t => t.attrs.type === 'start').map(slurNo), slurNe = slurs.filter(t => t.attrs.type === 'stop').map(slurNo);
+        const slurS = slurNs.length, slurE = slurNe.length;
         if (grace) { if (midi != null && !rest) (graceBuf[voice + '|' + staff] = graceBuf[voice + '|' + staff] || []).push(Math.round(midi)); }
-        else if (!rest) M.notes.push({ t: start, d: dPlay, slurS, slurE, midi: midi != null ? Math.round(midi) : null, voice, staff, stem: mxTxt(el, 'stem'), disp, chord,
+        else if (!rest) M.notes.push({ t: start, d: dPlay, slurS, slurE, slurNs, slurNe, tieTimes, midi: midi != null ? Math.round(midi) : null, voice, staff, stem: mxTxt(el, 'stem'), disp, chord,
           accent: has('articulations', 'accent') || has('articulations', 'strong-accent'), stacc: has('articulations', 'staccato') || has('articulations', 'staccatissimo'),
           ten: has('articulations', 'tenuto'), trill: has('ornaments', 'trill-mark') || has('ornaments', 'wavy-line'), trem: has('ornaments', 'tremolo'),
           xh: mxTxt(el, 'notehead') === 'x', tieStop, kf: fifths == null ? null : (((Math.round(fifths + 7 * transpose) % 12) + 18) % 12) - 6, graces: graceBuf[voice + '|' + staff] || null });
@@ -5607,6 +5616,11 @@ function analyzeXmlLine(sc, line = null) {
   let prevTs = null;
   // 성부 나누기: 오선 안에서 먼저 나온 성부(보통 1·5) = 윗성부, 나머지 = 아랫성부. 타악은 줄기 방향(위 = 윗성부), 없으면 높이
   const voiceOrder = [];
+  // 이음줄 시작·끝을 이벤트에 더함 (화음 구성음에 걸린 것도 화음 이벤트에): 수(slurS·slurE)와 번호(slurNs·slurNe)
+  const slurTo = (e, n) => {
+    if (n.slurS) { e.slurS = (e.slurS || 0) + n.slurS; e.slurNs = [...(e.slurNs || []), ...n.slurNs]; }
+    if (n.slurE) { e.slurE = (e.slurE || 0) + n.slurE; e.slurNe = [...(e.slurNe || []), ...n.slurNe]; }
+  };
   P.measures.forEach((M, bi) => {
     const Gm = (sc.xmlGlobal && sc.xmlGlobal[bi]) || { tempo: [], words: [], rehearsal: [], flags: {} };
     const ev = [];
@@ -5616,12 +5630,12 @@ function analyzeXmlLine(sc, line = null) {
       let v = voiceOrder.indexOf(n.voice) === 0 ? 'R' : 'L';
       if (P.perc) v = n.stem === 'down' ? 'L' : n.stem === 'up' ? 'R' : (n.disp != null && n.disp < 35 ? 'L' : 'R');   // 35 = B4
       const t = n.t, d = n.d;
-      if (n.chord && n.midi != null) { const host = ev.find(e => e.voice === v && e.t.eq(t) && e.midis && !e.tie === !n.tieStop); if (host) { if (!host.midis.includes(n.midi)) host.midis.push(n.midi); if (n.slurS) host.slurS = true; if (n.slurE) host.slurE = true; continue; } }
+      if (n.chord && n.midi != null) { const host = ev.find(e => e.voice === v && e.t.eq(t) && e.midis && !e.tie === !n.tieStop); if (host) { if (!host.midis.includes(n.midi)) host.midis.push(n.midi); slurTo(host, n); continue; } }
       if (n.chord && n.midi == null && ev.some(e => e.voice === v && e.t.eq(t))) continue;
       const e = { voice: v, t, dur: d, accent: n.accent, grace: n.graces ? n.graces.length : 0, roll: n.trem || (P.perc && n.trill) };
       if (n.midi != null && !P.perc) { e.midis = [n.midi]; if (n.graces) e.graceMidis = n.graces; if (n.kf != null) e.kf = n.kf; if (n.trill) { e.trill = true; e.trillInt = 2; } }
-      if (n.tieStop && n.midi != null) e.tie = true;
-      if (n.slurS) e.slurS = true; if (n.slurE) e.slurE = true;
+      if (n.tieStop && n.midi != null) { e.tie = true; if (n.tieTimes && n.tieTimes.length) e.tieTimes = n.tieTimes; }
+      slurTo(e, n);
       if (n.stacc) e.stacc = true; if (n.ten) e.ten = true; if (n.xh) e.xh = true;
       if (n.disp != null) e.pos = 35 - n.disp;
       ev.push(e);
@@ -5897,8 +5911,11 @@ function renderPlan(bars, order, opts) {
     for (let q = k; q < j; q++) restInfo[q] = { k: q - k + 1, n: j - k };
     k = j;
   }
+  const passOf = {};   // 마디마다 연주 순서에서 몇 번째로 나오는지 (MusicXML time-only 붙임줄: 그 회차에만 이음)
   order.forEach((bi, k) => {
     const b = bars[bi], s = spw(b.number), L = b.barLen.v, clk0 = clock(bi, L, s);
+    const pass = passOf[bi] = (passOf[bi] || 0) + 1;
+    const tied = e => !!e.tie && (!e.tieTimes || e.tieTimes.includes(pass));
     // 마디 가운데 음의 늘임표(fermataT): 그 음을 늘이고 뒤 음들을 그만큼 늦춘다 (마디 끝 늘임표는 아래에서 따로)
     const fbeat = opts.fermata == null ? 2 : +opts.fermata;
     const fIn = b.fermata && b.fermataT && b.fermataT.length && fbeat > 0 ? b.fermataT.map(t => t.v).filter(t => t < L - 1e-9) : [];
@@ -5929,7 +5946,7 @@ function renderPlan(bars, order, opts) {
         const dsec = e.t.v + d <= L + 1e-9 ? clk(e.t.v + d) - clk(e.t.v) : d * s;
         const midis = e.midis.map(m => m + 12 * (mel.oct || 0) + (opts.shift || 0));   // shift: 조옮김(반음) + 기준음 높이(소수)
         if (e.x != null) marks.push({ t: ts, e: ts + dsec, bi, line: e.line, x: e.x });
-        if (e.tie) {
+        if (tied(e)) {
           // 마디를 넘는 붙임줄: 앞 음을 늘린다. 붙임줄 곡선 높이로 성부를 정해 앞 음과 성부가 다르게 읽히기도 하므로 성부는 따지지 않는다.
           // 이을 앞 음이 없으면(이음줄을 붙임줄로 읽은 경우 등) 버리지 않고 새 음으로 친다 (예전에는 그 음이 통째로 빠졌다)
           // 앞 음은 줄·음높이마다 기억해 둔 것에서 찾는다: 전에는 바로 앞 60개 음만 보아, 총보에서 여러 줄이 16분음표를 치는 마디 뒤의
@@ -5961,7 +5978,7 @@ function renderPlan(bars, order, opts) {
         notes.push(nt); for (const m of midis) lastOf.set(e.line + '|' + m, nt);
         continue;
       }
-      if (e.tie) continue;
+      if (tied(e)) continue;
       let key = (e.line != null ? opts.sounds[e.line + ':' + e.voice] : undefined) ?? opts.sounds[e.voice];
       if (!key || key === 'off' || lg <= 0) continue;
       let ts = cur + clk(e.t.v);
@@ -10049,7 +10066,7 @@ function buildMusicXml() {
         const pc = !snap && !perc && e.midis && e.pcs && e.pcs.length > 1 ? e.pcs.map(f => Math.round(f.v * W)) : null;
         if (pc && pc.every(v => v > 0) && pc.reduce((a, c) => a + c, 0) === nat) {
           let p = st;
-          pc.forEach((d, k) => { evs.push({ st: p, nat: d, e: k === 0 ? { ...e, pcs: null, stacc: false } : { ...e, pcs: null, tie: true, accent: false, ten: false, trill: false, vib: false, slurS: 0, slurE: 0, graceMidis: null, stacc: k === pc.length - 1 && e.stacc } }); p += d; });
+          pc.forEach((d, k) => { evs.push({ st: p, nat: d, e: k === 0 ? { ...e, pcs: null, stacc: false } : { ...e, pcs: null, tie: true, accent: false, ten: false, trill: false, vib: false, slurS: 0, slurE: 0, slurNs: null, slurNe: null, graceMidis: null, stacc: k === pc.length - 1 && e.stacc } }); p += d; });
         } else evs.push({ e, st, nat });
       }
       const R = evs.filter(x => x.e.voice !== 'L'), Lv = evs.filter(x => x.e.voice === 'L');
@@ -10064,7 +10081,8 @@ function buildMusicXml() {
             for (const n of hs) if (!h.hs.some(o => o.pos === n.pos)) h.hs.push(n);
             h.nat = Math.min(h.nat, x.nat);
             if (!x.e.tie) { h.e = { ...h.e, accent: h.e.accent || x.e.accent, stacc: h.e.stacc || x.e.stacc, ten: h.e.ten || x.e.ten, trill: h.e.trill || x.e.trill, vib: h.e.vib || x.e.vib, roll: h.e.roll || x.e.roll, graceMidis: h.e.graceMidis || x.e.graceMidis, tie: false }; }
-            if (x.e.slurS || x.e.slurE) h.e = { ...h.e, slurS: h.e.slurS || x.e.slurS, slurE: h.e.slurE || x.e.slurE };
+            if (x.e.slurS || x.e.slurE) h.e = { ...h.e, slurS: h.e.slurS || x.e.slurS, slurE: h.e.slurE || x.e.slurE,
+              slurNs: x.e.slurNs ? [...(h.e.slurNs || []), ...x.e.slurNs] : h.e.slurNs, slurNe: x.e.slurNe ? [...(h.e.slurNe || []), ...x.e.slurNe] : h.e.slurNe };
           } else out.push({ ...x, ms, hs });
         }
         return out;
@@ -10123,7 +10141,8 @@ function buildMusicXml() {
             const fresh = !e.tie;   // 꾸밈·셈여림 표시는 새로 치는 음에만
             ps.forEach((pd, pi) => {
               const piece = ms.map((mm, j) => ({ d: pd, voice, st: p, midi: mm, dia: diaOf[mm], K, chord: j > 0, accent: fresh && pi === 0 && e.accent, stacc: fresh && pi === ps.length - 1 && e.stacc, ten: fresh && pi === 0 && e.ten, trill: fresh && pi === 0 && e.trill, vib: j === 0 && pi === 0 && !!e.vib, twoV,
-                slurS: j === 0 && pi === 0 && !!e.slurS, slurE: j === 0 && pi === ps.length - 1 && !!e.slurE }));
+                slurS: j === 0 && pi === 0 && !!e.slurS, slurE: j === 0 && pi === ps.length - 1 && !!e.slurE,
+                slurNs: j === 0 && pi === 0 && e.slurNs && e.slurNs.length ? e.slurNs : null, slurNe: j === 0 && pi === ps.length - 1 && e.slurNe && e.slurNe.length ? e.slurNe : null }));
               piece.forEach((o, j) => {
                 if (pi === 0) {   // 이을 앞 음이 바로 앞에서 끝날 때만 붙임줄 (사이에 다른 음이 있으면 새 음 — 재생과 같게)
                   // 앞 음은 성부마다 기억한다: 다른 성부가 나중에 같은 음을 적으면 그 음으로 덮여 붙임줄을 놓치던 것(미락흘 소아쟁 183→184마디)
@@ -10220,7 +10239,9 @@ function buildMusicXml() {
     out += `<part id="P${li + 1}">\n`;
     const pending = [];
     let lastTs = null, lastKey = null; const lastCl = SS.map(() => null);
-    const slurOpen = SS.map(() => null);   // 오선마다 열린 이음줄의 시작 음 (짝이 없는 시작·끝은 지운다)
+    // 오선마다 열린 이음줄 { o: 시작 음, key, num }. key: 번호를 아는 이음줄(MusicXML에서 읽은 것)은 'n'+번호, PDF에서 읽은 것은 'A'(늘 하나만 —
+    //  닫히기 전에 또 열리면 앞 시작을 지움, 예전과 같음). 번호가 다른 이음줄은 겹쳐 열릴 수 있고 내보낼 때 서로 다른 number를 줌(가능하면 원래 번호)
+    const slurOpen = SS.map(() => []);
     state.bars.forEach((b, bi) => {
       const L = Math.round(b.barLen.v * W);
       // 못갖춘마디: 첫 마디가 박자표보다 짧으면 박자표는 그대로 두고 implicit
@@ -10292,12 +10313,23 @@ function buildMusicXml() {
       // 이음줄 짝 맞추기: 오선마다 시간 순서로, 열린 것 없이 나온 끝은 지우고, 닫히기 전에 또 열리면 앞 시작을 지운다
       SS.forEach((S, si) => {
         const seq = objs.filter(o => !o.dirXml && !o.backup && !o.rest && (o.staff || 1) === si + 1 && (o.slurS || o.slurE)).sort((a, c) => a.st - c.st);
+        const open = slurOpen[si];
+        const dropStart = en => { const k = en.o.slurStarts.indexOf(en.num); if (k >= 0) en.o.slurStarts.splice(k, 1); open.splice(open.indexOf(en), 1); };
         for (const o of seq) {
-          if (o.slurE) { if (slurOpen[si] && slurOpen[si] !== o) slurOpen[si] = null; else o.slurE = false; }
-          if (o.slurS) { if (slurOpen[si]) slurOpen[si].slurS = false; slurOpen[si] = o; }
+          o.slurStops = []; o.slurStarts = [];
+          const stops = o.slurNe && o.slurNe.length ? o.slurNe.map(k => 'n' + k) : o.slurE ? ['A'] : [];
+          for (const key of stops) { const en = [...open].reverse().find(x => x.key === key && x.o !== o); if (en) { open.splice(open.indexOf(en), 1); o.slurStops.push(en.num); } }
+          const starts = o.slurNs && o.slurNs.length ? o.slurNs : o.slurS ? [null] : [];
+          for (const k of starts) {
+            const key = k == null ? 'A' : 'n' + k, old = open.find(x => x.key === key); if (old) dropStart(old);
+            const used = new Set(open.map(x => x.num));
+            let num = k != null && !used.has(k) ? k : 0; for (let c = 1; !num && c <= 16; c++) if (!used.has(c)) num = c;
+            if (!num) continue;
+            open.push({ o, key, num }); o.slurStarts.push(num);
+          }
         }
       });
-      if (bi === nb - 1) slurOpen.forEach((o, si) => { if (o) { o.slurS = false; slurOpen[si] = null; } });
+      if (bi === nb - 1) slurOpen.forEach(open => { for (const en of [...open]) { const k = en.o.slurStarts.indexOf(en.num); if (k >= 0) en.o.slurStarts.splice(k, 1); } open.length = 0; });
       // 음 객체 → XML
       const noteXml = o => {
         if (o.dirXml) return o.dirXml;
@@ -10322,7 +10354,7 @@ function buildMusicXml() {
         if (o.beams) for (const [n, t] of o.beams) x += `<beam number="${n}">${t}</beam>`;
         const nots = [];
         if (o.tieStop) nots.push('<tied type="stop"/>'); if (o.tieStart) nots.push('<tied type="start"/>');
-        if (o.slurE) nots.push('<slur type="stop" number="1"/>'); if (o.slurS) nots.push('<slur type="start" number="1"/>');
+        for (const k of o.slurStops || []) nots.push(`<slur type="stop" number="${k}"/>`); for (const k of o.slurStarts || []) nots.push(`<slur type="start" number="${k}"/>`);
         if (o.tupS) nots.push('<tuplet type="start" bracket="yes"/>'); if (o.tupE) nots.push('<tuplet type="stop"/>');
         const art = (o.accent ? '<accent/>' : '') + (o.stacc ? '<staccato/>' : '') + (o.ten ? '<tenuto/>' : '');
         if (art) nots.push(`<articulations>${art}</articulations>`);
@@ -11147,7 +11179,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-18 09:19';
+const APP_VERSION = '2026-11-18 10:06';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();

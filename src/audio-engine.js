@@ -218,8 +218,11 @@ export function renderPlan(bars, order, opts) {
     for (let q = k; q < j; q++) restInfo[q] = { k: q - k + 1, n: j - k };
     k = j;
   }
+  const passOf = {};   // 마디마다 연주 순서에서 몇 번째로 나오는지 (MusicXML time-only 붙임줄: 그 회차에만 이음)
   order.forEach((bi, k) => {
     const b = bars[bi], s = spw(b.number), L = b.barLen.v, clk0 = clock(bi, L, s);
+    const pass = passOf[bi] = (passOf[bi] || 0) + 1;
+    const tied = e => !!e.tie && (!e.tieTimes || e.tieTimes.includes(pass));
     // 마디 가운데 음의 늘임표(fermataT): 그 음을 늘이고 뒤 음들을 그만큼 늦춘다 (마디 끝 늘임표는 아래에서 따로)
     const fbeat = opts.fermata == null ? 2 : +opts.fermata;
     const fIn = b.fermata && b.fermataT && b.fermataT.length && fbeat > 0 ? b.fermataT.map(t => t.v).filter(t => t < L - 1e-9) : [];
@@ -250,7 +253,7 @@ export function renderPlan(bars, order, opts) {
         const dsec = e.t.v + d <= L + 1e-9 ? clk(e.t.v + d) - clk(e.t.v) : d * s;
         const midis = e.midis.map(m => m + 12 * (mel.oct || 0) + (opts.shift || 0));   // shift: 조옮김(반음) + 기준음 높이(소수)
         if (e.x != null) marks.push({ t: ts, e: ts + dsec, bi, line: e.line, x: e.x });
-        if (e.tie) {
+        if (tied(e)) {
           // 마디를 넘는 붙임줄: 앞 음을 늘린다. 붙임줄 곡선 높이로 성부를 정해 앞 음과 성부가 다르게 읽히기도 하므로 성부는 따지지 않는다.
           // 이을 앞 음이 없으면(이음줄을 붙임줄로 읽은 경우 등) 버리지 않고 새 음으로 친다 (예전에는 그 음이 통째로 빠졌다)
           // 앞 음은 줄·음높이마다 기억해 둔 것에서 찾는다: 전에는 바로 앞 60개 음만 보아, 총보에서 여러 줄이 16분음표를 치는 마디 뒤의
@@ -282,7 +285,7 @@ export function renderPlan(bars, order, opts) {
         notes.push(nt); for (const m of midis) lastOf.set(e.line + '|' + m, nt);
         continue;
       }
-      if (e.tie) continue;
+      if (tied(e)) continue;
       let key = (e.line != null ? opts.sounds[e.line + ':' + e.voice] : undefined) ?? opts.sounds[e.voice];
       if (!key || key === 'off' || lg <= 0) continue;
       let ts = cur + clk(e.t.v);

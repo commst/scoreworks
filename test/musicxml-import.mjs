@@ -63,5 +63,21 @@ const m = (k, bar = '', first = att(1)) => `<measure number="${k}">${k === 1 ? f
   const sc = await load(hdr([`<measure number="1">${att(1)}${n('C', 4, ti('start') + tn('start'))}<note><chord/><pitch><step>E</step><octave>4</octave></pitch><duration>4</duration></note></measure><measure number="2">${n('C', 4, ti('stop') + tn('stop'))}<note><chord/><pitch><step>G</step><octave>4</octave></pitch><duration>4</duration></note></measure>`]));
   check('붙임줄 화음 일부', analyzeXmlLine(sc, 0).bars[1].events.map(e => [e.midis, !!e.tie]), [[[60], true], [[67], false]]); }
 
+// 9. 이음줄 번호: 겹친 이음줄(1번 안에 2번), 번호가 이벤트에 남는지 (179/191번)
+{ const sl = (t, k) => `<slur type="${t}" number="${k}"/>`, N = x => `<notations>${x}</notations>`;
+  const sc = await load(hdr([`<measure number="1">${att(1)}${n('C', 1, N(sl('start', 1)))}${n('D', 1, N(sl('start', 2)))}${n('E', 1, N(sl('stop', 2)))}${n('F', 1, N(sl('stop', 1) + sl('start', 2)))}</measure><measure number="2">${n('G', 4, N(sl('stop', 2)))}</measure>`]));
+  const L = analyzeXmlLine(sc, 0);
+  check('이음줄 번호(겹침)', L.bars.flatMap(b => b.events).map(e => [e.slurS || 0, e.slurE || 0, e.slurNs || [], e.slurNe || []]),
+    [[1, 0, [1], []], [1, 0, [2], []], [0, 1, [], [2]], [1, 1, [2], [1]], [0, 1, [], [2]]]); }
+
+// 10. 붙임줄 time-only: 0마디 C, 1~2마디 되풀이, 2마디 끝 C ⌒ 1마디 첫 C (둘째 회차에만) → 첫 회차 1마디 C는 0마디 C에 잇지 않고 새로, 둘째 회차는 2마디 C에 이음
+{ const sc = await load(hdr([`<measure number="0">${att(1)}${n('C', 4)}</measure><measure number="1"><barline location="left"><repeat direction="forward"/></barline>${n('C', 4, '<tie type="stop" time-only="2"/><notations><tied type="stop"/></notations>')}</measure><measure number="2">${n('C', 4, '<tie type="start"/>')}<barline location="right"><repeat direction="backward"/></barline></measure><measure number="3">${n('D', 4)}</measure>`]));
+  const bars = analyzeXmlLine(sc, 0).bars;
+  check('time-only 읽기', [bars[1].events[0].tie, bars[1].events[0].tieTimes], [true, [2]]);
+  const { renderPlan } = await import('../src/audio-engine.js');
+  bars.forEach(b => b.events.forEach(e => { e.line = 0; }));
+  const plan = renderPlan(bars, playbackOrder(bars), { tempoRows: [{ start: 1, bpm: 60, unit: 'q' }], speed: 1, sounds: {}, melodic: { 0: { inst: 'x', oct: 0 } } });
+  check('time-only 재생(첫 회차 새로, 둘째 회차 이음)', plan.notes.map(x => [x.midis[0], Math.round(x.dur)]), [[60, 4], [60, 4], [60, 8], [60, 4], [62, 4]]); }
+
 console.log(fail ? `${fail}개 실패` : '모두 통과');
 process.exit(fail ? 1 : 0);

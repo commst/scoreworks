@@ -155,11 +155,19 @@ function mxReadPart(p, name) {
         const disp = un ? (mxNum(un, 'display-octave', 4) + 1) * 7 + 'CDEFGAB'.indexOf(mxTxt(un, 'display-step')) : null;   // 타악 음표 높이(성부 나누기용)
         const nots = mxKids(el, 'notations');
         const has = (grp, n) => nots.some(x => mxKids(x, grp).some(g => mxKid(g, n)));
-        const tieStop = mxKids(el, 'tie').some(t => t.attrs.type === 'stop') || nots.some(x => mxKids(x, 'tied').some(t => t.attrs.type === 'stop'));
-        // 이음줄(slur): 시작·끝 표시만 (PDF 해석 결과와 같은 slurS·slurE — 번호·겹친 이음줄은 아직 안 다룸)
-        const slurS = nots.some(x => mxKids(x, 'slur').some(t => t.attrs.type === 'start')), slurE = nots.some(x => mxKids(x, 'slur').some(t => t.attrs.type === 'stop'));
+        const tieStops = [...mxKids(el, 'tie'), ...nots.flatMap(x => mxKids(x, 'tied'))].filter(t => t.attrs.type === 'stop');
+        const tieStop = tieStops.length > 0;
+        // time-only="2" 등: 반복 구간에서 그 회차에만 붙임줄 (renderPlan이 회차를 세어 봄). 붙임줄 표시마다 다르면 모두 합침, 하나라도 없으면 늘 이음
+        //  (time-only는 <tie>에 적힘 — <tied>는 그림 표시라 보지 않음)
+        const tieEl = mxKids(el, 'tie').filter(t => t.attrs.type === 'stop');
+        const tieTimes = tieEl.length && tieEl.every(t => t.attrs['time-only']) ? [...new Set(tieEl.flatMap(t => t.attrs['time-only'].split(/[,\s]+/).map(Number).filter(x => x > 0)))] : null;
+        // 이음줄(slur): 시작·끝 수(PDF 해석 결과와 같은 slurS·slurE) + 번호(slurNs·slurNe — 겹친 이음줄을 번호로 짝지음, 내보내기에서 씀)
+        const slurNo = t => { const k = parseInt(t.attrs.number || '1'); return k >= 1 && k <= 16 ? k : 1; };
+        const slurs = nots.flatMap(x => mxKids(x, 'slur'));
+        const slurNs = slurs.filter(t => t.attrs.type === 'start').map(slurNo), slurNe = slurs.filter(t => t.attrs.type === 'stop').map(slurNo);
+        const slurS = slurNs.length, slurE = slurNe.length;
         if (grace) { if (midi != null && !rest) (graceBuf[voice + '|' + staff] = graceBuf[voice + '|' + staff] || []).push(Math.round(midi)); }
-        else if (!rest) M.notes.push({ t: start, d: dPlay, slurS, slurE, midi: midi != null ? Math.round(midi) : null, voice, staff, stem: mxTxt(el, 'stem'), disp, chord,
+        else if (!rest) M.notes.push({ t: start, d: dPlay, slurS, slurE, slurNs, slurNe, tieTimes, midi: midi != null ? Math.round(midi) : null, voice, staff, stem: mxTxt(el, 'stem'), disp, chord,
           accent: has('articulations', 'accent') || has('articulations', 'strong-accent'), stacc: has('articulations', 'staccato') || has('articulations', 'staccatissimo'),
           ten: has('articulations', 'tenuto'), trill: has('ornaments', 'trill-mark') || has('ornaments', 'wavy-line'), trem: has('ornaments', 'tremolo'),
           xh: mxTxt(el, 'notehead') === 'x', tieStop, kf: fifths == null ? null : (((Math.round(fifths + 7 * transpose) % 12) + 18) % 12) - 6, graces: graceBuf[voice + '|' + staff] || null });
@@ -208,6 +216,11 @@ export function analyzeXmlLine(sc, line = null) {
   let prevTs = null;
   // 성부 나누기: 오선 안에서 먼저 나온 성부(보통 1·5) = 윗성부, 나머지 = 아랫성부. 타악은 줄기 방향(위 = 윗성부), 없으면 높이
   const voiceOrder = [];
+  // 이음줄 시작·끝을 이벤트에 더함 (화음 구성음에 걸린 것도 화음 이벤트에): 수(slurS·slurE)와 번호(slurNs·slurNe)
+  const slurTo = (e, n) => {
+    if (n.slurS) { e.slurS = (e.slurS || 0) + n.slurS; e.slurNs = [...(e.slurNs || []), ...n.slurNs]; }
+    if (n.slurE) { e.slurE = (e.slurE || 0) + n.slurE; e.slurNe = [...(e.slurNe || []), ...n.slurNe]; }
+  };
   P.measures.forEach((M, bi) => {
     const Gm = (sc.xmlGlobal && sc.xmlGlobal[bi]) || { tempo: [], words: [], rehearsal: [], flags: {} };
     const ev = [];
@@ -217,12 +230,12 @@ export function analyzeXmlLine(sc, line = null) {
       let v = voiceOrder.indexOf(n.voice) === 0 ? 'R' : 'L';
       if (P.perc) v = n.stem === 'down' ? 'L' : n.stem === 'up' ? 'R' : (n.disp != null && n.disp < 35 ? 'L' : 'R');   // 35 = B4
       const t = n.t, d = n.d;
-      if (n.chord && n.midi != null) { const host = ev.find(e => e.voice === v && e.t.eq(t) && e.midis && !e.tie === !n.tieStop); if (host) { if (!host.midis.includes(n.midi)) host.midis.push(n.midi); if (n.slurS) host.slurS = true; if (n.slurE) host.slurE = true; continue; } }
+      if (n.chord && n.midi != null) { const host = ev.find(e => e.voice === v && e.t.eq(t) && e.midis && !e.tie === !n.tieStop); if (host) { if (!host.midis.includes(n.midi)) host.midis.push(n.midi); slurTo(host, n); continue; } }
       if (n.chord && n.midi == null && ev.some(e => e.voice === v && e.t.eq(t))) continue;
       const e = { voice: v, t, dur: d, accent: n.accent, grace: n.graces ? n.graces.length : 0, roll: n.trem || (P.perc && n.trill) };
       if (n.midi != null && !P.perc) { e.midis = [n.midi]; if (n.graces) e.graceMidis = n.graces; if (n.kf != null) e.kf = n.kf; if (n.trill) { e.trill = true; e.trillInt = 2; } }
-      if (n.tieStop && n.midi != null) e.tie = true;
-      if (n.slurS) e.slurS = true; if (n.slurE) e.slurE = true;
+      if (n.tieStop && n.midi != null) { e.tie = true; if (n.tieTimes && n.tieTimes.length) e.tieTimes = n.tieTimes; }
+      slurTo(e, n);
       if (n.stacc) e.stacc = true; if (n.ten) e.ten = true; if (n.xh) e.xh = true;
       if (n.disp != null) e.pos = 35 - n.disp;
       ev.push(e);
