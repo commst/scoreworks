@@ -15,5 +15,7 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
     return { row: row ? row.textContent.slice(0, 200) : null, bad: row ? row.classList.contains('bad') : false, color: row && row.querySelector('.wlen') ? getComputedStyle(row.querySelector('.wlen')).color : '',
       nBad: rows.filter(x => x.classList.contains('bad')).length, nAll: rows.length, sumBad: !![...document.querySelectorAll('.summary .wnum.bad')].find(k => k.textContent === bn) }; }, bar);
   ok('경고 줄 있음·붉게', r.bad && /rgb\(197, 34, 31\)/.test(r.color), r.row); ok('기대 글', r.row && r.row.includes(want)); ok('요약 번호 붉게', r.sumBad);
-  console.log('붉은 줄', r.nBad, '/', r.nAll); ok('페이지 오류 없음', !errs.length, errs.join(' | '));
+  console.log('붉은 줄', r.nBad, '/', r.nAll);
+  const order = await p.evaluate(() => { const rows = [...document.querySelectorAll('#warnList .msg')]; const k = rows.findIndex(x => !x.classList.contains('bad')); return k < 0 || rows.slice(k).every(x => !x.classList.contains('bad')); });
+  ok('붉은 경고가 먼저', order); ok('페이지 오류 없음', !errs.length, errs.join(' | '));
   await b.close(); console.log(fail ? `${fail}개 실패` : 'ALL OK'); process.exit(fail ? 1 : 0); })();
