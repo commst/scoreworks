@@ -169,7 +169,8 @@ function convertEncore(glyphs, drawings) {
   const isHead = g => /Anastasia/i.test(g.font) && (g.code === 207 || g.code === 250);
   const stemmed = g => merged.some(([x, y0, y1]) => x > g.ox - 1.2 && x < g.ox + g.size * 0.3 + 1.2 && y0 - 3 <= g.oy && g.oy <= y1 + 3);
   const heads = out.filter(isHead), withStem = new Set(heads.filter(stemmed));
-  const drop = new Set(heads.filter(h => !withStem.has(h) && heads.some(m => withStem.has(m) && Math.abs(m.oy - h.oy) <= h.size * 0.3 && Math.abs(m.ox - h.ox) > 0.5 && Math.abs(m.ox - h.ox) < h.size * 0.45)));
+  // (빈 머리와 채운 머리는 같은 기둥의 밀려난 머리가 아님 — 소나기 신디 𝅗𝅥.의 덧줄 아랫음이 아래 오선 16분음표 머리와 겹쳐 지워지던 것, 196번)
+  const drop = new Set(heads.filter(h => !withStem.has(h) && heads.some(m => withStem.has(m) && m.code === h.code && Math.abs(m.oy - h.oy) <= h.size * 0.3 && Math.abs(m.ox - h.ox) > 0.5 && Math.abs(m.ox - h.ox) < h.size * 0.45)));
   if (drop.size) for (let i = out.length - 1; i >= 0; i--) if (drop.has(out[i])) out.splice(i, 1);
   // 글자 상자를 실제 모양에 맞춘다 (기둥 끝·꼬리 위치 비교에 씀)
   for (const g of out) {
@@ -990,6 +991,12 @@ function pagePrep(pg, layout, pi) {
       return [c, n];
     };
     const HEADS = new Set([HEAD_FILLED, HEAD_HALF, HEAD_WHOLE]);
+    let vlsO = null;
+    const ownStem = (g, up) => {   // up: 머리가 오선 t 위쪽(이웃은 위) → 제 오선 쪽 = 아래로 뻗은 기둥
+      if (!vlsO) { vlsO = []; for (const d of drawings) { const r = d.rect; if (r && d.type === 's' && d.items.length === 1 && d.items[0].op === 'l' && r.width < 0.3 && r.height > spM * 2) vlsO.push(r); } }
+      // 기둥은 머리 옆 끝에 붙는다(위로 뻗으면 오른쪽, 아래로 뻗으면 왼쪽) — 마디선과 헷갈리지 않게
+      return vlsO.some(v => (up ? Math.abs(v.x0 - g.x0) < 1 && Math.abs(v.y0 - g.oy) < spM * 0.8 && v.y1 - g.oy > spM * 2 : Math.abs(v.x0 - g.x1) < 1 && Math.abs(v.y1 - g.oy) < spM * 0.8 && g.oy - v.y0 > spM * 2));
+    };
     for (const g of maestro) {
       if (!HEADS.has(g.code)) continue;
       const i = staffOf(g.oy); if (i == null) continue; const t = staves[i];
@@ -997,6 +1004,9 @@ function pagePrep(pg, layout, pi) {
       const j = up ? i - 1 : i + 1, o = staves[j]; if (!o) continue;
       const oOut = up ? g.oy - o.bottom : o.top - g.oy; if (oOut < 0 || oOut > 45) continue;
       const [co, no] = support(g, o, !up), [cs, ns] = support(g, t, up);
+      // 머리의 기둥이 이웃 오선 반대쪽(제 오선 쪽)으로 2칸 넘게 뻗어 있으면 옮기지 않는다(196번) — 소나기 신디 𝅗𝅥.의 덧줄 아랫음이 아래 오선(신디2) 16분음표의
+      // 덧줄 머리와 같은 자리에 겹쳐, 그 덧줄을 근거로 신디2 음으로 옮겨져 둘째 𝅗𝅥.이 빠지던 것(221~223마디)
+      if (no >= 1 && co === no && cs * 2 < Math.max(ns, 1) && g.code === HEAD_HALF && ownStem(g, up)) continue;
       if (no >= 1 && co === no && cs * 2 < Math.max(ns, 1)) ownerFix.set(g, j);
     }
     // 옮긴 머리에 딸린 기호(임시표·점·아티큘레이션)도 같은 오선으로
@@ -1241,10 +1251,12 @@ export function parseScore(pages, opts = {}) {
         if (forceDots == null) dots.forEach((dg, i) => {
           if (usedDots.has(i) || reserved.has(i)) return;
           if (firstDot && Math.abs(dg.oy - firstDot.oy) > 1) return;   // 겹점은 같은 높이에
-          if (gx1 + 0.3 <= dg.x0 && dg.x0 <= gx1 + 6 + nd * 4 && Math.abs(dg.oy - g.oy) < (isRest ? 8 : dotTol(g))
+          if (gx1 + (isRest ? -0.3 : 0.3) <= dg.x0 && dg.x0 <= gx1 + 6 + nd * 4 && Math.abs(dg.oy - g.oy) < (isRest ? 8 : dotTol(g))
             && (isRest || !heads.some(h => h !== g && Math.abs(cx(h) - cx(g)) < 1.5 && Math.abs(h.oy - dg.oy) < Math.abs(g.oy - dg.oy) - 0.1))   // 화음(타악의 위·아래 성부 포함): 점은 높이가 가장 가까운 머리의 것
             && (isRest || !pitchedStaff || !heads.some(h => h !== g && h.x0 > g.x1 - 0.5 && Math.abs((dg.x0 + dg.x1) / 2 - (h.x0 + h.x1) / 2) < (h.x1 - h.x0) * 0.2 && Math.abs(dg.oy - h.oy) > staffSp * 0.6 && Math.abs(dg.oy - h.oy) < staffSp * 1.8))   // 다른 머리 한가운데 위·아래 점 = 스타카토
-            && !bars.some(b => b[0] > g.x1 - 0.5 && b[0] < dg.x0 + 0.5)) { usedDots.add(i); nd++; firstDot = firstDot || dg; }
+            && !bars.some(b => b[0] > g.x1 - 0.5 && b[0] < dg.x0 + 0.5)
+            // 점과 이 머리 사이에(같은 높이) 다른 오선 머리가 있으면 그 머리의 점(196번 — 소나기 신디 𝅗𝅥.의 점을 아래 오선 16분음표가 가져가던 것)
+            && (isRest || !pg.glyphs.some(h => (h.code === HEAD_HALF || h.code === HEAD_FILLED) && h !== g && !heads.includes(h) && Math.abs(h.oy - dg.oy) < dotTol(g) && h.x1 > gx1 + 0.5 && h.x1 <= dg.x0 + 0.3))) { usedDots.add(i); nd++; firstDot = firstDot || dg; }
         });
         if (nd === 1) n.dur = n.dur.mul(F(3, 2)); else if (nd >= 2) n.dur = n.dur.mul(F(7, 4));
         n._dots = nd;
@@ -1259,8 +1271,12 @@ export function parseScore(pages, opts = {}) {
         if (twins.length < 2 && upS.length && dnS.length) {
           // 기둥의 반대쪽 끝이 다른 오선의 음표 머리에 닿아 있으면 그 기둥은 다른 오선 음의 것 — 빽빽한 총보에서 아래 오선 화음의 위 기둥이
           // 이 오선 덧줄 음 머리까지 올라와 '두 성부가 함께 치는 음'으로 나뉘던 것(소나기 태평소 242마디 C4 ♪⌒𝅗𝅥.: 다시 치고 마디가 넘침)
+          // 반대쪽 끝이 다른 오선 안(줄 사이)의 빔에 닿고 머리에서 3.5칸 넘게 떨어졌으면 그것도 남의 기둥(196번) — 소나기 신디 221~223마디:
+          // 아래 오선(신디2) 16분음표 화음의 기둥이 위 오선 𝅗𝅥.의 덧줄 아랫음에 닿아, 그 음을 따로 16분 빔 음(4분음표 길이)으로 읽어 붙임줄이 끊기고 다시 침
+          const beamEnd = (x, y) => pg.drawings.some(d => d.type === 'f' && d.rect && d.rect.width > staffSp * 0.8 && d.rect.height < staffSp * 2 && d.rect.x0 - 1 <= x && x <= d.rect.x1 + 1 && d.rect.y0 - 1.5 <= y && y <= d.rect.y1 + 1.5);
           const foreign = (c, up) => { const yE = up ? c[1] : c[2]; return pg.glyphs.some(h => (h.code === HEAD_FILLED || h.code === HEAD_HALF) && h !== g && !heads.includes(h)
-            && Math.abs(h.oy - yE) < staffSp * 1.2 && h.x0 - 2 <= c[0] && c[0] <= h.x1 + 2); };
+            && Math.abs(h.oy - yE) < staffSp * 1.2 && h.x0 - 2 <= c[0] && c[0] <= h.x1 + 2)
+            || (Math.abs(yE - g.oy) > staffSp * 3.5 && staves.some((o, oi) => oi !== si && !o.oneLine && yE >= o.top - 0.5 && yE <= o.bottom + 0.5) && beamEnd(c[0], yE)); };
           const up2 = upS.filter(c => !foreign(c, true)), dn2 = dnS.filter(c => !foreign(c, false));
           if (up2.length && !dn2.length) return [makeNote(g, false, up2[0])];
           if (dn2.length && !up2.length) return [makeNote(g, false, dn2[0])];
@@ -1383,7 +1399,7 @@ export function parseScore(pages, opts = {}) {
           if (L && R) br = { x0: L.x0, x1: R.x1 };
           else {
             // 많이 기운 괄호(위·아래 성부 괄호가 빔을 따라 비스듬히): 숫자 양옆 선분이 한 직선으로 이어질 때만 (달빛항해 136마디)
-            const sl = segs.filter(q => q.x1 - q.x0 > 6 && Math.abs(q.y1 - q.y0) <= (q.x1 - q.x0) * 0.3);
+            const sl = segs.filter(q => q.x1 - q.x0 > 4 && Math.abs(q.y1 - q.y0) <= (q.x1 - q.x0) * 0.4);   // 짧고 비스듬한 괄호 토막(프론티어 Piano 93마디: 4.7pt, 기울기 0.34)도 — 한 직선으로 이어질 때만(196번)
             const yAt = (q, x) => q.y0 + (q.y1 - q.y0) * (x - q.x0) / (q.x1 - q.x0);
             const L2 = sl.filter(q => q.x1 <= t.x0 + 2 && q.x1 >= t.x0 - 8 && Math.abs(q.y1 - cy(t)) < 6);
             for (const l of L2) {
@@ -1396,7 +1412,12 @@ export function parseScore(pages, opts = {}) {
           // 잇단음표 숫자와 세로로 가장 가까운 음표의 성부에 적용 (숫자가 오선 위에 있어도 아랫성부일 수 있음)
           const inBr = notes.filter(n => !n.grace && br.x0 - 4 <= n.x && n.x <= br.x1 + 4);
           const v = inBr.length ? inBr.reduce((b, n) => Math.abs(n.y - t.oy) < Math.abs(b.y - t.oy) ? n : b).voice : voice;
-          inBr.forEach(n => { if (n.voice === v) n.tuplet = tf; });
+          // 괄호 바로 뒤(4pt 안)의 음까지 넣으면 잇단 길이가 안 맞고, 괄호 안쪽(1.5pt) 음만으로 (가장 짧은 음 × 숫자)와 꼭 맞으면 안쪽 음만 —
+          // 프론티어 Piano 93마디: ♩♪ 셋잇단 바로 뒤 ♩(파)까지 셋잇단으로 읽어 파솔파를 함께 줄여 침(196번)
+          const xsT = arr => [...new Set(arr.map(n => Math.round(n.x)))], oneT = arr => xsT(arr).map(x => arr.find(n => Math.round(n.x) === x));
+          const fits = arr => { const o = oneT(arr); if (!o.length) return false; const u = o.reduce((a, n) => n.dur.lt(a) ? n.dur : a, F(1)); return frSum(o.map(n => n.dur)).eq(u.mul(F(tk))); };
+          const vIn = inBr.filter(n => n.voice === v), vTight = vIn.filter(n => br.x0 - 1.5 <= n.x && n.x <= br.x1 + 1.5);
+          (vTight.length < vIn.length && fits(vTight) && !fits(vIn) ? vTight : vIn).forEach(n => { n.tuplet = tf; });
           // 괄호 안 그 성부 음이 숫자보다 적고, 기둥 방향만 다른 다른 성부 음을 더하면 가로 자리가 숫자와 꼭 맞으면 그 음도 잇단음표
           // (한 성부 선율의 셋잇단에서 첫 음만 기둥이 아래로 — 미락흘 소금 86마디)
           const xsOf = arr => [...new Set(arr.map(n => Math.round(n.x)))];
@@ -1706,6 +1727,27 @@ export function parseScore(pages, opts = {}) {
         const inr = x => rx0 <= x && x < rx1;
         const m = { page: pi, staff: si, x0: rx0, x1: rx1, timesig: null, notes: notes.filter(n => inr(n.x)), kind: 'normal', multirest: 0, pitched: pitchedStaff,
           repeatStart: false, repeatEnd: false, fermata: false, sectionStart: false, warnings: [], tempoMarks: [] };
+        // 박 되풀이 빗금(Maestro 213, 오선 가운데의 굵은 '/'): 앞 박을 한 번 더 — 한 박 길이의 쉼표 자리로 넣었다가 timing 뒤 앞 박 음을 베껴 넣음(196번, 월광 소금·대금·피리 117마디)
+        { const spS = (st.bottom - st.top) / 4 || 7;
+          for (const g of sg) if (g.code === 213 && isMaestro(g) && inr(cx(g)) && Math.abs(g.oy - st.mid) < spS * 1.5 && g.size > smallSize * 0.9) {
+            const pv = m.notes.filter(n => !n.rest && !n.grace && n.x < cx(g)).sort((a, b) => b.x - a.x)[0];
+            // 한 박 길이: 첫 빗금 앞 같은 성부 음(화음은 한 번)의 합이 ♩·♩.·𝅗𝅥이면 그 길이(12/8의 ♩♪ 뒤 빗금 = 3/8), 아니면 4분음표
+            let u = F(1, 4);
+            const prevSl = m.notes.find(n => n.slash);
+            if (prevSl) u = prevSl.dur;
+            else if (pv) {
+              // 한 박: 빗금 앞 음을 거꾸로 더해 가며 ♩(1/4)·♩.(3/8)에 꼭 닿는 길이 가운데, 빗금 앞 전체 길이가 그 배수인 것
+              // (16분음표 넷 → 1/4, 12/8의 ♩♪·♩♪♩♪·16분음표 여섯 → 3/8. 둘 다 맞으면 1/4)
+              const xs = new Set(), seq = [];
+              for (const n of m.notes.filter(n => n.voice === pv.voice && !n.grace && n.x < cx(g)).sort((a, b) => a.x - b.x)) { const k = Math.round(n.x); if (xs.has(k)) continue; xs.add(k); seq.push(n.dur); }
+              const S = frSum(seq), hit = new Set(); let acc = ZERO;
+              for (let q = seq.length - 1; q >= 0; q--) { acc = acc.add(seq[q]); if (acc.eq(F(1, 4))) hit.add('q'); if (acc.eq(F(3, 8))) hit.add('dq'); if (acc.gt(F(3, 8))) break; }
+              const mult = c => S.v > 0 && Math.abs(S.v / c.v - Math.round(S.v / c.v)) < 1e-9;
+              const q = hit.has('q') && mult(F(1, 4)), dq = hit.has('dq') && mult(F(3, 8));
+              u = q ? F(1, 4) : dq ? F(3, 8) : hit.has('dq') ? F(3, 8) : F(1, 4);
+            }
+            m.notes.push({ voice: pv ? pv.voice : 'R', x: cx(g), y: st.mid, pos: 0, rest: true, slash: true, grace: false, accent: false, tied: false, roll: false, tuplet: false, dur: u });
+          } }
         let content = m.notes.length > 0;
         const ts = sg.filter(g => isDigit(g.code) && inr(cx(g)) && st.top - 2 <= g.oy && g.oy <= st.bottom + 2);
         const cts = sg.filter(g => g.code === COMMON_TIME && inr(cx(g)));
@@ -2449,7 +2491,19 @@ export function resolveBars(measures, systemNumbers = []) {
       e.events = copy(src.events); e.barLen = src.barLen; e.timesig = src.timesig; e.timesigChange = false;
       e.note = m.kind === 'repeat2a' ? '두 마디 반복 ①' : '두 마디 반복 ②';
     } else {
+      const slashes = m.notes.filter(n => n.slash).sort((a, b) => a.x - b.x);
+      const unitS = slashes.length ? slashes[0].dur : F(1, 4);
       e.events = timing(m, barLen);
+      // 박 되풀이 빗금: 빗금 바로 앞 한 박(모든 성부)의 음을 빗금 자리로 베낌
+      for (const n of slashes) {
+        if (n.onset == null) continue;
+        const s0 = n.onset.sub(unitS);
+        for (const ev of e.events.filter(ev => !ev.t.lt(s0) && ev.t.lt(n.onset))) {
+          const c = { ...ev, t: ev.t.add(unitS), x: n.x, _slashCopy: true }; delete c.tie; delete c.sus; delete c.pcs; delete c.slurS; delete c.slurE;
+          e.events.push(c);
+        }
+      }
+      if (slashes.length) { for (const ev of e.events) delete ev._slashCopy; e.events.sort((a, b) => a.t.v - b.t.v); }
       // 그래도 넘치면 마디를 늘린다
       const end = e.events.reduce((a, ev) => frMax(a, ev.t.add(ev.dur)), ZERO);
       if (end.gt(e.barLen)) e.barLen = end;
