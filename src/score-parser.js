@@ -2826,10 +2826,18 @@ export function analyzeLine(score, line = null) {
       // MusicXML 확인용: PDF에 그려진 음표 머리 자리(꾸밈음·쉼표 빼고, 보통 마디만)
       // 머리마다 [x, y, 적힌 모양] — 모양(MusicXML 겹쳐 보기에서 내보낸 음과 견줌, 소리에는 안 씀): u 기둥(1 위·-1 아래·0 없음), t 음표 종류(1 온·2 2분·4·8·16·32),
       //  d 점 수, a 아티큘레이션(a 악센트·s 스타카토·t 테누토), ti 앞 음에 붙임줄로 이어짐, ss·se 이음줄 시작·끝
+      const graceOwn = new Map();   // 꾸밈음 → 바로 뒤 같은 성부 본음(없으면 25pt 안 다른 성부 음) — timing의 graceTgt와 같은 규칙
+      { const mainN = (m.notes || []).filter(n => !n.grace && !n.rest);
+        for (const gN of (m.notes || []).filter(n => n.grace)) {
+          let c = mainN.filter(n => n.voice === gN.voice && n.x >= gN.x - 4); if (!c.length && m.pitched) c = mainN.filter(n => n.x > gN.x + 1 && n.x <= gN.x + 25);
+          if (c.length) { const tgt = c.reduce((b, n) => n.x < b.x ? n : b); graceOwn.set(tgt, (graceOwn.get(tgt) || 0) + 1); } } }
       if (m.kind === 'normal' || m.kind == null) g.heads = (m.notes || []).filter(n => !n.grace && !n.rest && n.x != null && n.y != null).map(n => {
         const dots = n._dots || 0, base = n.dur && n.dur.v > 0 ? n.dur.v / (dots === 1 ? 1.5 : dots >= 2 ? 1.75 : 1) : 0, t = base > 0 ? Math.round(1 / base) : 0;
         const nt = { u: n._up === true ? 1 : n._up === false ? -1 : 0, t: [1, 2, 4, 8, 16, 32, 64].includes(t) ? t : 0, d: dots, a: (n.accent ? 'a' : '') + (n.staccato ? 's' : '') + (n.tenuto ? 't' : '') };
         if (n.tied) nt.ti = 1; if (n.slurS) nt.ss = 1; if (n.slurE) nt.se = 1;
+        // 201번: v 성부(R 윗·L 아랫), o 떤음·굴림 표시(트릴·트레몰로·물결), tp 잇단 수(3·5…), gr 꾸밈음 수(이 머리 바로 앞, 같은 성부)
+        nt.v = n.voice; if (n.roll || n.tremolo || n.vib) nt.o = 1; if (n.tuplet && n.tuplet.d > 1) nt.tp = n.tuplet.d;
+        const gr = graceOwn.get(n); if (gr) nt.gr = gr;
         return [Math.round(n.x * 10) / 10, Math.round(n.y * 10) / 10, nt];
       });
     }

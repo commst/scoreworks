@@ -15,7 +15,7 @@ const pre = process.argv[2], SM = '/home/claude/samples/', src = SM + fs.readdir
     for (const b of bs) { const w = b.title; const m = w.match(/적힌 모양이 PDF와 다른 음 \d+개 \(([^)]*)\)/); if (m) for (const k of m[1].split('·')) kinds[k] = (kinds[k] || 0) + 1; if (/셈여림·꺾쇠가 다름/.test(w)) dyn++;
       if (/적힌 모양|셈여림·꺾쇠/.test(w) && ex.length < 400) ex.push(b.closest('.xchk-line').querySelector('b').textContent + ' ' + w.slice(0, 220)); }
     return { bad: bs.filter(b => b.classList.contains('bad')).length, diff: bs.filter(b => b.classList.contains('diff')).length, all: bs.length, dyn, kinds, ex }; });
-  console.log(JSON.stringify({...res, ex: undefined})); console.log(res.ex.filter(e => /붙임줄|기둥/.test(e)).slice(0, 8).join("\n")); console.log(await p.evaluate(() => [...document.querySelectorAll(".xchk-line b")].map((b, i) => i + ":" + b.textContent).join(" "))); console.log('errs', errs);
+  console.log(JSON.stringify({...res, ex: undefined})); console.log(res.ex.filter(e => new RegExp(process.env.KF || "붙임줄|기둥").test(e)).slice(0, 8).join("\n")); console.log(await p.evaluate(() => [...document.querySelectorAll(".xchk-line b")].map((b, i) => i + ":" + b.textContent).join(" "))); console.log('errs', errs);
   if (process.argv[3]) { const [li, bn] = process.argv[3].split(':');
     await p.evaluate(([li, bn]) => { const L = [...document.querySelectorAll('.xchk-line')][+li]; const bt = [...L.querySelectorAll('button')].find(b => b.textContent === bn); bt.click(); }, [li, bn]); await p.waitForTimeout(3000);
     const info = await p.evaluate(() => [...document.querySelectorAll('.sv-ovn.diff')].slice(0, 8).map(e => e.title).concat([...document.querySelectorAll('.sv-ovd')].slice(0, 6).map(e => 'dir ' + e.textContent + (e.classList.contains('diff') ? '!' : ''))));
