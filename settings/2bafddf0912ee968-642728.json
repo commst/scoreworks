@@ -4,7 +4,7 @@
  "title": "방황",
  "titleRead": "방황",
  "file": "방황_총보.pdf",
- "saved": "2026-11-18T08:20:42.253Z",
+ "saved": "2026-11-18T08:25:51.908Z",
  "lastBar": 268,
  "lines": {
   "main:0": {
@@ -42,7 +42,7 @@
    "role": "melody",
    "inst": "taepyeongso",
    "oct": 1,
-   "vol": 1,
+   "vol": 3.1622776601683795,
    "R": "따",
    "L": "궁",
    "nong": false
