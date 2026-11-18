@@ -16,4 +16,15 @@ const cr = { kind: 'ramp', p0: 10, p1: 11, dir: 1, hp: true, target: null }, de 
 ok('< 바로 뒤 > (부풀림): > 시작이 < 끝 크기에서 이어짐', near(L([mp, cr, de], 11.0001), 0.85) || L([mp, cr, de], 11.0001) > 0.8);
 ok('부풀림이 끝나면 원래 크기', near(L([mp, cr, de], 13), 0.6));
 ok('다른 글자가 나오면 그 크기', near(L([mp, dim, { kind: 'mark', p0: 30, level: 0.9 }], 31), 0.9));
+// 207번: mf 흐름 속 한 마디만 p < (미락흘 60·68마디) → 그 마디 안에서 p에서 커져 다음 마디부터 다시 mf
+const mf = { kind: 'mark', p0: 0, level: 0.75 }, pp = { kind: 'mark', p0: 59, level: 0.45 }, up = { kind: 'ramp', p0: 59, p1: 59.94, dir: 1, hp: true, target: null };
+ok('p < 마디 시작은 p', near(L([mf, pp, up], 59.0001), 0.45) || Math.abs(L([mf, pp, up], 59.0001) - 0.45) < 0.01);
+ok('p < 마디 안에서 커짐', L([mf, pp, up], 59.5) > 0.55 && L([mf, pp, up], 59.5) < 0.75);
+ok('p < 뒤에는 앞 크기(mf)로', near(L([mf, pp, up], 60.5), 0.75) && near(L([mf, pp, up], 80), 0.75));
+ok('p만 있고 < 가 없으면 p 유지', near(L([mf, pp], 70), 0.45));
+ok('앞 크기가 더 작으면(ppp → p <) 예전처럼 p로', near(L([{ ...mf, level: 0.22 }, pp, up], 70), 0.45));
+ok('글자에서 떨어진 < 는 예전처럼 원래 크기로', near(L([mf, pp, { ...up, p0: 62, p1: 63 }], 70), 0.45));
+ok('여러 마디에 걸친 p < 는 예전처럼 끝나면 p로', near(L([mf, pp, { ...up, p1: 63 }], 70), 0.45));
+ok('다음 마디 < 로 이어지는 p < 는 예전처럼', near(L([mf, pp, up, { ...up, p0: 60, p1: 60.9 }], 70), 0.45));
+ok('p < 바로 뒤 글자가 있으면 그 글자', near(L([mf, pp, up, { kind: 'mark', p0: 60, level: 0.9 }], 61), 0.9));
 console.log(bad ? `${bad} FAIL` : 'ALL OK'); process.exit(bad ? 1 : 0);

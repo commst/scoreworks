@@ -115,21 +115,25 @@ const GAIN = { '따': 2.06, '궁': 1.37, '꽹과리': 1.65, '꽹과리막음': 1
 // 바로 이어지는 꺾쇠(< 뒤 > 등)가 있으면 그 꺾쇠가 이어받는다. (160번: 전에는 줄어든 크기가 다음 셈여림 글자까지 곡 끝까지 남아,
 //  달빛항해 대금 16마디·해금 14마디의 > 뒤로 소리가 −12dB 작은 채로 이어졌다 — 145번에서 > 를 25%까지 줄이며 두드러짐)
 export const DYN_CHAIN = 0.15;   // 꺾쇠 끝과 다음 셈여림 사이가 이만큼(마디) 안이면 이어진 것으로 본다
+// 207번: 셈여림 글자 바로 뒤(0.25마디 안)에서 시작하는 끝 글자 없는 한 마디 이하 < (다음 꺾쇠로 이어지지 않는 것)는, 그 글자가 앞 크기보다 작으면 앞 크기로 되돌아가는 것으로 본다
+//  (미락흘 60·68마디: mf 흐름 속 한 마디만 p < → 다음 마디부터 다시 mf). 160번 뒤로는 p로 남아 61~67·69~88마디가 작게 들렸음
+export const DYN_BACK = 0.25;
 export function dynLevelAt(items, p) {
-  let level = 0.75, base = 0.75;
+  let level = 0.75, base = 0.75, prevBase = null, markP = -1;
   for (let i = 0; i < items.length; i++) {
     const it = items[i];
     if (it.p0 > p) break;
-    if (it.kind === 'mark') { level = base = it.level; continue; }
+    if (it.kind === 'mark') { prevBase = base; markP = it.p0; level = base = it.level; continue; }
+    const back = it.dir > 0 && it.target == null && prevBase != null && it.p1 - it.p0 <= 1.05 && !(items[i + 1] && items[i + 1].kind !== 'mark' && items[i + 1].p0 <= Math.max(it.p1 + DYN_CHAIN, Math.floor(it.p1) + 1.25)) && it.p0 - markP <= DYN_BACK + 1e-9 && prevBase > level + 1e-9 ? prevBase : null;
     // 그린 꺾쇠(hp)는 셈여림 글자가 없어도 귀에 들리게 0.25(약 4dB), 글자 cresc.·dim.은 0.15
     // 작아질 때(>·dim.)는 더 뚜렷하게: 그 순간 크기의 25%까지(약 −12dB, 글자 dim.은 45%) — 같은 양만 빼면 거의 들리지 않았음(연변목가 양금 트레몰로)
     const amt = it.hp ? 0.25 : 0.15;
-    const target = it.target != null ? it.target : it.dir < 0 ? Math.max(0.08, level * (it.hp ? 0.25 : 0.45)) : Math.max(0.2, Math.min(1, level + amt));
+    const target = it.target != null ? it.target : back != null ? back : it.dir < 0 ? Math.max(0.08, level * (it.hp ? 0.25 : 0.45)) : Math.max(0.2, Math.min(1, level + amt));
     // 다음 셈여림(꺾쇠·글자)이 이 꺾쇠가 끝나기 전에 시작하면 거기서 끝낸다(< 뒤 바로 > 가 겹쳐 > 가 들리지 않던 것 — 연변목가 양금 1마디)
     let p1 = it.p1;
     for (let j = i + 1; j < items.length; j++) if (items[j].p0 > it.p0 + 1e-6) { p1 = Math.min(p1, items[j].p0); break; }
     if (p < p1) return level + (target - level) * (p - it.p0) / Math.max(1e-6, p1 - it.p0);
-    if (it.target != null) { level = base = target; continue; }   // 끝 셈여림이 정해진 꺾쇠: 그 크기가 새 기준
+    if (it.target != null || back != null) { level = base = target; continue; }   // 끝 셈여림이 정해진 꺾쇠(또는 앞 크기로 되돌아가는 <): 그 크기가 새 기준
     const nx = items[i + 1];
     level = nx && nx.p0 <= p1 + DYN_CHAIN ? target : base;
   }
