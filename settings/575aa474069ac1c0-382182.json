@@ -4,7 +4,7 @@
  "title": "판놀음",
  "titleRead": "판놀음",
  "file": "판놀음II 스코아.pdf",
- "saved": "2026-11-11T14:41:05.599Z",
+ "saved": "2026-11-18T09:19:41.521Z",
  "lastBar": 109,
  "lines": {
   "main:0": {
@@ -52,7 +52,7 @@
    "role": "melody",
    "inst": "taepyeongso",
    "oct": 1,
-   "vol": 1,
+   "vol": 3.1622776601683795,
    "R": "따",
    "L": "궁",
    "nong": false
