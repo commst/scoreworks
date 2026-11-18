@@ -1704,9 +1704,9 @@ body, button, input, select, textarea { font-family: var(--font-body); }
             <dt>굵은 빨간 번호 · 보통 번호</dt>
             <dd><b>굵은 빨간 번호</b>는 내보낸 음이 PDF 음표 머리와 맞지 않는 마디(빠진 음·남는 음·박 위치나 음 높이가 다른 음)로 꼭 확인할 곳입니다. <b>보통 번호</b>는 앱이 '확인 필요' 경고를 붙였지만 머리 자리는 맞는 마디로, 대개 그대로 써도 됩니다. 번호 위에 마우스를 올리면 이유가 나옵니다.</dd>
             <dt>번호를 누르면 (겹쳐 보기)</dt>
-            <dd>악보로 보기에서 그 줄만 보기로 그 마디에 가고, 내보낸 음을 PDF 위에 동그라미로 겹쳐 그립니다. <b>파란 동그라미</b> = PDF 머리와 맞음, <b>빨간 동그라미</b> = 그 자리에 PDF 머리가 없는 음(박 위치·음 이름·옥타브가 다르거나 남는 음 — ♯·♭ 반음 차이는 표시되지 않음), <b>빨간 네모</b> = 맞는 음이 없는 PDF 머리(빠진 음). 악보로 보기 위쪽 [MusicXML 겹쳐 보기]로 언제든 켜고 끄며, 켜 둔 채 줄을 켜고 끄거나 음을 고치면 바로 다시 그립니다.</dd>
+            <dd>악보로 보기에서 그 줄만 보기로 그 마디에 가고, 내보낸 음을 PDF 위에 동그라미로 겹쳐 그립니다. <b>파란 동그라미</b> = PDF 머리와 맞음, <b>빨간 동그라미</b> = 그 자리에 PDF 머리가 없는 음(박 위치·음 이름·옥타브가 다르거나 남는 음 — ♯·♭ 반음 차이는 표시되지 않음), <b>빨간 네모</b> = 맞는 음이 없는 PDF 머리(빠진 음), <b>주황</b> = 자리는 맞고 적힌 모양이 다름, <b>보라</b> = 악보 그림의 실제 머리 높이와 다름. 누르면 이유가 나오고, 보라나 높이만 다른 빨강(그 마디 문제가 높이뿐일 때)에는 <b>[악보대로 고치기]</b>(같은 마디에 여럿이면 [이 마디 고칠 음 모두 악보대로]) 단추가 있어 악보 높이대로 고칩니다(✎와 같은 기록, Ctrl+Z로 되돌림). 악보로 보기 위쪽 [MusicXML 겹쳐 보기]로 언제든 켜고 끄며, 켜 둔 채 줄을 켜고 끄거나 음을 고치면 바로 다시 그립니다.</dd>
             <dt>음 높이가 다를 때 (동그라미가 머리 위·아래로 비켜 있음)</dt>
-            <dd>[✎ 음 고치기]를 켜고 그 마디를 눌러 ↓8·↑8(옥타브)로 PDF와 같은 높이로 맞추고 → 동그라미가 파래지면 [MusicXML 저장]을 다시 누릅니다. 음 이름(도·레·미…)이 다르면 ♭·♯를 여러 번 눌러 맞춥니다.</dd>
+            <dd>먼저 그 동그라미(또는 겹친 빨간 네모)를 눌러 보세요. 말풍선에 <b>[악보대로 고치기]</b>가 있으면 누르면 악보 머리 높이대로 고칩니다(같은 마디에 여럿이면 [이 마디 고칠 음 모두 악보대로], Ctrl+Z로 되돌림). 단추가 없으면 [✎ 음 고치기]를 켜고 그 마디를 눌러 ↓8·↑8(옥타브)로 PDF와 같은 높이로 맞추고 → 동그라미가 파래지면 [MusicXML 저장]을 다시 누릅니다. 음 이름(도·레·미…)이 다르면 ♭·♯를 여러 번 눌러 맞춥니다.</dd>
             <dt>반음(♯·♭)이 다를 때는 동그라미로 알 수 없음</dt>
             <dd>동그라미의 위아래 자리는 음 이름과 옥타브로만 정하고 ♯·♭은 따지지 않습니다(PDF 쪽도 머리 자리만 보고 임시표는 보지 않음). 그래서 F를 F♯로 읽었거나 ✎에서 ♯·♭로 반음만 고치면 동그라미는 같은 자리·같은 색 그대로입니다. 반음이 맞는지는 재생 소리나 ✎ 창의 음 이름으로 확인하세요.</dd>
             <dt>박 위치가 다를 때 (동그라미가 머리 옆으로 비켜 있음)</dt>
@@ -1716,7 +1716,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
             <dt>잇단음표가 섞인 복잡한 마디</dt>
             <dd>악보 프로그램이 열 수 있도록 16분음표 칸에 맞춰 적은 마디라 동그라미가 조금씩 비켜 있을 수 있습니다. 악보 프로그램에서 잇단음표로 다시 적어 주세요.</dd>
             <dt>대조하지 못하는 것</dt>
-            <dd>옥타브·조옮김을 바꿔 내보낸 줄과 타악 줄은 음 높이는 보지 않고 박 위치만, MusicXML로 올린 악보(쪽 그림 없음)는 앱이 읽은 결과와 박 위치만 맞춰 봅니다. 셈여림·이음줄·글자 같은 표기는 대조하지 않습니다.</dd>
+            <dd>조옮김을 바꿔 내보낸 줄과 타악 줄은 음 높이는 보지 않고 박 위치만(옥타브를 옮겨 듣는 줄은 PDF 자리 그대로 적어 높이까지 견줌), MusicXML로 올린 악보(쪽 그림 없음)는 앱이 읽은 결과와 박 위치만 맞춰 봅니다. 셈여림·이음줄·글자 같은 표기는 대조하지 않습니다.</dd>
           </dl>
         </details>
       </section>
@@ -1857,7 +1857,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
           <label class="chk" title="해석기가 쉼표 자리를 추정한 마디에서, 성부마다 음도 쉼표도 적혀 있지 않은 빈 자리를 흐린 빗금 칸으로 보여 줍니다(윗성부는 오선 위쪽, 아랫성부는 아래쪽)"><input type="checkbox" id="svHidden" checked>숨은 쉼표</label>
           <button type="button" class="btn" id="svFull">전체화면 보기</button>
           <button type="button" class="btn sv-warn" id="svWarn" hidden title="확인 필요 마디 목록(마디로 · 여기부터 · 고치기)">⚠ 경고 <b id="svWarnN"></b><span class="sv-warn-bad" id="svWarnBad"></span></button>
-          <label class="chk" id="svOverLbl" title="내보낼 MusicXML의 음을 악보 위에 동그라미로 겹쳐 그립니다. PDF 음표 머리와 맞으면 파랑, 맞지 않으면 빨강, 자리는 맞지만 적힌 모양(음표 종류·점·기둥·아티큘레이션·붙임줄·이음줄)이 다르면 주황, 쪽 그림의 실제 머리 높이와 다르면 보라, 맞는 음이 없는 PDF 머리는 빨간 네모. 짧은 선은 해석기가 읽은 기둥(윗성부 파랑·아랫성부 초록). 내보낸 셈여림·꺾쇠는 오선 아래 글자(PDF와 다르면 주황). 표시를 누르면 이유"><input type="checkbox" id="svOver">MusicXML 겹쳐 보기</label>
+          <label class="chk" id="svOverLbl" title="내보낼 MusicXML의 음을 악보 위에 동그라미로 겹쳐 그립니다. PDF 음표 머리와 맞으면 파랑, 맞지 않으면 빨강, 자리는 맞지만 적힌 모양(음표 종류·점·기둥·아티큘레이션·붙임줄·이음줄)이 다르면 주황, 쪽 그림의 실제 머리 높이와 다르면 보라, 맞는 음이 없는 PDF 머리는 빨간 네모. 보라·높이만 다른 빨강은 눌러서 [악보대로 고치기]. 짧은 선은 해석기가 읽은 기둥(윗성부 파랑·아랫성부 초록). 내보낸 셈여림·꺾쇠는 오선 아래 글자(PDF와 다르면 주황). 표시를 누르면 이유"><input type="checkbox" id="svOver">MusicXML 겹쳐 보기</label>
           <button type="button" class="btn" id="svEdit" aria-pressed="false" title="켜면 마디를 눌렀을 때 재생 대신 그 마디의 음정·음 길이를 고치는 창이 열립니다">✎ 음 고치기</button>
           <span class="zoom">크기 <button type="button" id="svZoomOut" aria-label="작게">−</button><span id="svZoomVal">100%</span><button type="button" id="svZoomIn" aria-label="크게">+</button></span>
         </div>
@@ -11658,7 +11658,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-18 16:58';
+const APP_VERSION = '2026-11-18 17:11';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();
