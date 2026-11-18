@@ -10,7 +10,7 @@ const mode = process.argv[2]; let fail = 0; const ok = (c, m) => { console.log((
   await p.setInputFiles('#pdfInput', t); await p.waitForFunction(() => /읽었습니다/.test(document.getElementById('fileInfo').textContent), null, { timeout: 200000 });
   await p.evaluate(() => { const m = document.getElementById('msg'); if (m && !m.hidden) m.click(); });
   const bar = () => p.evaluate(() => { const m = /(\d+)마디/.exec(document.getElementById('nowText').textContent); return m ? +m[1] : null; });
-  const vis = await p.evaluate(() => { const r = document.querySelector('.dock-jump').getBoundingClientRect(); return r.width > 0 && r.right <= innerWidth + 1 && r.left >= -1; });
+  const vis = await p.evaluate(() => { const r = document.querySelector('#dock .dock-jump').getBoundingClientRect(); return r.width > 0 && r.right <= innerWidth + 1 && r.left >= -1; });
   ok(vis, '마디 이동 칸이 화면 안에 보임');
   ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), '가로 넘침 없음');
   // 소리를 만들기 전: 연주 범위 첫 마디(1) + 4 → 5마디부터

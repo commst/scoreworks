@@ -129,6 +129,8 @@ th { background: var(--soft); font-weight: 700; }
   <li>카카오톡·네이버 앱 안에서 링크를 열면 위쪽에 안내가 뜹니다. <span class="btn pri">브라우저에서 실행</span>을 눌러 Safari나 Chrome으로 여세요. 앱 안의 브라우저에서는 파일 올리기·저장이 잘 안 될 수 있습니다.</li>
 </ol>
 <figure><img src="img/01_welcome.png"><figcaption>처음 연 화면(첫 화면). 아래에 총보·파트보 올리기 상자가 있습니다.</figcaption></figure>
+<div class="box tip"><span class="t">읽을 수 없는 악보를 올렸을 때</span> 스캔한 PDF·손상된 파일처럼 읽을 수 없는 악보를 올리면, 위쪽에 이유를 노란 글로 보여 주고 <b>첫 화면으로 돌아갑니다</b>(앞에 열어 둔 악보도 닫힘). 노란 글을 누르면 닫히고, 다른 악보를 올리면 됩니다.</div>
+<figure><img src="img/30_unreadable.png"><figcaption>그림으로 만든 PDF를 올렸을 때: 오류를 보여 주고 첫 화면으로</figcaption></figure>
 <div class="box ex"><span class="t">악보 없이 먼저 들어 보기</span> 첫 화면 맨 아래 <span class="btn">예시 장단으로 먼저 들어 보기</span>를 누르면 8마디 장구 장단으로 화면을 미리 써 볼 수 있습니다.</div>
 
 <!-- 2 -->
@@ -140,9 +142,9 @@ th { background: var(--soft); font-weight: 700; }
   <tr><td><b>위 막대</b></td><td>가운데에 <b>ScoreWorks</b> 이름. 왼쪽에 곡 이름과 줄 수·마디 수, 설정 저장 상태. 오른쪽에 <span class="btn">악보</span>(올린 악보 보기·바꾸기), <span class="btn">이력</span>(업데이트 이력), <span class="btn">사용법</span>, <span class="btn">설명서</span>(이 사용설명서 받기), <span class="btn">신고</span>(문제점 신고하기). 아주 넓은 화면에서는 단추에 전체 이름이 나옵니다. 곡 이름을 눌러도 악보 파일 창이 열립니다.</td></tr>
   <tr><td><b>왼쪽 다섯 칸</b></td><td><span class="tab">악기</span> 줄마다 켜기·끄기, 소리, 음량<br><span class="tab">빠르기</span> 빠르기 표, rit.·accel., 연습 속도<br><span class="tab">연주</span> 카운트인·메트로놈 같은 재생 옵션, 소리 다듬기, 연주 순서<br><span class="tab">저장</span> 음원(MP3·WAV), MIDI·MusicXML, 이 악보의 설정<br><span class="tab">음색</span> 모든 곡에 함께 쓰는 악기별 기본 음량·음색(낮은음·가운데·높은음)</td></tr>
   <tr><td><b>가운데</b></td><td><span class="btn">악보로 보기</span>: 올린 악보 PDF를 그대로 보여 주고 연주 위치를 따라갑니다. <span class="btn">마디맵으로 보기</span>: 마디마다 리듬을 점으로 보여 줍니다.</td></tr>
-  <tr><td><b>아래 연주 막대</b></td><td>늘 보입니다. 연습 번호 단추, ■ 정지(처음으로), ▶ 재생·일시정지, 지금 마디와 시간, 진행 막대, 마디 ○부터 ○까지, <span class="btn">⟲ 구간 반복</span>, 속도 −·+, <span class="btn">음원 저장</span>.</td></tr>
+  <tr><td><b>아래 연주 막대</b></td><td>늘 보입니다. 연습 번호 단추, ■ 정지(처음으로), ▶ 재생·일시정지, 지금 마디와 시간, 진행 막대, <b>마디 이동 ◀◀ [4] ▶▶</b>(지금 자리에서 적은 마디 수만큼 앞·뒤로, 연주 순서대로), 마디 ○부터 ○까지, <span class="btn">⟲ 구간 반복</span>, 속도 −·+, <span class="btn">음원 저장</span>.</td></tr>
 </table>
-<figure><img src="img/13_dock.png"><figcaption>아래 연주 막대. 왼쪽 위 A~N은 악보의 연습 번호이고, 작은 숫자는 그 번호가 시작하는 마디입니다.</figcaption></figure>
+<figure><img src="img/13_dock.png"><figcaption>아래 연주 막대. 왼쪽 위 A~N은 악보의 연습 번호이고, 작은 숫자는 그 번호가 시작하는 마디입니다. 가운데 ◀◀ 4 ▶▶는 네 마디씩 앞·뒤로 옮겨 재생(숫자는 바꿀 수 있고 이 기기에 기억됨).</figcaption></figure>
 <div class="box tip"><span class="t">처음 쓸 때 기억할 세 가지</span>
 <ul><li>무엇을 들을지는 <span class="tab">악기</span>, 얼마나 빨리 들을지는 <span class="tab">빠르기</span>에서 정합니다.</li>
 <li>재생·정지·구간·속도는 언제나 아래 연주 막대에 있습니다.</li>
@@ -156,6 +158,7 @@ th { background: var(--soft); font-weight: 700; }
   <li>첫 화면의 <b>총보 업로드</b> 상자에서 <span class="btn pri">총보 추가</span>를 누르고 총보 PDF를 고릅니다. 또는 파일을 상자 위로 끌어다 놓습니다.</li>
   <li>"악보를 읽는 중…"이 나오고, 몇 초 뒤(쪽이 많으면 10초쯤) 화면이 바뀝니다. 위 막대에 <b>연변목가 15줄 · 158마디</b>처럼 나오면 다 읽은 것입니다.</li>
   <li>올린 파일은 위 막대의 <span class="btn">악보</span>(악보 파일)에서 다시 볼 수 있습니다.</li>
+  <li>다른 총보를 올리거나 같은 총보를 다시 올리면, 앞 악보의 정보(파일 이름·악기·빠르기·연주 범위·'○○만' 보기·겹쳐 보기 등)를 모두 지우고 새로 읽습니다. 이 악보에 저장해 둔 설정과 음 수정은 다시 불러옵니다.</li>
 </ol>
 <figure><img src="img/02_files.png"><figcaption>악보 파일 창. 맨 위 곡 제목 칸, 총보, 총보에 더한 악보(악보 추가), 파트보를 보고 ✕로 뺄 수 있습니다.</figcaption></figure>
 <div class="box tip"><span class="t">곡 제목 바꾸기</span> 제목을 잘못 읽었거나(예: 작곡가 이름이 제목으로) 다른 이름으로 부르고 싶으면 악보 파일 창 맨 위 <b>곡 제목</b> 칸에 적고 Enter를 누릅니다. 고친 제목은 위 막대, 음원·MusicXML·MIDI 파일 이름에 쓰이고 이 악보의 설정에 저장됩니다. 칸을 비우고 Enter를 누르면 악보에서 읽은 제목으로 돌아갑니다.</div>
@@ -292,16 +295,18 @@ th { background: var(--soft); font-weight: 700; }
 <!-- 8 -->
 <h2>8. 악보로 보기와 음 고치기</h2>
 <h3>악보로 보기</h3>
-<p>가운데 위의 <span class="btn">악보로 보기</span>를 누르면 올린 PDF가 그대로 보입니다. 연주하는 동안 지금 마디는 <b>노란 칸</b>, 지금 위치는 <b>빨간 선</b>으로 음표를 따라 움직이고, 다음 단·다음 쪽으로 넘어가면 악보가 따라 내려갑니다.</p>
-<figure><img src="img/12_score_play.png"><figcaption>연습 번호 D부터 재생 중. 35마디에 노란 칸과 빨간 선.</figcaption></figure>
+<p>가운데 위의 <span class="btn">악보로 보기</span>를 누르면 올린 PDF가 그대로 보입니다. 연주하는 동안 지금 마디는 <b>노란 칸</b>, 지금 위치는 <b>빨간 선</b>으로 음표를 따라 움직이고, 다음 단·다음 쪽으로 넘어가면 악보가 따라 내려갑니다. <b>음표 따라가기</b>를 켜 두면(처음 켜짐) 지금 소리 나는 음표 머리가 악기 갈래 색(관악 초록·현악 파랑·타악 주홍·그 밖 보라)으로 바뀝니다.</p>
+<figure><img src="img/12_score_play.png"><figcaption>연습 번호 D부터 재생 중. 36마디에 노란 칸과 빨간 선, 소리 나는 소금 음표 머리가 초록으로.</figcaption></figure>
 <ul>
   <li><b>연주 위치 따라가기</b>를 끄면 악보를 직접 넘겨 볼 수 있습니다.</li>
   <li>악보를 누르면 그 마디부터 재생합니다.</li>
   <li><b>크기</b> −·+로 100~300%까지 키웁니다. 휴대폰에서 총보가 작으면 키우세요.</li>
-  <li><span class="btn">화면 가득 보기</span>: 화면 전체에 악보만. 위쪽 단추로 재생·일시정지, ✕나 <span class="kbd">Esc</span>로 돌아옵니다.</li>
+  <li><span class="btn">전체화면 보기</span>: 화면 전체에 악보만. <b>아래 연주 막대</b>에 기본 화면과 같은 ■ 정지·▶ 재생(노란 원)·지금 마디와 진행 막대(누르면 그 자리로)·<b>마디 이동 ◀◀ [n] ▶▶</b>·<b>속도 −·+</b>가 있습니다. 위쪽 <span class="btn">✕ 닫기</span>나 <span class="kbd">Esc</span>로 돌아옵니다.</li>
+  <li><b>음표 따라가기</b>: 재생 중 소리 나는 음표 머리를 색으로 칠합니다. '대금만' 보기면 그 악기만, 총보 전체면 켠 줄 모두. 끄면 노란 칸·빨간 선만.</li>
   <li><b>보기</b> 상자에서 '총보 전체' 대신 '대금만'처럼 켠 줄을 고르면 그 악기 오선만 잘라 이어 보여 줍니다.</li>
   <li><b>MusicXML 겹쳐 보기</b>: 내보낼 MusicXML의 음을 악보 위에 동그라미로 겹쳐 그려, 앱이 PDF와 다르게 읽은 곳을 찾습니다(9장).</li>
 </ul>
+<figure><img src="img/29_full.png"><figcaption>전체화면 보기. 아래 연주 막대에서 재생·일시정지, 마디 이동, 속도를 바로 바꿉니다.</figcaption></figure>
 <figure><img src="img/14_mypart.png"><figcaption>보기: 대금만. 총보에서 대금 오선만 잘라 이어 붙여 크게 봅니다.</figcaption></figure>
 <h3>음 고치기 (✎)</h3>
 <p>자동으로 읽다 보니 음 높이나 길이가 악보와 다르게 들리는 마디가 있을 수 있습니다. 직접 고칠 수 있습니다.</p>
@@ -384,15 +389,15 @@ th { background: var(--soft); font-weight: 700; }
 <p>가운데 칸 위의 <span class="btn">마디맵으로 보기</span>를 누르면 열립니다(<span class="btn">악보로 보기</span>로 돌아감). 고른 보기는 이 기기에 기억됩니다.</p>
 
 <h3>10-1. 위쪽 요약</h3>
-<figure><img src="img/16a_map_top.png"><figcaption>마디맵 위쪽: 성부 색, 요약, 확인할 마디 안내(예시: 연변목가 총보)</figcaption></figure>
+<figure><img src="img/16a_map_top.png"><figcaption>마디맵 위쪽: 성부 색, 요약, 확인할 마디 안내와 바로가기 단추(예시: 연변목가 총보)</figcaption></figure>
 <table>
   <tr><th style="width:24%">항목</th><th>뜻과 예</th></tr>
   <tr><td>● 윗성부 · ● 아랫성부</td><td>마디 칸의 점 색입니다. <b>빨간 점</b> = 윗성부(악보에서 위쪽 음표, 장구라면 채편 '따'), <b>파란 점</b> = 아랫성부(아래쪽 음표, 북편 '궁').</td></tr>
   <tr><td>마디</td><td>읽은 마디 수. 예: 마디 158.</td></tr>
   <tr><td>박자</td><td>곡에 쓰인 박자들. 예: 12/8 · 6/8 · 8/8 · 10/8 · 4/4 → 중간에 박자가 여러 번 바뀌는 곡.</td></tr>
-  <tr><td>확인 필요</td><td>인식이 불확실한 마디 번호들. 마디 칸에 <b>노란 테두리</b>로도 표시됩니다. '없음'이면 모두 박자와 맞게 읽힌 것입니다.</td></tr>
+  <tr><td>확인 필요</td><td>인식이 불확실한 마디 번호들. 마디 칸에 <b>노란 테두리</b>로도 표시됩니다. '없음'이면 모두 박자와 맞게 읽힌 것입니다. 번호를 누르면 그 마디 칸으로 옮겨 잠깐 깜빡입니다(마우스를 올리면 이유).</td></tr>
   <tr><td>악상기호</td><td>읽어 낸 셈여림·빠르기 말과 개수. 예: f×11 p×4 &lt;×14 rit.×4 → f가 11곳, 크레셴도가 14곳, rit.이 4곳.</td></tr>
-  <tr><td>노란 안내 목록</td><td>확인할 마디마다 무엇이 불확실한지. 예: "2마디: 소금: 아랫성부 쉼표 일부 숨김 → 위치로 추정" = 악보에서 숨겨 둔 쉼표 자리를 음표 위치로 짐작했다는 뜻. 대부분 소리에는 문제가 없지만, 이상하게 들리면 이 마디부터 확인하세요.</td></tr>
+  <tr><td>노란 안내 목록</td><td>확인할 마디마다 무엇이 불확실한지. 예: "2마디: 소금: 아랫성부 쉼표 일부 숨김 → 위치로 추정" = 악보에서 숨겨 둔 쉼표 자리를 음표 위치로 짐작했다는 뜻. 대부분 소리에는 문제가 없지만, 이상하게 들리면 이 마디부터 확인하세요. 줄마다 <span class="btn">마디로</span>(그 마디로 가서 깜빡 — 악보로 보기에서도, 연주 위치 따라가기를 꺼 두어도), <span class="btn">▶ 여기부터</span>(그 마디부터 재생), <span class="btn">✎ 고치기</span>(음 고치기 창). 처음엔 6줄만 보이고 <span class="btn">나머지 n마디 더 보기</span>로 펼치고 <span class="btn">접기</span>로 다시 접습니다.</td></tr>
 </table>
 
 <h3>10-2. 마디 칸 읽기</h3>
@@ -563,7 +568,8 @@ th { background: var(--soft); font-weight: 700; }
 <h2>14. 문제가 생겼을 때</h2>
 <table>
   <tr><th style="width:32%">이럴 때</th><th>이렇게 해 보세요</th></tr>
-  <tr><td>"악보 기호를 찾을 수 없습니다"</td><td>스캔하거나 사진으로 만든 PDF입니다. 악보 프로그램에서 PDF로 다시 저장하거나 MusicXML로 내보내 올리세요.</td></tr>
+  <tr><td>"악보 기호를 찾을 수 없습니다" / "PDF를 여는 중에 문제가 생겼습니다"</td><td>스캔하거나 사진으로 만든 PDF, 또는 손상·암호가 걸린 파일입니다. 이유를 보여 주고 첫 화면으로 돌아가니, 악보 프로그램에서 PDF로 다시 저장하거나 MusicXML로 내보내 올리세요.</td></tr>
+  <tr><td>악보로 보기에서 쪽이 하얗게 비어요</td><td>예전 판의 문제입니다(11월 17일 고침). 화면 맨 아래 판 번호를 확인하고 새로 고침하세요.</td></tr>
   <tr><td>▶를 눌렀는데 "템포를 입력해 주세요"</td><td>빠르기 칸의 노란 BPM 칸을 채우세요(5장).</td></tr>
   <tr><td>소리가 안 나요</td><td>악기 칸에서 켠 줄이 있는지, 음량이 0이 아닌지, 솔로가 다른 줄에 켜져 있지 않은지(위 노란 안내), 음색 칸에서 그 악기의 기본 음량을 0으로 두지 않았는지 확인하세요. 휴대폰은 처음 한 번 재생 단추를 직접 눌러야 합니다.</td></tr>
   <tr><td>악기 이름이 이상해요 / 소리가 다른 악기로 나와요</td><td>줄을 펼쳐 첫 단 그림으로 악기를 확인하고 '악기 이름' 칸에서 이름을 고치세요. 맞는 소리로 바꾸는 단추가 나옵니다. 소리만 바꾸려면 '악기 소리'에서 고르세요.</td></tr>
@@ -597,7 +603,7 @@ th { background: var(--soft); font-weight: 700; }
 <table>
   <tr><th style="width:30%">키</th><th>하는 일</th></tr>
   <tr><td><span class="kbd">스페이스바</span></td><td>재생·일시정지(입력 칸·단추에 초점이 있거나 창이 떠 있을 때는 동작하지 않음)</td></tr>
-  <tr><td><span class="kbd">Esc</span></td><td>창·서랍·화면 가득 보기 닫기</td></tr>
+  <tr><td><span class="kbd">Esc</span></td><td>창·서랍·전체화면 보기 닫기</td></tr>
   <tr><td><span class="kbd">Ctrl</span>+<span class="kbd">Z</span></td><td>방금 한 음 수정 취소</td></tr>
   <tr><td><span class="kbd">←</span> <span class="kbd">→</span></td><td>왼쪽 칸 탭에 초점이 있을 때 다른 칸으로</td></tr>
 </table>
