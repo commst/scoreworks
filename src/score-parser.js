@@ -2504,6 +2504,9 @@ export function resolveBars(measures, systemNumbers = []) {
         }
       }
       if (slashes.length) { for (const ev of e.events) delete ev._slashCopy; e.events.sort((a, b) => a.t.v - b.t.v); }
+      // 적힌 쉼표(성부·시각·길이): 앱이 '숨은 쉼표'(음도 적힌 쉼표도 없는 빈 자리)를 보여 줄 때 씀(198번). 소리·마디 읽기에는 안 씀
+      { const rs = m.notes.filter(n => n.rest && !n.slash && !n.grace && n.onset != null && n.dur).map(n => ({ voice: n.voice, t: n.onset, dur: n.tuplet ? n.dur.mul(n.tuplet) : n.dur }));
+        if (rs.length) e.rests = rs; }
       // 그래도 넘치면 마디를 늘린다
       const end = e.events.reduce((a, ev) => frMax(a, ev.t.add(ev.dur)), ZERO);
       if (end.gt(e.barLen)) e.barLen = end;
