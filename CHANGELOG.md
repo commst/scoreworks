@@ -1501,3 +1501,9 @@
 - 계산: 대조(MusicXML 만들기+대조)가 프론티어 전 줄에서 약 0.56초라, 경고 목록을 그린 뒤·고칠 곳이 있던 상태에서 바꿨을 때만 0.9초 뒤 다시 셈(재생·소리 만드는 중이면 미룸). 시작할 때 쓰는 변수는 앞쪽(svOverData 옆)에 선언
 - 확인: 새 test/pwfixlist.cjs(프론티어 대금 148마디 음 둘을 ✎로 바꿔 → 요약 1마디·음 2개 → 창 → 전체 검사 27쪽 끝, 보라 오탐 0 → [고치러 가기] 말풍선 → [이 마디 모두] 뒤 요약 사라짐; PC·휴대폰), pwovfix2·pwboot 통과. 사용설명서 9-4·앱 도움말에 모아 보기 설명
 
+
+## 2026-11-18 (206) · MusicXML 내보내기: 반복 회차별 붙임줄(time-only)
+- 문제: 191번에서 MusicXML의 `<tie type="stop" time-only="2"/>`를 읽어 재생(그 회차에만 이음)에는 썼으나, 내보내기(buildMusicXml)는 '앞 음이 바로 앞에서 끝날 때만' 붙임줄을 적어서 ① time-only가 빠지고 ② 악보 순서로 바로 앞 마디의 같은 음(첫 회차 앞 마디)에 보통 붙임줄을 걸었음 → 되읽으면 첫 회차에도 이어 연주
+- 고침: 음 묶음(ms)에 tieTimes(tt)를 실어(화음으로 합칠 때는 회차를 합침, 하나라도 회차 없는 붙임줄이면 늘 이음, pcs로 나눈 뒤 조각은 tt 없음) 끝 음에 `<tie type="stop" time-only="…"/>`를 적고, 붙임줄 시작은 연주 순서(playbackOrder, 반복 켬)에서 그 회차에 바로 앞에 오는 마디의 마지막 같은 음에 붙임(오선마다 마디 끝 음 S.endAt, 아직 안 나온 마디면 S.ttPend로 기다림 — 직렬화가 맨 끝이라 앞 마디 음에도 붙일 수 있음). `<tied>`에는 time-only 속성이 없어 그대로
+- test/integrity.py: time-only 붙임줄 끝은 시작이 악보 뒤쪽(반복 끝)에 있을 수 있어 고아로 세지 않고 뒤에 나온 같은 음 시작과 짝지음(짝 없으면 tie_timeonly_unmatched)
+- 확인: 새 test/timeonly-tie.musicxml(2마디 C ⌒ 반복 끝 3마디 C, 둘째 회차만) → `node test/pwxmlrt.cjs test/timeonly-tie.musicxml` 되읽기: 1마디 C에 붙임줄 시작 없음, 2마디 `time-only="2"` 끝, 3마디 C 시작 — 다시 읽은 tie·tieTimes가 원본과 같음, XSD VALID, integrity 짝 오류 0. PDF 내보내기(pwxml) 프론티어 9203ad49·월광 2bc31eef 예전 판과 글자 하나까지 같음. musicxml-import 17항목·tieplan·dynlevel·pwboot 통과

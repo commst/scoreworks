@@ -4,7 +4,7 @@ tot = collections.Counter()
 for f in sys.argv[1:]:
     root = ET.parse(f).getroot(); c = collections.Counter()
     for part in root.iter('part'):
-        open_t = {}; open_s = collections.Counter()
+        open_t = {}; open_s = collections.Counter(); back = collections.Counter()   # back: 반복 회차별(time-only) 붙임줄 끝 — 시작이 악보 뒤쪽(반복 끝)에 있을 수 있음
         div = 96
         for me in part.iter('measure'):
             tup = {}
@@ -14,9 +14,11 @@ for f in sys.argv[1:]:
                 if p is not None:
                     key = (stf, p.findtext('step'), p.findtext('alter'), p.findtext('octave'))
                     ts = [t.get('type') for t in n.findall('tie')]
+                    tonly = any(t.get('time-only') for t in n.findall('tie') if t.get('type') == 'stop')
                     if 'stop' in ts:
                         c['ties'] += 1
                         if key in open_t: open_t.pop(key)
+                        elif tonly: back[key] += 1
                         else: c['tie_stop_orphan'] += 1
                     if 'start' in ts: open_t[key] = 1
                 for sl in n.iter('slur'):
@@ -32,7 +34,10 @@ for f in sys.argv[1:]:
                             tup[v] = 0
                 if n.find('type') is None and n.find('grace') is None and not (n.find('rest') is not None and n.find('rest').get('measure') == 'yes'): c['no_type'] += 1
             c['tuplet_open_at_bar_end'] += sum(1 for x in tup.values() if x)
+        for key in list(open_t):
+            if back[key]: back[key] -= 1; open_t.pop(key)
         c['tie_start_orphan'] += len(open_t)
+        c['tie_timeonly_unmatched'] += sum(back.values())
         c['slur_unbalanced'] += sum(abs(x) for x in open_s.values())
     tot.update(c)
     bad = {k: v for k, v in c.items() if k not in ('ties', 'slurs') and v}
