@@ -2767,7 +2767,14 @@ export function analyzeLine(score, line = null) {
       const pts = [...seen].sort((a, c) => a[0] - c[0]).filter((p, i, A) => !i || p[1] > A[i - 1][1]);   // 오른쪽으로만 가는 점
       if (pts.length) g.pts = pts.map(([f, x]) => [f, Math.round(x * 10) / 10]);
       // MusicXML 확인용: PDF에 그려진 음표 머리 자리(꾸밈음·쉼표 빼고, 보통 마디만)
-      if (m.kind === 'normal' || m.kind == null) g.heads = (m.notes || []).filter(n => !n.grace && !n.rest && n.x != null && n.y != null).map(n => [Math.round(n.x * 10) / 10, Math.round(n.y * 10) / 10]);
+      // 머리마다 [x, y, 적힌 모양] — 모양(MusicXML 겹쳐 보기에서 내보낸 음과 견줌, 소리에는 안 씀): u 기둥(1 위·-1 아래·0 없음), t 음표 종류(1 온·2 2분·4·8·16·32),
+      //  d 점 수, a 아티큘레이션(a 악센트·s 스타카토·t 테누토), ti 앞 음에 붙임줄로 이어짐, ss·se 이음줄 시작·끝
+      if (m.kind === 'normal' || m.kind == null) g.heads = (m.notes || []).filter(n => !n.grace && !n.rest && n.x != null && n.y != null).map(n => {
+        const dots = n._dots || 0, base = n.dur && n.dur.v > 0 ? n.dur.v / (dots === 1 ? 1.5 : dots >= 2 ? 1.75 : 1) : 0, t = base > 0 ? Math.round(1 / base) : 0;
+        const nt = { u: n._up === true ? 1 : n._up === false ? -1 : 0, t: [1, 2, 4, 8, 16, 32, 64].includes(t) ? t : 0, d: dots, a: (n.accent ? 'a' : '') + (n.staccato ? 's' : '') + (n.tenuto ? 't' : '') };
+        if (n.tied) nt.ti = 1; if (n.slurS) nt.ss = 1; if (n.slurE) nt.se = 1;
+        return [Math.round(n.x * 10) / 10, Math.round(n.y * 10) / 10, nt];
+      });
     }
     return g;
   });
