@@ -253,6 +253,8 @@ body.picking .b, body.picking .sv-page, body.picking #svPages > * { cursor: cros
 .sv-ovn.tap::after { content: ''; position: absolute; inset: -9px; }
 .ov-bubble { position: fixed; z-index: 10002; padding: 8px 11px; border-radius: 9px; background: #1f2433; color: #fff; font-size: 13px; line-height: 1.45; box-shadow: 0 4px 14px rgba(0, 0, 0, .25); pointer-events: none; }
 .ov-bubble[hidden] { display: none; }
+.ov-bubble.act { pointer-events: auto; }
+.ov-bubble .ov-fix { margin-top: 8px; padding: 6px 12px; border: 0; border-radius: 7px; background: #b98cf0; color: #1f1233; font: inherit; font-weight: 700; cursor: pointer; }
 .sv-ovn.pix { border-color: #8e3fd6; background: rgba(142, 63, 214, .18); }
 .sv-ovs { position: absolute; width: 0; border-left: 1.5px solid #1a73e8; pointer-events: none; }
 .sv-ovs.low { border-left-color: #1e9e5a; }
@@ -1908,7 +1910,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 18일</h3>
-    <h4>기능 업데이트 <small>14</small></h4><ul class="hlist">
+    <h4>기능 업데이트 <small>15</small></h4><ul class="hlist">
+      <li><details><summary>겹쳐 보기: [악보대로 고치기]</summary><p>보라 동그라미(쪽 그림의 실제 머리 높이와 다른 음)를 누르면 말풍선에 [악보대로 고치기 (도5 → 레5)] 단추가 나옵니다. 누르면 그림 높이대로 음을 고칩니다(조표를 따름, ♯·♭은 ✎로 다듬기). 같은 마디에 보라 음이 여럿이면 [이 마디 보라 음 n개 모두 악보대로]도 나옵니다. 음 고치기(✎)와 같은 기록이라 Ctrl+Z·✎ 창으로 되돌리고, 내보내기·공유도 그대로 됩니다.</p></details></li>
       <li><details><summary>겹쳐 보기: 쪽 그림과 직접 대조(보라), 기둥 선 표시, 옥타브 악기 MusicXML</summary><p>겹쳐 보기가 해석기가 읽은 좌표끼리만 견주던 것에 더해, 쪽 그림에서 실제 음표 머리의 높이를 찾아 동그라미와 반 칸(한 음) 넘게 어긋나면 보라로 표시합니다(채운 머리만). 해석기가 읽은 기둥 방향을 짧은 선으로 그립니다(윗성부 파랑·아랫성부 초록, MusicXML과 다르면 주황). 태평소처럼 옥타브를 옮겨 듣는 줄은 MusicXML에 음을 PDF와 같은 자리에 적고 소리만 옥타브 옮김(transpose)으로 적어, 피날레·뮤즈스코어에서도 PDF와 같은 자리에 보입니다(전에는 한 옥타브 높게 적혀 겹쳐 보기 동그라미도 머리 위에 떠 있었음).</p></details></li>
       <li><details><summary>겹쳐 보기: 성부·늘임표·트릴·트레몰로·꾸밈음·잇단음표도 견줌</summary><p>MusicXML 겹쳐 보기와 저장 뒤 확인 창이 성부 번호(MusicXML에 성부가 둘 이상인 마디), 늘임표, 트릴·트레몰로·물결 표시, 꾸밈음 수, 잇단음표도 PDF에서 읽은 것과 견줍니다. 다르면 주황 동그라미(누르면 이유). 이 비교로 선율 악기의 트레몰로(해금·양금 등)가 MusicXML에 빠지던 것을 찾아 함께 고쳤습니다.</p></details></li>
       <li><details><summary>겹쳐 보기: 동그라미를 누르면 이유</summary><p>MusicXML 겹쳐 보기의 주황·빨강 동그라미와 빨간 네모를 누르면 무엇이 다른지 말풍선으로 보여 줍니다(휴대폰에서도). 누른 것이 그 마디 재생으로 넘어가지 않습니다.</p></details></li>
@@ -6416,20 +6419,46 @@ function ovInkOffset(P, x, y, sp) {
   } catch (e) { return null; }
 }
 if (/#.*dbg/.test(location.hash)) window.__ovInk = (P, x, y, sp) => { const r = ovInkOffset(P, x, y, sp); return r; };   // 시험 도구용(주소 #dbg)
-function ovTap(e, text) {
+function ovTap(e, text, act) {
   e.title = text; e.classList.add('tap'); e.setAttribute('role', 'button'); e.setAttribute('aria-label', text);
-  e.addEventListener('click', ev => { ev.stopPropagation(); ev.preventDefault(); ovBubble(text, ev.clientX, ev.clientY); });
+  e.addEventListener('click', ev => { ev.stopPropagation(); ev.preventDefault(); ovBubble(text, ev.clientX, ev.clientY, act); });
+}
+// [악보대로 고치기](203번): 보라(쪽 그림의 머리 높이와 다름) 음을 그림 높이로 — 음 고치기(✎)와 같은 수정 기록(되돌리기·내보내기·공유 그대로)
+// 반 칸 = 한 음(온음계 한 칸)씩, 조표를 따른 음으로. 임시표는 보지 않으므로 ♯·♭은 ✎로 다듬기
+const SEMI7 = [0, 2, 4, 5, 7, 9, 11], SHARP_ORD = [3, 0, 4, 1, 5, 2, 6];
+function diaToMidi(d, kf) { const s = ((d % 7) + 7) % 7, alt = kf > 0 ? (SHARP_ORD.slice(0, kf).includes(s) ? 1 : 0) : kf < 0 ? (SHARP_ORD.slice().reverse().slice(0, -kf).includes(s) ? -1 : 0) : 0; return 12 * (Math.floor(d / 7) + 1) + SEMI7[s] + alt; }
+function ovFixAction(key, k, p, off) {
+  const steps = Math.round(off * 2); if (!steps || !p.n.step) return null;
+  const raw = state.lineRaw[key], rb = raw && raw.bars[k]; if (!rb) return null;
+  const xm = (p.n.oct + 1) * 12 + ({ C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[p.n.step] || 0) + (p.n.alter || 0);
+  let hit = null;
+  for (const v of ['R', 'L']) noteList(rb, v).forEach((e, ord) => { if (!hit && e.midis && e.midis.includes(xm) && Math.abs(e.t.v - p.n.t) < 1e-6) hit = { v, ord, e }; });
+  if (!hit) return null;
+  const d0 = hit.e.dia && hit.e.dia[xm] != null ? hit.e.dia[xm] : Math.floor(xm / 12 - 1) * 7 + [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6][xm % 12];
+  const nm = diaToMidi(d0 - steps, hit.e.kf || 0);
+  const label = `악보대로 고치기 (${pitchName(xm)} → ${pitchName(nm)})`;
+  const ed = { key, k, v: hit.v, ord: hit.ord, e: hit.e, xm, nm };
+  return { label, ed, run: () => { setEdit(key, k, hit.v, hit.ord, hit.e, { m: hit.e.midis.map(m => m === xm ? nm : m) }); showMsg(`${state.bars[k] ? state.bars[k].number : k + 1}마디 ${pitchName(xm)}을(를) 악보 그림 높이대로 ${pitchName(nm)}(으)로 고쳤습니다. 되돌리기: Ctrl+Z 또는 ✎ 음 고치기 창.`); } };
 }
 let ovBub = null, ovBubT = 0;
-function ovBubble(text, x, y) {
+function ovBubble(text, x, y, act) {
   if (!ovBub) { ovBub = document.createElement('div'); ovBub.className = 'ov-bubble'; ovBub.setAttribute('role', 'status'); document.body.appendChild(ovBub);
-    const hide = () => { if (ovBub) ovBub.hidden = true; }; document.addEventListener('scroll', hide, true); document.addEventListener('click', ev => { if (!ev.target.closest || !ev.target.closest('.sv-ovn.tap')) hide(); }, true); }
-  ovBub.textContent = text; ovBub.hidden = false;
+    const hide = () => { if (ovBub) ovBub.hidden = true; }; document.addEventListener('scroll', hide, true); document.addEventListener('click', ev => { if (!ev.target.closest || !ev.target.closest('.sv-ovn.tap, .ov-bubble')) hide(); }, true); }
+  ovBub.textContent = text; ovBub.hidden = false; ovBub.classList.toggle('act', !!act);
+  if (act) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'ov-fix'; b.textContent = act.label; b.addEventListener('click', ev => { ev.stopPropagation(); ovBub.hidden = true; act.run(); }); ovBub.appendChild(document.createElement('br')); ovBub.appendChild(b);
+    const all = act.bar || [];
+    if (all.length > 1) { const b2 = document.createElement('button'); b2.type = 'button'; b2.className = 'ov-fix'; b2.textContent = `이 마디 보라 음 ${all.length}개 모두 악보대로`;
+      b2.addEventListener('click', ev => { ev.stopPropagation(); ovBub.hidden = true;
+        for (const a of all) { const d = a.ed; setEdit(d.key, d.k, d.v, d.ord, d.e, { m: d.e.midis.map(m => m === d.xm ? d.nm : m) }); }
+        showMsg(`${state.bars[all[0].ed.k] ? state.bars[all[0].ed.k].number : ''}마디 보라 음 ${all.length}개를 악보 그림 높이대로 고쳤습니다. 되돌리기: Ctrl+Z(하나씩) 또는 ✎ 음 고치기 창.`); });
+      ovBub.appendChild(document.createTextNode(' ')); ovBub.appendChild(b2); }
+  }
   const w = Math.min(320, window.innerWidth - 16); ovBub.style.maxWidth = w + 'px';
   const bw = Math.min(w, ovBub.offsetWidth || w), bh = ovBub.offsetHeight || 60;
   ovBub.style.left = Math.max(8, Math.min(window.innerWidth - bw - 8, x - bw / 2)) + 'px';
   ovBub.style.top = (y - bh - 14 > 8 ? y - bh - 14 : y + 18) + 'px';
-  clearTimeout(ovBubT); ovBubT = setTimeout(() => { if (ovBub) ovBub.hidden = true; }, 6000);
+  clearTimeout(ovBubT); ovBubT = setTimeout(() => { if (ovBub) ovBub.hidden = true; }, act ? 15000 : 6000);
 }
 function svOverPanel(P) {
   if (!P || !P.el) return;
@@ -6445,6 +6474,7 @@ function svOverPanel(P) {
     if (svPart && key !== svPart) continue;
     const r = state.lineRes[key], item = state.lineList.find(l => cfgKey(l.id) === key), sc = (item && item.sourceScore) || state.score;
     if (!r || !r.geo || sc !== G.sc) continue;
+    const barFix = new Map();   // 마디마다 [악보대로 고치기]를 할 수 있는 보라 음들 — 말풍선에서 '이 마디 모두'
     for (const [k, mk] of lm) {
       const g = r.geo[k]; if (!g || g.page !== P.page || (P.staff != null && g.staff !== P.staff)) continue;
       const bn = state.bars[k] ? state.bars[k].number : k + 1, ln = (item && dispName(item)) || '';
@@ -6455,7 +6485,8 @@ function svOverPanel(P) {
         const off = p.ok && mk.pitch && lone && p.n.tp >= 4 ? ovInkOffset(P, p.hx != null ? p.hx : p.x, p.y, p.sp) : null, pix = off != null && Math.abs(off) >= 0.45 && Math.abs(off * 2 - Math.round(off * 2)) < 0.35;   // 반 칸(한 음) 단위에 가까울 때만   // 타악 줄은 소리별 자리로 적어 그림과 높이가 다를 수 있어 뺌
         const e = dot(p.x, p.y, p.sp, 'sv-ovn' + (p.ok ? (pix ? ' pix' : p.nd ? ' diff' : '') : ' bad'));
         const why = [pix ? `쪽 그림의 실제 머리가 이 음보다 ${Math.abs(off).toFixed(1)}칸 ${off > 0 ? '아래' : '위'}에 있음 — 음 높이를 ${Math.round(Math.abs(off) * 2) >= 1 ? Math.round(Math.abs(off) * 2) + '도' : ''} 잘못 읽었을 수 있음` : '', ...(p.nd || []), !p.ok ? '이 자리에 맞는 PDF 음표 머리가 없음(남는 음이거나 박 위치·음 높이가 다름)' : ''].filter(Boolean).join(' / ');
-        if (why) ovTap(e, `${bn}마디 ${ln}: ${why}`);
+        const act = pix ? ovFixAction(key, k, p, off) : null; if (act) { const arr = barFix.get(k) || []; arr.push(act); barFix.set(k, arr); act.bar = arr; }
+        if (why) ovTap(e, `${bn}마디 ${ln}: ${why}`, act);
         // 기둥(성부): 해석기가 그림에서 읽은 기둥 방향(없으면 MusicXML의 기둥·성부)을 짧은 선으로 — 윗성부 파랑·아랫성부 초록, MusicXML과 다르면 주황
         const sd = p.hu || (p.n.stem === 'up' ? 1 : p.n.stem === 'down' ? -1 : mk.multiV ? (p.n.voice % 2 === 1 ? 1 : -1) : 0);
         if (sd && !p.n.chordTail) { const st2 = document.createElement('span'); st2.className = 'sv-ovs' + ((p.nd || []).some(t => /^기둥|^성부/.test(t)) ? ' diff' : (p.hv || (sd > 0 ? 'R' : 'L')) === 'L' ? ' low' : '');
