@@ -38,7 +38,7 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
   if (!target) { await b.close(); process.exit(1); }
   const findRed = async () => { for (const e of await p.$$('.sv-ovn.bad.tap')) if ((await e.getAttribute('title')).startsWith(pick.bar + '마디') && /칸 (위|아래)에 있음/.test(await e.getAttribute('title'))) return e; return null; };
   await target.evaluate(x => x.scrollIntoView({ block: 'center', inline: 'center' })); await p.waitForTimeout(1500);
-  let clip = null; const clipAt = async e => { const bb = await e.boundingBox(); const vw = 1500, w = 600, h = 420; clip = { x: Math.max(0, Math.min(vw - w, bb.x - 430)), y: Math.max(0, Math.min(900 - h, bb.y - 270)), width: w, height: h }; return clip; };
+  let clip = null; const clipAt = async e => { let bb = e && await e.boundingBox(); for (let i = 0; i < 10 && !bb; i++) { await p.waitForTimeout(500); const e2 = await findRed(); bb = e2 && await e2.boundingBox(); } const vw = 1500, w = 600, h = 420; clip = { x: Math.max(0, Math.min(vw - w, bb.x - 430)), y: Math.max(0, Math.min(900 - h, bb.y - 270)), width: w, height: h }; return clip; };
   await clipAt(await findRed());
   const tapShot = async (nm) => { const e = await findRed(); await e.evaluate(x => x.scrollIntoView({ block: 'center', inline: 'center' })); await p.waitForTimeout(800); await clipAt(e); await e.click({ force: true }); await p.waitForTimeout(400); const btns = await p.$$eval('.ov-bubble .ov-fix', a => a.map(x => x.textContent)); await p.screenshot({ path: out + nm, clip }); return btns; };
   { const e0 = await findRed(); await e0.evaluate(x => x.scrollIntoView({ block: 'center', inline: 'center' })); await p.waitForTimeout(800); await clipAt(await findRed()); }
