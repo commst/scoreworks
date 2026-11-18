@@ -35,5 +35,14 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
   ok('다시 누르면 꺼짐', s2.on === s.on && s2.sw === s.sw);
   // 줄 카드 스위치로 바꾸면 단추도
   await p.locator('#lineList .lsw').first().click(); await p.waitForTimeout(400); s2 = await st(); ok('스위치 → 단추 따라감', s2.on === s2.sw && s2.on !== s.on);
+  // 195번: 모두 켜기·끄기는 제목 옆, 모두 펼치기는 카드 아래
+  const lay = await p.evaluate(() => { const g = id => document.getElementById(id).getBoundingClientRect(), t = document.querySelector('.qline-t').getBoundingClientRect(), gr = g('quickGrid');
+    return { inCard: ['allOn', 'allOff', 'expandAll'].every(id => document.getElementById(id).closest('#quickLines')), sameRow: Math.abs(g('allOn').top - t.top) < 12 && Math.abs(g('allOff').top - t.top) < 12 && g('allOn').left > t.left,
+      below: document.getElementById('expandAll').hidden || g('expandAll').top > gr.bottom }; });
+  ok('모두 켜기·끄기 제목 옆, 펼치기 카드 아래', lay.inCard && lay.sameRow && lay.below, JSON.stringify(lay));
+  await p.click('#allOn'); await p.waitForTimeout(500); s2 = await st(); ok('모두 켜기', s2.on === s2.n && s2.sw === s2.cards, `${s2.on}/${s2.n}`);
+  ok('펼치기 단추 보임', await p.isVisible('#expandAll'));
+  await p.locator('#quickLines').scrollIntoViewIfNeeded().catch(() => {}); await p.locator('#quickLines').screenshot({ path: `/tmp/quick2-${phone ? 'phone' : 'desk'}.png` }).catch(() => {});
+  await p.click('#allOff'); await p.waitForTimeout(500); s2 = await st(); ok('모두 끄기', s2.on === 0 && s2.sw === 0 && await p.isHidden('#expandAll'), `${s2.on}`);
   ok('페이지 오류 없음', !errs.length, errs.join(' | '));
   await b.close(); console.log(fail ? `${fail}개 실패` : 'ALL OK'); process.exit(fail ? 1 : 0); })();
