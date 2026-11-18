@@ -4,7 +4,7 @@
  "title": "방황",
  "titleRead": "방황",
  "file": "방황_총보.pdf",
- "saved": "2026-11-18T08:25:51.908Z",
+ "saved": "2026-11-18T08:29:00.187Z",
  "lastBar": 268,
  "lines": {
   "main:0": {
@@ -189,9 +189,10 @@
   {
    "start": 26,
    "unit": "q",
-   "bpm": 120,
+   "bpm": 130,
    "auto": true,
-   "text": "♩=120"
+   "text": "♩=120",
+   "manual": true
   },
   {
    "start": 145,
@@ -203,9 +204,10 @@
   {
    "start": 185,
    "unit": "q",
-   "bpm": 110,
+   "bpm": 130,
    "auto": true,
-   "text": "♩=110"
+   "text": "♩=110",
+   "manual": true
   }
  ],
  "tempoDet": [
