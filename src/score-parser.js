@@ -1572,8 +1572,19 @@ export function parseScore(pages, opts = {}) {
         const rk = rankTie.get(c);
         if (rk) { end.length = 0; end.push(rk[1]); start.length = 0; start.push(rk[0]); }
         if (end.length) {
-          const en = rk ? rk[1] : better(end.reduce((b, n) => n.x < b.x ? n : b), headNotes.filter(n => !n.grace), 'tied'); en.tied = true;
-          const sn0 = start.length ? start.reduce((b, n) => Math.abs(n.x - c.x0) < Math.abs(b.x - c.x0) ? n : b) : null;
+          // 한 기둥 화음에서 시작·끝 후보가 여럿이면 같은 높이(1pt 안) 머리끼리 짝 — 그런 짝이 여럿이면 곡선에 가장 가까운 것.
+          // 예전에는 x가 0.0002pt 작은 머리를 골라 화음 아래 곡선이 바뀐 가운데 음에 붙던 것(방황 피리 64→65마디: C를 다시 치고 바뀐 E를 이음).
+          // 시작 머리가 없는 곡선(꾸밈음 이음줄·앞 단에서 넘어오는 끝)과 같은 높이 짝이 없으면 예전 그대로
+          const near = (p, q) => dOut(p) - dOut(q) || Math.abs(p.y - ccy) - Math.abs(q.y - ccy);
+          let pr = null;
+          if (!rk && start.length > 1 || !rk && end.length > 1) {
+            const ex0 = Math.min(...end.map(n => n.x)), sx0 = Math.min(...start.map(n => Math.abs(n.x - c.x0)));
+            const es = end.filter(n => n.x < ex0 + 1), ss = start.filter(n => Math.abs(n.x - c.x0) < sx0 + 1);
+            const cand = []; for (const e of es) for (const q of ss) if (Math.abs(e.y - q.y) < 1) cand.push([q, e]);
+            if (cand.length) pr = cand.sort((a, b) => near(a[1], b[1]))[0];
+          }
+          const en = rk ? rk[1] : better(pr ? pr[1] : end.reduce((b, n) => n.x < b.x ? n : b), headNotes.filter(n => !n.grace), 'tied'); en.tied = true;
+          const sn0 = pr ? pr[0] : start.length ? start.reduce((b, n) => Math.abs(n.x - c.x0) < Math.abs(b.x - c.x0) ? n : b) : null;
           const sn = rk ? rk[0] : sn0 ? better(sn0, headNotes.filter(n => !n.grace && n.x < en.x), '_tieOut') : null;
           if (sn) sn._tieOut = true;
           if (sn && sn !== en && sn.x < en.x) curvePairs.push([sn, en, voice]);
@@ -2096,10 +2107,11 @@ function timing(m, barLen) {
         const prev = evs.filter(e => e.voice === n.voice && e.midis && e.midis.includes(n.midi) && e.t.lt(onset.get(n))).pop();
         if (prev && prev.t.add(prev.sus || prev.dur).eq(onset.get(n))) {
           prev.sus = (prev.sus || prev.dur).add(n.dur); prev.pcs = [...(prev.pcs || [prev.dur]), n.dur]; prev._lp = [onset.get(n), n.dur];   // pcs: 악보에 적힌 붙임줄 조각 (내보내기용)
+          if (prev._end) prev._end.set(n.midi, onset.get(n).add(n.dur));
           if (prev._cs) prev._tm = prev._tm ? new Set([...prev._tm].filter(m => prev._cs.has(m))) : prev._cs;   // 앞 조각까지 이어진 음
           prev._cs = new Set([n.midi]);
         }
-        else if (prev && prev._lp && prev._lp[0].eq(onset.get(n)) && prev._lp[1].eq(n.dur)) prev._cs.add(n.midi);   // 화음의 다른 음이 같은 조각을 잇는 붙임줄: 이미 이어짐
+        else if (prev && prev._lp && prev._lp[0].eq(onset.get(n)) && prev._lp[1].eq(n.dur)) { prev._cs.add(n.midi); if (prev._end) prev._end.set(n.midi, onset.get(n).add(n.dur)); }   // 화음의 다른 음이 같은 조각을 잇는 붙임줄: 이미 이어짐
         else evs.push({ voice: n.voice, t: onset.get(n), dur: n.dur, tie: true, midis: [n.midi], ...(n.dia != null ? { dia: { [n.midi]: n.dia } } : {}), x: n.x, ...(n.kf != null ? { kf: n.kf } : {}), ...(n.cl != null ? { cl: n.cl } : {}), ...(n.slurS ? { slurS: n.slurS } : {}), ...(n.slurE ? { slurE: n.slurE } : {}) });
       }
       else {
@@ -2111,12 +2123,12 @@ function timing(m, barLen) {
     }
     const key = n.voice + onset.get(n).toString();
     const ex = seen.get(key);
-    if (ex) { if (n.xh) ex.xh = true; ex.accent = ex.accent || n.accent; ex.roll = ex.roll || n.roll || !!n.tremolo; if (n.staccato) ex.stacc = true; if (n.tenuto) ex.ten = true; if (n.roll && n.midi != null) { ex.trill = true; if (!ex.trillInt) ex.trillInt = n.upInt; } if (n.vib) ex.vib = true; if (n.midi != null && ex.midis && !ex.midis.includes(n.midi)) { ex.midis.push(n.midi); if (n.dia != null) (ex.dia = ex.dia || {})[n.midi] = n.dia; } if (n.slurS) ex.slurS = Math.max(ex.slurS || 0, n.slurS); if (n.slurE) ex.slurE = Math.max(ex.slurE || 0, n.slurE); continue; }
+    if (ex) { if (n.xh) ex.xh = true; ex.accent = ex.accent || n.accent; ex.roll = ex.roll || n.roll || !!n.tremolo; if (n.staccato) ex.stacc = true; if (n.tenuto) ex.ten = true; if (n.roll && n.midi != null) { ex.trill = true; if (!ex.trillInt) ex.trillInt = n.upInt; } if (n.vib) ex.vib = true; if (n.midi != null && ex.midis && !ex.midis.includes(n.midi)) { ex.midis.push(n.midi); if (n.dia != null) (ex.dia = ex.dia || {})[n.midi] = n.dia; if (ex._end) ex._end.set(n.midi, ex.t.add(ex.dur)); } if (n.slurS) ex.slurS = Math.max(ex.slurS || 0, n.slurS); if (n.slurE) ex.slurE = Math.max(ex.slurE || 0, n.slurE); continue; }
     const ev = { voice: n.voice, t: onset.get(n), dur: n.dur, accent: n.accent, grace: gcount.get(n) || 0, roll: n.roll || !!n.tremolo, x: n.x };   // x: 음표 가로 자리 (다른 줄과 세로로 맞춰 시각을 다시 읽을 때)
     if (n.pos != null) ev.pos = n.pos;
     if (n.xh) ev.xh = true;   // X 머리 음표   // 오선 가운데에서 몇 칸(반 칸 단위, 위가 -) — 모듬북처럼 자리마다 다른 북을 칠 때 음높이로
     if (n.tremolo && !n.roll) ev.rollDur = n.dur;
-    if (n.midi != null) { ev.midis = [n.midi]; if (n.dia != null) ev.dia = { [n.midi]: n.dia }; if (graceMidi.has(n)) ev.graceMidis = graceMidi.get(n); if (n.kf != null) ev.kf = n.kf; if (n.cl != null) ev.cl = n.cl; }
+    if (n.midi != null) { ev.midis = [n.midi]; ev._end = new Map([[n.midi, onset.get(n).add(n.dur)]]); if (n.dia != null) ev.dia = { [n.midi]: n.dia }; if (graceMidi.has(n)) ev.graceMidis = graceMidi.get(n); if (n.kf != null) ev.kf = n.kf; if (n.cl != null) ev.cl = n.cl; }
     if (n.slurS) ev.slurS = n.slurS; if (n.slurE) ev.slurE = n.slurE;   // 이음줄 (MusicXML 내보내기용)
     if (n.staccato) ev.stacc = true;   // 스타카토: 선율은 짧게 끊어 낸다
     if (n.tenuto) ev.ten = true;   // 테누토: 길이를 꽉 채우고 조금 무게 있게
@@ -2132,11 +2144,18 @@ function timing(m, barLen) {
     delete e._cs; delete e._tm;
     if (!e.midis || e.midis.length < 2 || tm.size >= e.midis.length || !tm.size) continue;
     const rest = e.midis.filter(m => !tm.has(m));
-    const o = { ...e, midis: rest }; delete o.sus; delete o.pcs; delete o._lp;
+    // 떼어 낸 음도 붙임줄로 이어진 데까지는 길게(_end: 음마다 이어진 끝) — 예전에는 첫 조각 길이만 남아 나머지 조각 동안 소리가 없었음
+    // (달빛항해 Score 대금 79마디: 위 음은 셋째 조각까지, 아래 음은 마디 끝까지 이어짐)
+    const ends = new Map(); for (const m of rest) { const en = e._end && e._end.get(m); const k = en && e.pcs && en.gt(e.t.add(e.dur)) ? en.sub(e.t).toString() : ''; if (!ends.has(k)) ends.set(k, []); ends.get(k).push(m); }
+    for (const [k, ms] of ends) {
+      const o = { ...e, midis: ms }; delete o.sus; delete o.pcs; delete o._lp; delete o._end;
+      if (k) { const L = e._end.get(ms[0]).sub(e.t); let acc = null; const pcs = []; for (const p of e.pcs) { acc = acc ? acc.add(p) : p; pcs.push(p); if (!acc.lt(L)) break; }
+        if (acc && acc.eq(L) && pcs.length > 1) { o.sus = L; o.pcs = pcs; } }
+      evs.push(o);
+    }
     e.midis = e.midis.filter(m => tm.has(m));
-    evs.push(o);
   }
-  for (const e of evs) delete e._lp;
+  for (const e of evs) { delete e._lp; delete e._end; }
   evs.sort((a, b) => a.t.v - b.t.v);
   return evs;
 }
