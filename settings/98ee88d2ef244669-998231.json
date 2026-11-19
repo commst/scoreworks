@@ -5,7 +5,7 @@
  "titleRead": "양방언",
  "songTitle": "프론티어",
  "file": "FRONTIER - Full Score.pdf",
- "saved": "2026-11-19T03:53:47.706Z",
+ "saved": "2026-11-19T04:15:19.795Z",
  "lastBar": 170,
  "lines": {
   "main:0": {
@@ -100,7 +100,7 @@
   },
   "main:9": {
    "name": "양금 (윗줄)",
-   "role": "melody",
+   "role": "off",
    "inst": "yanggeum",
    "oct": 0,
    "vol": 1,
