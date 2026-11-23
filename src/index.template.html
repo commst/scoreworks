@@ -1563,6 +1563,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
           <span class="ramp-set" id="rampSet" hidden>처음 <input type="number" id="rampStart" class="num mini" min="30" max="100" step="5" value="70" aria-label="처음 속도 %">% · 한 번에 +<input type="number" id="rampStep" class="num mini" min="1" max="30" step="1" value="5" aria-label="한 번에 올릴 %">% → 연습 속도까지</span>
           <label><input type="checkbox" id="optCount" checked>카운트인</label>
           <label><input type="checkbox" id="optMetro">메트로놈</label>
+          <label class="metro-vol" title="메트로놈을 어느 음표마다 칠지: 박마다(빠르기 표의 기준 음표), 정한 음표마다, 박 + 반박. 마디 첫 박은 강하게, 박이 아닌 분박은 작게 칩니다">메트로놈 치는 단위 <select id="optMetroDiv" class="mini"><option value="beat" selected>박마다</option><option value="beat2">박 + 반박</option><option value="q">4분음표마다</option><option value="e">8분음표마다</option><option value="s">16분음표마다</option></select></label>
           <label class="metro-vol">메트로놈·카운트인 크기 <select id="optMetroVol" class="mini"><option value="0.6">작게</option><option value="1" selected>보통</option><option value="1.6">크게</option><option value="2.4">아주 크게</option></select></label>
           <label>쉬는 마디 박 짚기
             <select id="optRest" class="mini">
@@ -1853,6 +1854,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
         <div class="sv-tools">
           <label class="chk"><input type="checkbox" id="svFollow" checked>연주 위치 따라가기</label>
           <label class="chk" title="재생하는 동안 지금 소리 나는 음표 머리를 악기 갈래 색으로 칠하며 따라갑니다(켠 줄, 'OO만' 보기면 그 줄)"><input type="checkbox" id="svNotes" checked>음표 따라가기</label>
+          <label class="chk" title="빨간 선을 음표 자리를 따라 움직입니다. 끄면 마디 안에서 시간에 맞춰 고른 빠르기로 움직여 메트로놈 박과 맞습니다(음표 간격이 고르지 않은 악보에서 선이 멈칫하거나 휙 넘어가지 않음)"><input type="checkbox" id="svCurNotes">빨간 선 음표 따라</label>
           <label class="sv-part">보기 <select id="svPartSel" aria-label="악보 보기에서 볼 줄"><option value="">총보 전체</option></select></label>
           <label class="chk" title="해석기가 쉼표 자리를 추정한 마디에서, 성부마다 음도 쉼표도 적혀 있지 않은 빈 자리를 흐린 빗금 칸으로 보여 줍니다(윗성부는 오선 위쪽, 아랫성부는 아래쪽)"><input type="checkbox" id="svHidden" checked>숨은 쉼표</label>
           <button type="button" class="btn" id="svFull">전체화면 보기</button>
@@ -1917,6 +1919,17 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 
 <template id="histTpl">
+  <section class="hday"><h3>11월 24일</h3>
+    <h4>기능 업데이트 <small>3</small></h4><ul class="hlist">
+      <li><details><summary>글리산도(gliss.) 연주</summary><p>음표에서 비스듬히 오르내리는 글리산도 선(gliss.)과 비스듬한 물결선을 읽어, 가야금·거문고·양금·피아노는 그 곡의 음계를 따라 선 끝까지 줄을 훑는 소리로 연주합니다(예: 프론티어 가야금 20·52마디). 부는·켜는 악기는 아직 적힌 음만 냅니다.</p></details></li>
+      <li><details><summary>빨간 선이 고른 빠르기로</summary><p>악보로 보기의 빨간 선이 마디 안에서 시간에 맞춰 고르게 움직여 메트로놈 박과 맞습니다. 예전처럼 음표 자리를 따라가게 하려면 도구줄의 '빨간 선 음표 따라'를 켜세요.</p></details></li>
+      <li><details><summary>메트로놈 치는 단위 고르기</summary><p>[연주] 칸의 '메트로놈 치는 단위'에서 박마다·박 + 반박·4분음표마다·8분음표마다·16분음표마다를 고릅니다. 마디 첫 박은 강하게, 분박은 작게 칩니다.</p></details></li>
+    </ul>
+    <h4>버그 수정 <small>2</small></h4><ul class="hlist">
+      <li><details class="hbug"><summary>가야금처럼 두 오선인 악기의 아랫줄이 꺼져 있던 것</summary><p>가야금 파트보를 총보 칸에 올리면 윗줄만 켜져 아랫줄이 들리지 않았습니다. 처음 켜는 악기가 두 오선이면 아랫줄도 함께 켭니다.</p></details></li>
+      <li><details class="hbug"><summary>마디 이동 ◀◀ ▶▶을 잇달아 누르면 덜 옮겨지던 것</summary><p>소리가 나기 전에 다시 누르면 한 마디 덜 옮겨졌습니다. 이제 누를 때마다 적은 마디 수만큼 옮깁니다.</p></details></li>
+    </ul>
+  </section>
   <section class="hday"><h3>11월 23일</h3>
     <h4>기능 업데이트 <small>1</small></h4><ul class="hlist">
       <li><details><summary>아쟁 pizz.(뜯기) 소리, 음 수정에서 주법 고르기</summary><p>아쟁 줄은 악보에 적힌 pizz.부터 arco까지 손가락으로 뜯는 소리로 연주합니다(켠 아쟁 녹음의 음색을 입혀 만든 뜯기 녹음). 악보에 pizz.·arco가 빠졌으면 ✎ 음 수정 창에서 음마다 '주법'을 고릅니다: 여기부터 뜯기·여기부터 활(다음 표시까지), 이 음만 뜯기·이 음만 활. 고친 내용은 다른 수정처럼 저장·되돌리기·내보내기가 되고, MusicXML로 저장하면 고친 대로 pizz.·arco가 적혀 피날레·뮤즈스코어에서도 뜯는 소리로 재생됩니다. 콘트라베이스·첼로처럼 아쟁 소리로 연주하는 줄도 같습니다.</p></details></li>
@@ -2841,8 +2854,8 @@ let overTimer = null;   // 겹쳐 보기 다시 그리기 지연(overStale)
 const fixPix = new Map();   // '줄|마디' → Set(음 시각|음 이름) : 그림을 재서 찾은 보라   // 205번 — 시작할 때 화면 그리기가 쓰므로 여기서 선언
 let fixIdx = null, fixTimer = 0, fixScanState = null;   // fixScanState: { done, total, page } 전체 검사 진행
 let svOverData = null;   // MusicXML 겹쳐 보기 자료 — 시작할 때 악보로 보기를 펼치며(svKey 바꿀 때) 쓰므로 여기서 선언(113번)
-try { const v = JSON.parse(localStorage.getItem(PREF_VIEW) || '{}'); if (v.mode === 'score') viewMode = 'score'; if (v.zoom >= 1 && v.zoom <= 3) svZoom = v.zoom; if (v.follow === false) $('svFollow').checked = false; if (v.notes === false) $('svNotes').checked = false; } catch (e) {}
-function saveViewPref() { try { localStorage.setItem(PREF_VIEW, JSON.stringify({ mode: viewMode, zoom: svZoom, follow: $('svFollow').checked, notes: $('svNotes').checked })); } catch (e) {} }
+try { const v = JSON.parse(localStorage.getItem(PREF_VIEW) || '{}'); if (v.mode === 'score') viewMode = 'score'; if (v.zoom >= 1 && v.zoom <= 3) svZoom = v.zoom; if (v.follow === false) $('svFollow').checked = false; if (v.notes === false) $('svNotes').checked = false; if (v.curNotes === true) $('svCurNotes').checked = true; } catch (e) {}
+function saveViewPref() { try { localStorage.setItem(PREF_VIEW, JSON.stringify({ mode: viewMode, zoom: svZoom, follow: $('svFollow').checked, notes: $('svNotes').checked, curNotes: $('svCurNotes').checked })); } catch (e) {} }
 function setView(mode) {
   viewMode = mode === 'score' ? 'score' : 'map';
   for (const id of ['viewMap', 'viewMap2']) $(id).setAttribute('aria-pressed', String(viewMode === 'map'));
@@ -2861,6 +2874,7 @@ $('viewMap').addEventListener('click', () => setView('map'));
 for (const [id, mode] of [['viewScore2', 'score'], ['viewMap2', 'map']]) $(id).addEventListener('click', () => { setView(mode); $('tBars').closest('section').scrollIntoView({ block: 'start', behavior: 'smooth' }); });
 $('viewScore').addEventListener('click', () => { setView('score'); try { $('scoreView').scrollIntoView({ block: 'start' }); } catch (e) {} });
 $('svFollow').addEventListener('change', saveViewPref);
+$('svCurNotes').addEventListener('change', saveViewPref);
 $('svNotes').addEventListener('change', () => { saveViewPref(); if (!$('svNotes').checked) svNotesClear(); });
 // 화면 가득 보기 (휴대폰·아이패드에서도 되게 브라우저 전체 화면 대신 화면을 덮는 칸으로)
 function setFull(on) {
@@ -3106,14 +3120,18 @@ function svShow(k, scroll) {
   svCurrent = k; const r = svRect(k), P0 = svPanelOf(r); if (P0) svRender([...svPages.entries()].find(([, q]) => q === P0)[0]);
   svPlace(k, scroll);
 }
-// 재생 선: 피날레처럼 마디 안에서 음표를 따라 움직인다 (음표 자리를 모르면 마디를 고르게)
+// 재생 선: 처음 설정은 마디 안에서 시간에 맞춰 고른 빠르기로(209번 — 메트로놈 박과 맞게. 음표를 따라가면 음표 간격이 고르지 않은 마디에서
+// 선이 멈칫하거나 휙 넘어가 박과 어긋나 보였다). '빨간 선 음표 따라'를 켜면 예전처럼 피날레식으로 음표 자리를 따라 움직인다(음표 자리를 모르면 고르게)
 function svCursor(k, f) {
   if (k !== svCurrent) svShow(k, true);
   const r = svRect(k), P = svPanelOf(r); if (!P || !P.w) return;
   const g = svGeo().geo[k];
   let pts = g.pts && g.pts.length ? g.pts.slice() : [[0, r.x0 + 6]];
-  if (pts[0][0] > 0) pts.unshift([0, Math.max(r.x0 + 4, pts[0][1] - 12)]);
-  pts.push([1, Math.max(pts[pts.length - 1][1] + 2, r.x1 - 4)]);
+  if (!$('svCurNotes').checked) {   // 고르게: 마디의 첫 음 자리(단 첫 마디면 음자리표·조표 뒤)부터 마디선 앞까지
+    const xa = pts[0][0] < 0.02 ? Math.max(r.x0 + 4, pts[0][1] - 6) : r.x0 + 6;
+    pts = [[0, xa], [1, Math.max(xa + 2, r.x1 - 4)]];
+  } else if (pts[0][0] > 0) pts.unshift([0, Math.max(r.x0 + 4, pts[0][1] - 12)]);
+  if ($('svCurNotes').checked) pts.push([1, Math.max(pts[pts.length - 1][1] + 2, r.x1 - 4)]);
   let x = pts[0][1];
   for (let i = 1; i < pts.length; i++) if (f <= pts[i][0]) { const [f0, x0] = pts[i - 1], [f1, x1] = pts[i]; x = x0 + (x1 - x0) * (f1 > f0 ? (f - f0) / (f1 - f0) : 0); break; }
   if (!svCur) svCur = document.createElement('div'), svCur.className = 'sv-cur';
@@ -3703,7 +3721,7 @@ function explainTempo() {
   if (sp !== 1) { const h = document.createElement('div'); h.style.color = 'var(--muted)'; h.textContent = `연습 속도 ${Math.round(sp * 100)}%를 적용한 실제 빠르기`; el.appendChild(h); }
   for (const l of lines) { const d = document.createElement('div'); d.textContent = l; el.appendChild(d); }
 }
-['optCount', 'optMetro', 'optMetroVol', 'optDyn', 'ritF', 'accF', 'optRest'].forEach(id => $(id).addEventListener('change', changed));
+['optCount', 'optMetro', 'optMetroVol', 'optMetroDiv', 'optDyn', 'ritF', 'accF', 'optRest'].forEach(id => $(id).addEventListener('change', changed));
 $('optRepeat').addEventListener('change', () => { refreshOrder(); changed(); });
 function refreshOrder() {
   const manual = !!state.manualOrder;
@@ -3752,7 +3770,7 @@ function clampRange(edited) {
 // 재생 칸의 설정 (연주 범위·반복·카운트인 등)
 function playOpts() {
   clampRange();
-  return { from: +$('from').value, to: +$('to').value, repeats: $('optRepeat').checked, countIn: $('optCount').checked, metronome: $('optMetro').checked, metroVol: +$('optMetroVol').value || 1,
+  return { from: +$('from').value, to: +$('to').value, repeats: $('optRepeat').checked, countIn: $('optCount').checked, metronome: $('optMetro').checked, metroVol: +$('optMetroVol').value || 1, metroDiv: $('optMetroDiv').value,
     restCount: $('optRest').value, dyn: $('optDyn').checked, speed: +$('speed').value };
 }
 // 소리 다듬기 칸 (재생·저장 공통)
@@ -3793,7 +3811,7 @@ async function buildAudio(onProgress, o = null, bg = false) {
   const plan = renderPlan(state.bars, order, {
     tempoRows: state.tempoRows, speed: o.speed / 100, sounds: currentSounds(), useLvl: o.dyn,
     melodic: currentMelodic(), lineGain: currentGains(),
-    countIn: o.countIn, metronome: o.metronome, restCount: o.restCount,
+    countIn: o.countIn, metronome: o.metronome, restCount: o.restCount, metroDiv: $('optMetroDiv').value,   // 메트로놈 치는 단위(209번) — 음원 저장도 재생 설정을 따름
     dyn: o.dyn && state.marks.dyn.length ? state.marks.dyn : null,
     tempo: tempoItems(), ritF: pctIn('ritF', 80, 30, 100) / 100, accF: pctIn('accF', 120, 100, 200) / 100,
     shift: snd.shift, fermata: snd.fermata, stacc: snd.artic, trill: snd.artic, human: snd.human,
@@ -4082,15 +4100,16 @@ $('track').addEventListener('pointerdown', ev => {
 $('track').addEventListener('pointermove', ev => { if (!trackDrag || ev.pointerId !== trackDrag.id) return; trackDrag.f = trackFrac(ev); trackShow(trackDrag.f); });
 $('track').addEventListener('pointerup', ev => { if (trackDrag && ev.pointerId === trackDrag.id) trackEnd(true); });
 $('track').addEventListener('pointercancel', () => { trackEnd(false); tick.w = null; if (!state.playing) { const r = state.rendered, f = r ? Math.min(1, (audio.currentTime || 0) / r.plan.total) : 0; const w = (f * 100).toFixed(1) + '%'; $('trackFill').style.width = w; $('trackKnob').style.left = w; } });
+const JUMP_PRE = 0.05;   // 마디로 옮길 때 첫 음이 잘리지 않게 그만큼 앞에서 시작(209번: 지금 마디를 셀 때도 더함)
 // 키보드: ←·→ 한 마디씩, Home 처음, End 마지막 마디
 $('track').addEventListener('keydown', ev => {
   if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(ev.key)) return;
   ev.preventDefault();
   if (building || !fresh()) return;
   const { plan } = state.rendered, bt = plan.barTimes; if (!bt.length) return;
-  const cur = barAtT(plan, audio.currentTime || 0), i = cur ? bt.indexOf(cur) : -1;
+  const cur = barAtT(plan, (audio.currentTime || 0) + JUMP_PRE + 0.01), i = cur ? bt.indexOf(cur) : -1;   // 마디로 옮길 때 0.05초 앞에서 시작하므로 그만큼 더해 지금 마디를 센다(209번)
   const j = ev.key === 'Home' ? 0 : ev.key === 'End' ? bt.length - 1 : Math.max(0, Math.min(bt.length - 1, i + (ev.key === 'ArrowRight' ? 1 : -1)));
-  play(ev.key === 'Home' ? 0 : Math.max(0, bt[j].abs - 0.05));
+  play(ev.key === 'Home' ? 0 : Math.max(0, bt[j].abs - JUMP_PRE));
 });
 // 마디 이동(183번): 연주 막대의 ⏪ [n] ⏩ — 지금 자리에서 연주 순서대로 n마디 앞·뒤로 옮겨 재생. 소리를 만들기 전이면 연주 범위 첫 마디 기준
 const JUMP_KEY = 'hapju-jumpN';
@@ -4101,9 +4120,11 @@ function jumpBars(dir) {
   const n = Math.max(1, Math.min(999, Math.round(+$('jumpN').value) || 1));
   if (!fresh() || !state.rendered) { const b = Math.max(1, Math.min(lastBar(), (+$('from').value || 1) + dir * n)); playFromBar(b); return; }
   const { plan } = state.rendered, bt = plan.barTimes; if (!bt.length) return;
-  const cur = barAtT(plan, audio.currentTime || 0), i = cur ? bt.indexOf(cur) : 0;
+  // 지금 마디: 마디로 옮길 때 0.05초(JUMP_PRE) 앞에서 시작하므로 그만큼 더해 센다. 예전에는 바로 앞 마디로 세어 두 번째부터 n-1마디씩만 옮겨졌다
+  // (미락흘 가야금 67마디 제보 '마디 점프가 잘 안 됨', 209번)
+  const cur = barAtT(plan, (audio.currentTime || 0) + JUMP_PRE + 0.01), i = cur ? bt.indexOf(cur) : 0;
   const j = Math.max(0, Math.min(bt.length - 1, i + dir * n));
-  play(j === 0 && dir < 0 ? 0 : Math.max(0, bt[j].abs - 0.05));
+  play(j === 0 && dir < 0 ? 0 : Math.max(0, bt[j].abs - JUMP_PRE));
 }
 $('jumpBack').addEventListener('click', () => jumpBars(-1));
 $('jumpFwd').addEventListener('click', () => jumpBars(1));// 연습 번호 단추 (A, B, 2악장 …): 누르면 그 마디부터 재생하거나, 다음 번호 전까지를 연주 구간으로
@@ -4443,7 +4464,7 @@ function applyRestSettings(S) {
   if (badRange) { $('from').value = 1; $('to').value = LB; }
   else { if (P.from) $('from').value = P.from; if (P.to) $('to').value = Math.min(P.to, LB); }
   const ck = (id, v) => { if (typeof v === 'boolean') $(id).checked = v; };
-  ck('optRepeat', P.repeats); ck('optCount', P.countIn); ck('optMetro', P.metronome); if (P.metroVol && [...$('optMetroVol').options].some(x => +x.value === +P.metroVol)) $('optMetroVol').value = String(P.metroVol); ck('optDyn', P.dyn); ck('optLoop', P.loop); ck('optRamp', P.ramp && P.loop);
+  ck('optRepeat', P.repeats); ck('optCount', P.countIn); ck('optMetro', P.metronome); if (P.metroVol && [...$('optMetroVol').options].some(x => +x.value === +P.metroVol)) $('optMetroVol').value = String(P.metroVol); $('optMetroDiv').value = [...$('optMetroDiv').options].some(x => x.value === P.metroDiv) ? P.metroDiv : 'beat'; ck('optDyn', P.dyn); ck('optLoop', P.loop); ck('optRamp', P.ramp && P.loop);
   if (P.rampStart) $('rampStart').value = P.rampStart; if (P.rampStep) $('rampStep').value = P.rampStep; $('rampSet').hidden = !$('optRamp').checked;
   if (P.restCount) $('optRest').value = P.restCount;
   clampRange(); audio.loop = $('optLoop').checked;
@@ -4842,11 +4863,14 @@ async function loadFullPdf(files) {
     state.extras = loaded.filter(x => x !== main).map(x => ({ ...x, uid: ++uidSeq, label: (x.sc.partName || '').trim() || stemOf(x.file) }));
     state.lineList = fullLineList();
     state.lineCfg = {};
-    let melodyGiven = false;
+    let melodyGiven = false, firstUpper = null;
     for (const l of state.lineList) {
       if (l.sourceScore) continue;
       const isMel = l.clef === 'pitched' && !PERC_NAME.test(l.label || '');
-      state.lineCfg[cfgKey(l.id)] = defaultCfg(l, isMel && !melodyGiven);
+      // 처음 켜는 선율 악기가 두 오선(윗줄·아랫줄)이면 아랫줄도 함께 켠다(209번 — 가야금 파트보를 총보 칸에 올리면 아랫줄이 꺼져 '아랫줄을 못 읽는' 것처럼 보였음)
+      const partner = isMel && firstUpper != null && (l.label || '') === firstUpper + ' (아랫줄)';
+      state.lineCfg[cfgKey(l.id)] = defaultCfg(l, isMel && (!melodyGiven || partner));
+      if (isMel && !melodyGiven) { const m = /^(.*) \(윗줄\)$/.exec(l.label || ''); firstUpper = m ? m[1] : null; }
       if (isMel) melodyGiven = true;
     }
     cfgNewLines(state.lineList.filter(l => l.sourceScore), true);

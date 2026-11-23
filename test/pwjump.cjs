@@ -22,6 +22,12 @@ const mode = process.argv[2]; let fail = 0; const ok = (c, m) => { console.log((
   await p.click('#jumpBack'); await p.waitForTimeout(500); let b4 = await bar(); ok(b4 >= b3 - 2 && b4 <= b3 - 1, '숫자 2로 바꿔 ◀◀ (' + b4 + ')');
   for (let k = 0; k < 5; k++) await p.click('#jumpBack'); await p.waitForTimeout(500); ok((await bar()) <= 2, '처음보다 앞으로는 1마디에서 멈춤');
   ok(await p.evaluate(() => localStorage.getItem('hapju-jumpN') === '2'), '숫자 기억');
+  // 209번: 잇달아 누르면 누를 때마다 n마디씩(예전에는 옮긴 자리를 앞 마디로 세어 두 번째부터 n-1마디씩 — 미락흘 가야금 67마디 제보)
+  await p.fill('#jumpN', '4'); await p.dispatchEvent('#jumpN', 'change');
+  await p.click('#jumpFwd'); await p.waitForTimeout(250); const s0 = await bar();
+  for (let k = 0; k < 3; k++) { await p.click('#jumpFwd'); await p.waitForTimeout(150); }
+  await p.waitForTimeout(150); const s1 = await bar();
+  ok(s1 - s0 >= 12 && s1 - s0 <= 13, '▶▶ 세 번 잇달아 → 12마디 (' + s0 + ' → ' + s1 + ')');
   await p.screenshot({ path: '/tmp/pwjump-' + (mode || 'desk') + '.png' });
   ok(!errs.length, '페이지 오류 없음 ' + errs.join(' | '));
   console.log(fail ? 'FAIL ' + fail : 'ALL OK'); await b.close(); process.exit(fail ? 1 : 0); })();

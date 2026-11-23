@@ -199,6 +199,15 @@ export function renderPlan(bars, order, opts) {
     return w => { const x = Math.max(0, Math.min(N, w / L * N)), k = Math.min(N - 1, Math.floor(x)); return cum[k] + (cum[k + 1] - cum[k]) * (x - k); };
   };
   const dynAt = p => opts.dyn ? dynLevelAt(opts.dyn, p) / 0.75 : 1;
+  // 글리산도로 훑을 음계(209번): 그 줄에 가장 많이 나온 음 이름 7개(25현 가야금은 곡의 음계로 줄을 고르므로 그 줄들을 차례로 뜯는 셈)
+  const GLISS_PLUCK = /^(gayageum|geomungo|yanggeum|piano|ajaeng_pizz)/, scaleCache = {};
+  const scaleOf = line => {
+    if (scaleCache[line]) return scaleCache[line];
+    const cnt = new Array(12).fill(0);
+    for (const b of bars) for (const e of b.events) if (e.line === line && e.midis && !e.tie) for (const m of e.midis) cnt[((m % 12) + 12) % 12] += e.dur.v;
+    const pcs = cnt.map((c, i) => [c, i]).filter(x => x[0] > 0).sort((a, b) => b[0] - a[0]).slice(0, 7).map(x => x[1]);
+    return (scaleCache[line] = new Set(pcs.length >= 5 ? pcs : [0, 2, 4, 5, 7, 9, 11]));
+  };
   // 모듬북처럼 두 성부 모두 북 소리인 줄: 성부보다 오선 위 자리(ev.pos)로 북을 고른다 (자리마다 다른 북)
   //  가장 많이 친 자리 = 기본 북(아랫성부 소리), 그보다 위로 갈수록 높은 북(2칸 위부터 윗성부 소리), 아래로 가면 더 낮게
   const BUKS = new Set(['북', '북녹음', '북짧게']), bukRef = {};
@@ -243,8 +252,13 @@ export function renderPlan(bars, order, opts) {
       }
     }
     if (opts.metronome) {
-      const unit = UNIT_FRAC[rowFor(b.number).unit];
-      for (let x = 0, j = 0; x < L - 1e-9; x += unit, j++) hits.push([cur + clk(x), j === 0 ? '클릭강' : '클릭', 0.55]);
+      // 치는 단위(209번): 박마다(빠르기 표의 기준 음표, 처음 설정) · 박 + 반박 · 4분·8분·16분음표마다. 마디 첫 박 강하게, 박이 아닌 분박은 작게
+      const unit = UNIT_FRAC[rowFor(b.number).unit], dv = opts.metroDiv || 'beat';
+      const step = { q: 1 / 4, e: 1 / 8, s: 1 / 16, beat2: unit / 2 }[dv] || unit;
+      for (let x = 0, j = 0; x < L - 1e-9; x = ++j * step) {
+        const onBeat = Math.abs(x / unit - Math.round(x / unit)) < 1e-6;
+        hits.push([cur + clk(x), j === 0 ? '클릭강' : '클릭', j === 0 || onBeat ? 0.55 : 0.3]);
+      }
     }
     for (const e of b.events) {
       const lg = e.line != null && opts.lineGain && opts.lineGain[e.line] != null ? opts.lineGain[e.line] : 1;
@@ -289,6 +303,19 @@ export function renderPlan(bars, order, opts) {
           trem: !!e.roll && !e.trill, trill: e.trill && opts.trill !== false ? (e.trillInt || 2) : 0, nong: pz || mel.nong === false ? false : e.vib ? 'force' : true,   // 'force': 농현 표시(물결선, 182번) — 길이와 상관없이 농현
           graces: e.graceMidis ? e.graceMidis.map(m => m + 12 * (mel.oct || 0) + (opts.shift || 0)) : null };
         notes.push(nt); for (const m of midis) lastOf.set(e.line + '|' + m, nt);
+        // 글리산도(209번): 뜯는 악기(가야금·거문고·양금·피아노·아쟁 뜯기)는 그 줄 음계를 따라 선 끝까지 훑는다(줄을 차례로 뜯는 소리).
+        // 부는·켜는 악기는 아직 미끄러지는 소리가 없어 적힌 음만
+        if (e.gliss && e.gliss.steps && GLISS_PLUCK.test(nt.inst)) {
+          const scale = scaleOf(e.line), dir = Math.sign(e.gliss.steps), n = Math.min(Math.abs(e.gliss.steps), 36);
+          const tEnd = Math.max(tsH + 0.12, cur + clk(Math.min(L, e.gliss.endW))), step = (tEnd - tsH) / (n + 1);
+          const off = 12 * (mel.oct || 0) + (opts.shift || 0);   // 음계는 적힌 음으로 세고 소리는 옥타브·조옮김을 더해
+          let m = dir > 0 ? Math.max(...e.midis) : Math.min(...e.midis);
+          for (let i = 1; i <= n; i++) {
+            do m += dir; while (!scale.has(((m % 12) + 12) % 12));
+            if (m + off < 26 || m + off > 100) break;
+            notes.push({ t: tsH + i * step, inst: nt.inst, midis: [m + off], dur: Math.max(0.12, step * 2), gain: nt.gain * 0.7, line: e.line, voice: e.voice, bi, dynL: nt.dynL, dynOff: nt.dynOff, trem: false, trill: 0, nong: false, graces: null, glissRun: true });
+          }
+        }
         continue;
       }
       if (tied(e)) continue;

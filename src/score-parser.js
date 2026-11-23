@@ -1638,7 +1638,24 @@ export function parseScore(pages, opts = {}) {
       const rollSpans = [];
       // 비스듬한 물결선(글리산도 — 'Glissando' 글자가 함께, 프론티어 가야금 87마디·달빛항해 가야금 75마디)은 트릴도 농현도 아님: 글자 높이가 4pt 넘게 오르내리면 뺌
       for (const g of trills) { const s0 = rollSpans[rollSpans.length - 1]; if (s0 && g.x0 - s0.x1 < 8 && Math.abs(g.oy - s0.yl) < 6) { s0.x1 = Math.max(s0.x1, g.x1); s0.yl = g.oy; s0.ymin = Math.min(s0.ymin, g.oy); s0.ymax = Math.max(s0.ymax, g.oy); } else rollSpans.push({ x0: g.x0, x1: g.x1, y: g.oy, yl: g.oy, ymin: g.oy, ymax: g.oy }); }
-      if (pitchedStaff) for (let k = rollSpans.length - 1; k >= 0; k--) if (rollSpans[k].ymax - rollSpans[k].ymin > 4) rollSpans.splice(k, 1);   // 타악 굴림 물결선은 그대로(달빛항해 장구 137마디)
+      // 글리산도(209번): 음표 머리 바로 오른쪽에서 비스듬히 오르내리는 곧은 선(프론티어 가야금 20·52마디 — X 머리 + 'gliss.')과 비스듬한 물결선.
+      // 음표에 gliss = { steps: 끝까지 오르내린 온음계 단계(반 칸 = 1, 위가 +), x1: 끝 가로 자리 } — 재생이 그 사이를 훑는다(뜯는 악기)
+      const glissLines = [];
+      if (pitchedStaff) for (let k = rollSpans.length - 1; k >= 0; k--) if (rollSpans[k].ymax - rollSpans[k].ymin > 4) { const w = rollSpans[k]; glissLines.push({ x0: w.x0, y0: w.y, x1: w.x1, y1: w.yl }); rollSpans.splice(k, 1); }   // 타악 굴림 물결선은 그대로(달빛항해 장구 137마디)
+      if (pitchedStaff) for (const s of segs) {
+        const dx = s.x1 - s.x0, dy = s.y1 - s.y0;
+        // 꺾쇠(헤어핀)는 벌어진 폭이 1칸 안팎이라 1.5칸 넘게 오르내리는 선만. 기둥처럼 선 것(기울기 1.5 넘음)·짧은 선은 뺌.
+        // 시작(왼쪽 끝)이 이 오선 가까이 — 다른 오선까지 건너가는 선도(프론티어 가야금 87마디: 윗줄 X에서 아랫줄 아래까지)
+        if (s.used || dx < 14 || Math.hypot(dx, dy) < 18 || Math.abs(dy) < staffSp * 1.5 || Math.abs(dy) / dx > 2.5 || s.y0 < st.top - staffSp * 4 || s.y0 > st.bottom + staffSp * 4) continue;
+        // 곧은 선은 'gliss.' 글자 조각(비스듬히 찍혀 'gli'·'ss.'·'is'처럼 끊겨 읽힘)이 선 둘레에 있거나, 같은 오선의 다음 음에서 끝날 때만(달빛항해 피리 75마디 — 음과 음 사이 미끄러짐).
+        // 월광 양금 12마디처럼 음에서 다른 곳으로 뻗은 선(글자 없음)은 글리산도가 아님
+        const yl = Math.min(s.y0, s.y1), yh = Math.max(s.y0, s.y1);
+        const tr = runs.filter(r => /^[glis.\s]+$/i.test(r.text.trim()) && r.x0 < s.x1 + 10 && r.x1 > s.x0 - 10 && r.y > yl - 14 && r.y < yh + 14);
+        const txt = tr.length >= 2 || tr.some(r => r.text.trim().length >= 2);   // 글자 하나씩 따로 찍힌 PDF도(프론티어 가야금 87마디)
+        const toNote = notes.some(n => !n.rest && Math.abs(n.x - s.x1) < 9 && Math.abs(n.y - s.y1) < staffSp * 1.2);
+        if (!txt && !toNote) continue;
+        glissLines.push({ x0: s.x0, y0: s.y0, x1: s.x1, y1: s.y1, seg: s });
+      }
       for (const sp0 of rollSpans) sp0.tr = sg.some(g => g.code === 217 && isMaestro(g) && sp0.x0 - g.x1 < 6 && sp0.x0 > g.x0 && Math.abs(g.oy - sp0.y) < 12);
       const trSyms = sg.filter(g => g.code === 217 && isMaestro(g) && !trills.some(w => w.x0 - g.x1 < 6 && w.x0 > g.x0));   // 물결선이 이어지는 tr는 위에서
 
@@ -1880,6 +1897,13 @@ export function parseScore(pages, opts = {}) {
         }
         if (pendingTimesig) { m.timesig = pendingTimesig; pendingTimesig = null; }
         for (const sp0 of rollSpans) m.notes.forEach(n => { if (!n.rest && sp0.x0 - n.x > 0 && sp0.x0 - n.x < 20) { if (sp0.tr || !pitchedStaff) n.roll = true; else n.vib = true; } });
+        for (const gl of glissLines) {   // 글리산도: 선이 시작하는 곳 바로 왼쪽(26pt 안)·비슷한 높이의 음
+          if (gl.done) continue;
+          const c = m.notes.filter(n => !n.rest && !n.grace && n.midi != null && gl.x0 - n.x > 1 && gl.x0 - n.x < 26 && Math.abs(gl.y0 - n.y) < staffSp * 2.2).sort((a, b) => Math.abs(a.y - gl.y0) - Math.abs(b.y - gl.y0));
+          // 선 바로 왼쪽의 음이 다음 마디에 있으면 그 음 것(프론티어 총보 20마디 X 머리 — 앞 마디 끝 음에 붙던 것)
+          if (!c.length || notes.some(n => !n.rest && !n.grace && n.x > c[0].x + 1 && n.x < gl.x0 - 1 && Math.abs(gl.y0 - n.y) < staffSp * 2.2)) continue;
+          c[0].gliss = { steps: Math.round((gl.y0 - gl.y1) / (staffSp / 2)), x1: gl.x1 }; gl.done = true; if (gl.seg) gl.seg.used = true;
+        }
         // 물결선 없이 'tr' 글자만 음표 위·아래에 적은 트릴(판놀음II 마지막 마디 온음표 tr + 늘임표)
         if (trSyms.length) m.notes.forEach(n => { if (!n.rest && !n.grace && !n.roll && trSyms.some(g => Math.abs(cx(g) - n.x) < 6 && Math.abs(g.oy - n.y) < staffSp * 6)) n.roll = true; });
         if (inRoll && !m.notes.length) m.rollExt = true;
@@ -2176,6 +2200,8 @@ function timing(m, barLen) {
     if (n.tenuto) ev.ten = true;   // 테누토: 길이를 꽉 채우고 조금 무게 있게
     if (n.roll && n.midi != null) { ev.trill = true; ev.trillInt = n.upInt || 2; }   // 선율의 트릴(tr + 물결선): 위 음과 빠르게 오간다
     if (n.vib) ev.vib = true;   // 'tr' 없는 물결선 = 농현(182번)
+    // 글리산도(209번): 온음계 단계 수와 끝 시각(온음표 단위, 선 끝의 가로 자리를 마디 안 비율로 — 적어도 이 음 끝까지)
+    if (n.gliss && n.midi != null) { const fr = Math.max(0, Math.min(1, (n.gliss.x1 - m.x0) / Math.max(1, m.x1 - m.x0))); ev.gliss = { steps: n.gliss.steps, endW: Math.max(onset.get(n).add(n.dur).v, fr * barLen.v) }; }
     seen.set(key, ev); evs.push(ev);
   }
   // 화음 가운데 일부 음만 붙임줄로 이어졌으면 이어진 음만 길게 두고 나머지 음은 떼어 낸다
