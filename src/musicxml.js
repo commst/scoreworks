@@ -212,7 +212,7 @@ function mxReadPart(p, name) {
 // 줄 하나를 마디 목록으로 (PDF 해석 결과와 같은 모양)
 export function analyzeXmlLine(sc, line = null) {
   const L = sc.xmlLines[line == null ? 0 : line]; const P = sc.xmlParts[L.part];
-  const bars = [], dyn = [], tempo = [], rehearsal = [];
+  const bars = [], dyn = [], tempo = [], rehearsal = [], words = [];
   let prevTs = null;
   // 성부 나누기: 오선 안에서 먼저 나온 성부(보통 1·5) = 윗성부, 나머지 = 아랫성부. 타악은 줄기 방향(위 = 윗성부), 없으면 높이
   const voiceOrder = [];
@@ -254,6 +254,8 @@ export function analyzeXmlLine(sc, line = null) {
     const labels = [];
     const f = { ...M.flags, ...Gm.flags };
     const wordsAll = [...Gm.words, ...M.words.filter(w => !Gm.words.some(g => g.text === w.text))];
+    // 아쟁 주법 글자(pizz.·arco, 208번): 이 파트 것만 연주 지시 글자로 남긴다 → 앱이 뜯기 구간을 정하고, 다시 내보낼 때도 그대로
+    for (const w of M.words) if (/pizz|arco|피치카토|아르코/i.test(w.text)) words.push({ p0: bi + w.t.v / M.len.v, text: w.text, above: true });
     for (const w of wordsAll) {
       const t = w.text, p0 = bi + w.t.v / M.len.v;
       if (/^(rit|rall|allarg|slent)|점점\s*느리게/i.test(t)) { tempo.push({ kind: 'rit', p0, p1: p0 + 2, dashed: false }); labels.push('rit.'); }
@@ -287,5 +289,5 @@ export function analyzeXmlLine(sc, line = null) {
   // 셈여림 꺾쇠: 끝(stop)이 없으면 다음 셈여림까지(최대 2마디)
   for (const d of dyn) if (d.kind === 'ramp') { delete d.open; const t = dyn.find(x => x.kind === 'mark' && x.p0 > d.p0 + 0.01 && x.p0 <= d.p1 + 1); d.target = t ? t.level : null; }
   dyn.sort((a, b) => a.p0 - b.p0); tempo.sort((a, b) => a.p0 - b.p0);
-  return { bars, marks: { dyn, tempo }, mismatches: [], scanned: false, geo: null, rehearsal };
+  return { bars, marks: { dyn, tempo, words }, mismatches: [], scanned: false, geo: null, rehearsal };
 }

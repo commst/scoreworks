@@ -5,7 +5,8 @@ import { SR, applyTone, toneFlat } from './audio-engine.js';
 
 // 악기별 기본 크기(157번, 11-12): 곡과 상관없는 시험 악보(test/levelref.py — 악기마다 편한 음역의 음계·긴 음)를 줄마다 재서(K 가중, 0.1·0.4초 창 상위 10%의 평균)
 // 모두 같은 크기로 맞춘 뒤 역할 보정: 대금·소금 +3dB, 가야금 +2, 태평소 −3(원래 큼), 아쟁 −2(받침), 양금 −5(밝은 소리가 튐), 나머지 0. 곡마다 다른 것은 음량 막대로
-const LV = { gayageum: 3.13, geomungo: 2.37, yanggeum: 1.14, daegeum: 1.61, sogeum: 1.58, piri: 1.33, daepiri: 1.5, taepyeongso: 0.89, saenghwang: 1.01, haegeum: 1.08, ajaeng: 1.3, piano: 1.74 };
+const LV = { gayageum: 3.13, geomungo: 2.37, yanggeum: 1.14, daegeum: 1.61, sogeum: 1.58, piri: 1.33, daepiri: 1.5, taepyeongso: 0.89, saenghwang: 1.01, haegeum: 1.08, ajaeng: 1.3, ajaeng_pizz: 1, piano: 1.74 };
+// 아쟁 뜯기(208번): 같은 선율을 켠 소리(1.3)와 견주면 소리 나는 구간 크기가 약 1.3dB 작음(test 방법은 CHANGELOG 208) — 뜯는 소리라 조금 작은 것이 자연스러워 그대로
 export const INSTRUMENTS = {
   gayageum: { name: '가야금 (녹음)', kind: 'pluck', bright: 0.55, decay: 2.6, ring: 0.9, nong: 22, bank: 'gayageum' },
   gayageum_syn: { name: '가야금 (합성음)', kind: 'pluck', bright: 0.55, decay: 2.6, ring: 0.9, nong: 22 },
@@ -27,6 +28,9 @@ export const INSTRUMENTS = {
   haegeum_syn: { name: '해금 (합성음)', kind: 'bow', harm: null, breath: 0.07, atk: 0.07, vib: [6, 28], formant: [[900, 300, 1.8], [2200, 600, 1.2]] },
   ajaeng: { name: '아쟁 (녹음)', kind: 'bow', bank: 'ajaeng', harm: null, breath: 0.12, atk: 0.09, vib: [5, 20], formant: [[500, 250, 1.6], [1500, 500, 1.0]] },
   ajaeng_syn: { name: '아쟁 (합성음)', kind: 'bow', harm: null, breath: 0.12, atk: 0.09, vib: [5, 20], formant: [[500, 250, 1.6], [1500, 500, 1.0]] },
+  // 아쟁 뜯기(pizz.): 손가락으로 뜯은 단음 녹음이 없어, 켠 아쟁 녹음의 배음 크기를 입혀 합성한 소리(tools/make_ajaeng_pizz.py, 208번).
+  // 악보의 pizz.~arco 구간과 음 수정(✎)의 '주법'에서 고른 음만 이 소리로 낸다. 음색 탭은 아쟁 설정을 따른다
+  ajaeng_pizz: { name: '아쟁 뜯기 (pizz.)', kind: 'pluck', bank: 'ajaeng_pizz', bright: 0.3, decay: 0.9, ring: 0.35 },
   piano: { name: '피아노 (녹음)', kind: 'piano', bank: 'piano' },
   piano_syn: { name: '피아노 (합성음)', kind: 'piano' },
   // 팀파니: 녹음은 한 번 친 소리(약 E3) 하나와 굴림 하나뿐 → 음높이는 녹음을 빠르게·느리게 읽어 맞춘다. 녹음을 못 받으면 낮은 뜯는 소리로
@@ -160,6 +164,8 @@ function scale(y, vel) { let m = 0; for (const v of y) m = Math.max(m, Math.abs(
 // meta: [[종류('p' 뜯기 | 'n' 농현 | 't' 트레몰로), 실제 음높이(midi, 소수), 시작(초), 길이(초)], ...]
 // pcm: meta의 소리들이 이어 붙은 녹음 (SR 표본률, Float32)
 export const BANKS = {};
+// 음색 탭 설정은 악기 이름으로: 합성음(_syn)·뜯기(_pizz)는 원래 악기 설정을 따른다
+const toneKey = inst => String(inst).replace(/_syn$/, '').replace(/_pizz$/, '');
 export function setBank(name, meta, pcm) {
   const bank = { p: [], n: [], t: [] };
   for (const [kind, m, s, L] of meta) {
@@ -174,7 +180,7 @@ export function setBank(name, meta, pcm) {
     bank[kind].push({ m, y });
   }
   BANKS[name] = bank;
-  for (const [key, ins] of Object.entries(INSTRUMENTS)) if (ins.bank === name && !key.endsWith('_syn') && !toneFlat(TONE[key])) toneBank(bank, TONE[key]);
+  for (const [key, ins] of Object.entries(INSTRUMENTS)) if (ins.bank === name && !key.endsWith('_syn') && !toneFlat(TONE[toneKey(key)])) toneBank(bank, TONE[toneKey(key)]);
 }
 // ---------- 음색 탭(전역): 악기마다 음량 배율과 3대역 EQ (158번) ----------
 // 녹음 음원은 원본(y0)을 두고 거른 것을 y로 쓴다. 합성음은 음 캐시에 넣기 전에 거른다
@@ -182,14 +188,14 @@ const TONE = {};   // 악기 이름(_syn 뺀 것) → { vol, lo, mid, hi }
 export function setInstTones(map) {
   const old = JSON.stringify(TONE); for (const k of Object.keys(TONE)) delete TONE[k]; Object.assign(TONE, map || {});
   if (JSON.stringify(TONE) === old) return false;
-  for (const [key, ins] of Object.entries(INSTRUMENTS)) { const b = ins.bank && BANKS[ins.bank]; if (b && !key.endsWith('_syn')) toneBank(b, TONE[key]); }
+  for (const [key, ins] of Object.entries(INSTRUMENTS)) { const b = ins.bank && BANKS[ins.bank]; if (b && !key.endsWith('_syn')) toneBank(b, TONE[toneKey(key)]); }
   clearNoteCache(); return true;
 }
 function toneBank(bank, t) {
   for (const kind of ['p', 'n', 't']) for (const c of bank[kind]) { if (!c.y0) c.y0 = c.y; c.y = toneFlat(t) ? c.y0 : applyTone(c.y0.slice(), t); }
 }
-const tvol = inst => { const t = TONE[String(inst).replace(/_syn$/, '')]; return t && t.vol != null ? t.vol : 1; };
-const ttone = inst => TONE[String(inst).replace(/_syn$/, '')];
+const tvol = inst => { const t = TONE[toneKey(inst)]; return t && t.vol != null ? t.vol : 1; };
+const ttone = inst => TONE[toneKey(inst)];
 export const NONG_MIN = 0.7;   // 이 길이(초) 이상인 음에 농현
 
 // 4점 보간으로 rate배 빠르게 읽기 (음높이 바꾸기)

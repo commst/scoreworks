@@ -205,6 +205,11 @@ MusicXML을 저장하면 내보낸 파일을 다시 읽어 악보 PDF의 음표 
 - **선율 음**
   - 높이: **♭ / ♯**는 반음 내리기·올리기, **↓8 / ↑8**은 옥타브 내리기·올리기입니다. 화음은 음마다 따로 고칩니다.
   - 길이: 목록에서 고릅니다(32분·셋잇단 16분·16분·점16분·셋잇단 8분·8분·점8분·셋잇단 4분·4분·점4분·2분·점2분·온음표).
+- **아쟁 주법(pizz.·arco)**: 아쟁 줄(콘트라베이스·첼로처럼 아쟁 소리로 연주하는 줄 포함)은 음마다 **뜯기(pizz.)·활(arco)** 칩과 **주법** 목록이 있습니다.
+  - 처음에는 **악보대로**: 악보에 적힌 pizz.(PIZZ, Pizz., 피치카토)부터 arco(Arco., 아르코)까지 뜯는 소리로 연주합니다.
+  - 악보에 표시가 빠졌으면 **여기부터 뜯기 / 여기부터 활**(그 음부터 다음 pizz.·arco 표시까지)이나 **이 음만 뜯기 / 이 음만 활**을 고릅니다. 다른 수정처럼 저장·되돌리기·내보내기가 됩니다.
+  - 뜯는 소리는 켠 아쟁 녹음의 음색을 입혀 합성한 녹음(`banks/ajaeng_pizz`, 2반음마다 17음)으로 냅니다. 음색 탭의 아쟁 설정이 함께 적용됩니다.
+  - MusicXML로 저장하면 pizz.·arco 글자에 `<sound pizzicato>`가 붙어 피날레·뮤즈스코어도 뜯는 소리로 재생합니다. 주법을 고친 줄은 고친 결과대로 pizz.·arco를 적습니다. MusicXML을 올릴 때도 pizz.·arco 글자를 읽습니다.
 - **타악 음**: 길이만 고칠 수 있습니다.
 - **길이를 바꾸면** 같은 성부의 뒤 음들이 그만큼 밀리거나 당겨집니다. 마디 길이를 넘으면 경고가 나옵니다.
 - **자동 저장**: 고치는 즉시 이 기기의 브라우저에 저장됩니다. 수정 창에서 고친 음은 색이 다르게 표시되고 "원래 솔5"처럼 원래 값이 함께 보입니다. 마디 지도에는 번호 옆에 ✎가 붙습니다.
@@ -325,6 +330,7 @@ scoreworks/
 | 태평소 | A♭4–E♭6, 12음 | 12음(민속악 농음) | |
 | 해금 | A♭3–G5, 14음 | 14음 | |
 | 아쟁 | G♯2–D♯4, 8음 | 8음(G2–C5) | 높은 음은 농현 녹음으로 |
+| 아쟁 뜯기(pizz.) | E2–C5, 2반음마다 17음 | — | 켠 아쟁 녹음의 배음 크기로 합성 (`tools/make_ajaeng_pizz.py`) |
 
 ---
 
@@ -391,6 +397,12 @@ python3 build.py
 
 `tools/extract_gayageum.py`, `tools/extract_haegeum.py`는 이번 가야금·해금 녹음 전용입니다(음 시작 시각·음계가 코드에 적혀 있음). 새 녹음에는 위 두 도구를 쓰세요.
 
+**아쟁 뜯기(pizz.) 녹음 묶음**: 손가락으로 뜯은 단음 녹음이 없어 켠 아쟁 녹음에서 만듭니다(208번).
+```
+python3 tools/make_ajaeng_pizz.py banks/ajaeng banks/ajaeng_pizz
+```
+켠 녹음에서 음마다 배음 크기(울림통 모양)를 뽑아 뜯는 줄 소리를 합성합니다(높은 배음부터 빨리 사라짐, 손가락이 줄을 놓는 '툭' 소리). 실제 뜯은 녹음을 구하면 4-1의 `extract_pluck.py`로 같은 이름(`banks/ajaeng_pizz`)의 뱅크를 만들어 바꾸면 됩니다.
+
 ### 4-1-1. 타악 녹음 한 타 넣기 (북·바라·징·장구 등)
 한 번 친 소리를 녹음한 wav/mp3를 `src/samples.json`에 넣습니다(ffmpeg 필요).
 ```
@@ -438,6 +450,7 @@ python3 tools/gen_outline_templates.py <fonts 폴더> src/outline-templates.js
 | `python3 test/levelref.py /tmp/levelref.musicxml` → `node test/levelstems.mjs <html> /tmp/levelref.musicxml <폴더>` → `python3 test/levelmeas.py <폴더>` | 악기 기본 음량 측정(곡과 상관없는 시험 악보로 악기·타악 소리마다 크기, 157번). 기본 음량(LV·GAIN)을 바꾸면 이것으로 확인 |
 | `node test/stems.mjs <html> <접두어> <폴더>` → `test/frontier/*.py` | 줄마다(크기 맞추기 없이) WAV를 받아 실제 연주 음원과 악기별 크기·대역·울림 비교 (test/frontier/README.md) |
 | `node test/pwsvscroll.cjs [html] [phone]` | 악보로 보기 스크롤 시험(187번): 소나기 총보를 일시정지한 채 끝까지·처음까지 스크롤해 보이는 쪽에 그림이 있는지(쪽 그림 지우기는 보이는 쪽을 빼고) |
+| `node test/pizzmark.mjs [악보.pdf…]`, `node test/pwpizz.cjs <html> [desktop\|mobile]` | 아쟁 주법(208번): 악보 pizz.·arco 구간, 음 수정의 '주법', 재생 계획의 뜯는 소리, MusicXML pizz.·arco(`/tmp/pwpizz-*.musicxml` → xsdcheck.py). 기본 샘플은 월광 소아쟁(5139dcdd)·바르도 소아쟁(01391308) |
 | `node test/pwboot.cjs index.html` | 시작 시험: 저장된 설정(악보로 보기·탭·자동 저장 등) 여러 가지로 열어 끝까지 시작되는지. 화면 코드를 고치면 꼭 |
 | `NODE_PATH=/opt/npm-tools/node_modules node test/pwspill.cjs <접두어> [out.json]` | 총보를 열고 모든 줄을 켠 뒤 재생 마디(state.bars)에서 마디 길이를 넘어 잘리는 음을 줄·마디별로 셈(170번 점검 도구). out.json에 마디 길이 목록도 |
 | `node test/pwxml.cjs <접두어…>` → `xsdcheck.py`·`xmlcheck.py`·`integrity.py`·`msall.sh` | MusicXML 내보내기 검사(표준 규칙, 원래 음 대비, 붙임줄·이음줄·잇단 짝, 뮤즈스코어로 열기) |

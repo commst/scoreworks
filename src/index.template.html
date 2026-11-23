@@ -187,6 +187,10 @@ body.picking .b, body.picking .sv-page, body.picking #svPages > * { cursor: cros
 .edit-dlg .ed-orig { font-size: 11.5px; color: var(--muted); }
 .edit-dlg select { padding: 4px 6px; border: 1px solid var(--line); border-radius: 7px; background: var(--card); font-size: 12.5px; }
 .edit-dlg .ed-warn { color: var(--warn); font-size: 12px; margin: 4px 0; }
+.edit-dlg .ed-pz { display: inline-flex; align-items: center; gap: 5px; }
+.edit-dlg .ed-pz i { font-style: normal; font-size: 12px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.edit-dlg .ed-pz i.on { background: color-mix(in srgb, var(--accent) 14%, var(--card)); border-color: var(--accent); color: var(--ink); }
+.edit-dlg .ed-pzhint { color: var(--muted); font-size: 12px; margin: 2px 0 4px; }
 .edit-dlg .ed-foot { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; border-top: 1px solid var(--line); margin-top: 10px; padding-top: 12px; }
 @media (max-width: 520px) { .edit-back { align-items: flex-end; padding: 0; } .edit-dlg { border-radius: 16px 16px 0 0; max-height: 88vh; } }
 .b-stop:hover { background: var(--warn-bg); }
@@ -1913,6 +1917,11 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 
 <template id="histTpl">
+  <section class="hday"><h3>11월 23일</h3>
+    <h4>기능 업데이트 <small>1</small></h4><ul class="hlist">
+      <li><details><summary>아쟁 pizz.(뜯기) 소리, 음 수정에서 주법 고르기</summary><p>아쟁 줄은 악보에 적힌 pizz.부터 arco까지 손가락으로 뜯는 소리로 연주합니다(켠 아쟁 녹음의 음색을 입혀 만든 뜯기 녹음). 악보에 pizz.·arco가 빠졌으면 ✎ 음 수정 창에서 음마다 '주법'을 고릅니다: 여기부터 뜯기·여기부터 활(다음 표시까지), 이 음만 뜯기·이 음만 활. 고친 내용은 다른 수정처럼 저장·되돌리기·내보내기가 되고, MusicXML로 저장하면 고친 대로 pizz.·arco가 적혀 피날레·뮤즈스코어에서도 뜯는 소리로 재생됩니다. 콘트라베이스·첼로처럼 아쟁 소리로 연주하는 줄도 같습니다.</p></details></li>
+    </ul>
+  </section>
   <section class="hday"><h3>11월 18일</h3>
     <h4>기능 업데이트 <small>18</small></h4><ul class="hlist">
       <li><details><summary>MusicXML 내보내기: 반복 회차별 붙임줄(time-only)</summary><p>MusicXML을 불러왔을 때 '반복 둘째 회차에만 이어지는 붙임줄'(time-only)은 재생에만 쓰이고, 다시 내보내면 바로 앞 마디의 같은 음에 보통 붙임줄로 이어 적어 첫 회차에도 이어지는 악보가 되었습니다. 이제 끝 음에 회차(time-only)를 그대로 적고, 붙임줄 시작은 그 회차에 바로 앞에 연주되는 마디(예: 반복 끝 마디)의 마지막 음에 붙입니다. PDF에서 읽은 악보의 내보내기는 바뀌지 않습니다.</p></details></li>
@@ -2355,9 +2364,11 @@ function autoOct(key) {
   c.octAuto = best;
 }
 function bankOf(inst) { return INSTRUMENTS[inst] && INSTRUMENTS[inst].bank; }
-function prefetchBanks() { for (const v of Object.values(currentMelodic())) { const b = bankOf(v.inst); if (b) loadBank(b); } }
+// 줄 악기에 필요한 녹음들: 아쟁 줄은 pizz.(뜯기) 음이 있을 수 있어 뜯기 녹음도 함께 (208번, 약 240KB)
+function banksOf(inst) { const b = bankOf(inst); return inst === 'ajaeng' || inst === 'ajaeng_syn' ? [b, 'ajaeng_pizz'].filter(Boolean) : b ? [b] : []; }
+function prefetchBanks() { for (const v of Object.values(currentMelodic())) for (const b of banksOf(v.inst)) loadBank(b); }
 const UNIT_LABEL = { q: '♩ 4분', dq: '♩. 점4분', e: '♪ 8분', h: '2분' };
-const INST_OPTIONS = Object.entries(INSTRUMENTS).map(([k, v]) => [k, v.name]);
+const INST_OPTIONS = Object.entries(INSTRUMENTS).filter(([k]) => !k.endsWith('_pizz')).map(([k, v]) => [k, v.name]);   // 아쟁 뜯기는 줄 악기가 아니라 주법(음 수정의 '주법')
 
 const state = { bars: [], tempoRows: [], title: '', custom: {}, sounds: null, rendered: null, dirty: true, playing: false,
   score: null, lineIds: [], lineRes: {}, lineRaw: {}, parts: [], extras: [], sourceScores: [], soundSel: {}, lineCfg: {}, lineList: [],
@@ -3254,6 +3265,7 @@ function applyEdits(raw, sc, srcKey) {
         applied++; e.edited = true;
         if (rec.m && e.midis) e.midis = rec.m.slice();
         if (rec.tie === true && e.midis && e.midis.length) { e.tie = true; e.tieEd = true; }   // 앞 음과 붙임줄로 잇기(168번)
+        if (rec.pz && e.midis && e.midis.length) e.pzEd = rec.pz;   // 아쟁 주법(208번): 'p1'·'a1' 이 음만 뜯기·활, 'pf'·'af' 여기부터 뜯기·활 — markPizz가 e.pz로
         if (rec.d) {
           const nd = parseFr(rec.d), delta = nd.sub(e.dur);
           if (e.sus) e.sus = e.sus.add(delta);
@@ -3274,6 +3286,33 @@ function applyEdits(raw, sc, srcKey) {
   });
   return { ...raw, bars, editApplied: applied, editMiss: miss };
 }
+// ----- 아쟁 주법: pizz.(뜯기)·arco(활) (208번) -----
+// 악보의 연주 지시 글자(marks.words, 해석기가 읽어 MusicXML에만 쓰던 것)에서 pizz.~arco 구간을 찾고, 음 수정의 '주법'(e.pzEd)을 더해
+// 음마다 e.pz(뜯기)를 단다. 재생(renderPlan)은 아쟁 줄의 e.pz 음만 뜯는 소리로 낸다.
+// 악보에 pizz.·arco가 빠진 곳은 ✎ 음 수정에서 '여기부터 뜯기/활'이나 '이 음만'으로 고친다
+const PZ_ON = /pizz|피치카토|뜯[어기]/i, PZ_OFF = /arco|아르코|활로/i;
+const pizzWord = t => PZ_OFF.test(t) ? false : PZ_ON.test(t) ? true : null;
+function markPizz(res) {
+  if (!res || !res.bars) return res;
+  const W = (((res.marks && res.marks.words) || []).map(w => ({ p: w.p0 - 0.03, on: pizzWord(w.text || '') }))).filter(x => x.on != null && x.p >= -1);   // 글자는 음 머리보다 조금 앞뒤에 찍히므로 0.03마디 앞부터
+  const evs = [];
+  res.bars.forEach((b, bi) => b.events.forEach((e, i) => { if (e.midis && e.midis.length) evs.push({ bi, i, e, p: bi + e.t.v / (b.barLen.v || 1) }); }));
+  const marks = W.concat(evs.filter(x => x.e.pzEd === 'pf' || x.e.pzEd === 'af').map(x => ({ p: x.p - 1e-6, on: x.e.pzEd === 'pf' })));
+  if (!marks.length && !evs.some(x => x.e.pzEd)) return res;
+  marks.sort((a, b) => a.p - b.p);
+  evs.sort((a, b) => a.p - b.p || a.bi - b.bi);
+  let k = 0, auto = false;
+  const set = new Map();   // bi → Map(i → pz)
+  for (const x of evs) {
+    while (k < marks.length && marks[k].p <= x.p) auto = marks[k++].on;
+    const ed = x.e.pzEd, pz = ed === 'p1' ? true : ed === 'a1' ? false : auto;
+    if (pz) (set.get(x.bi) || set.set(x.bi, new Map()).get(x.bi)).set(x.i, true);
+  }
+  if (!set.size) return res;
+  const bars = res.bars.map((b, bi) => { const S = set.get(bi); if (!S) return b; return { ...b, events: b.events.map((e, i) => S.has(i) ? { ...e, pz: true } : e) }; });
+  return { ...res, bars, pizzUsed: true };
+}
+const lineResOf = (raw, sc, srcKey) => markPizz(applyEdits(raw, sc, srcKey));
 function srcInfo(key) {
   const item = state.lineList.find(l => cfgKey(l.id) === key);
   const sc = (item && item.sourceScore) || state.score;
@@ -3283,7 +3322,7 @@ function srcInfo(key) {
 function loadedSources() { return state.sourceScores.length ? state.sourceScores : (state.score && state.score.fp ? [state.score, ...(state.extras || []).map(x => x.sc)] : []); }
 function reapplyEdits() {
   if (!state.score) return;   // 예시 장단에는 수정이 없다
-  for (const k of Object.keys(state.lineRaw)) { const { sc, srcKey } = srcInfo(k); state.lineRes[k] = applyEdits(state.lineRaw[k], sc, srcKey); }
+  for (const k of Object.keys(state.lineRaw)) { const { sc, srcKey } = srcInfo(k); state.lineRes[k] = lineResOf(state.lineRaw[k], sc, srcKey); }
   const keepOrder = state.manualOrder;
   applySelection();
   if (keepOrder) { state.manualOrder = keepOrder; refreshOrder(); }
@@ -3302,7 +3341,8 @@ function setEdit(key, bi, v, ord, rawEv, patch) {
     if (rec.m && JSON.stringify(rec.m) === JSON.stringify(o.m)) delete rec.m;
     if (rec.d && rec.d === o.d) delete rec.d;
     if (rec.tie != null && !(rec.tie === true && !rawEv.tie) && !(rec.tie === false && rawEv.tie)) delete rec.tie;   // 원래와 같으면 지움
-    if (rec.m || rec.d || rec.tie != null) B[id] = rec; else delete B[id];
+    if (!rec.pz) delete rec.pz;   // 주법 '악보대로'
+    if (rec.m || rec.d || rec.tie != null || rec.pz) B[id] = rec; else delete B[id];
   }
   if (!Object.keys(B).length) delete L[bi];
   if (!Object.keys(L).length) delete E.lines[srcKey];
@@ -3334,6 +3374,7 @@ const PITCH_NAMES = ['도', '도♯', '레', '레♯', '미', '파', '파♯', '
 const pitchName = m => PITCH_NAMES[((m % 12) + 12) % 12] + (Math.floor(m / 12) - 1);
 const DUR_OPTS = [['1/32', '32분음표'], ['1/24', '셋잇단 16분'], ['1/16', '16분음표'], ['3/32', '점16분음표'], ['1/12', '셋잇단 8분'], ['1/8', '8분음표'], ['3/16', '점8분음표'], ['1/6', '셋잇단 4분'], ['1/4', '4분음표'], ['3/8', '점4분음표'], ['1/2', '2분음표'], ['3/4', '점2분음표'], ['1', '온음표']];
 const durName = s => (DUR_OPTS.find(o => o[0] === s) || [s, `${s} (온음표=1)`])[1];
+const PZ_OPTS = [['', '악보대로'], ['pf', '여기부터 뜯기 (pizz.)'], ['af', '여기부터 활 (arco)'], ['p1', '이 음만 뜯기'], ['a1', '이 음만 활']];
 function openEditor(n) { editorBar = n; hideBarTip(0); renderEditor(); }
 window.__openEditor = openEditor;   // 시험 도구용(test/pwtieedit.cjs)
 function closeEditor() { editorBar = null; if (editorEl) { editorEl.remove(); editorEl = null; } }
@@ -3356,6 +3397,8 @@ function renderEditor() {
     const bi = raw.bars.findIndex(b => b.number === n); if (bi < 0) continue;
     const rb = raw.bars[bi], cb = cur.bars[bi], cfg = state.lineCfg[key] || {};
     const sec = tipNode('div', 'ed-line'); sec.append(tipNode('b', '', lineLabel(id) || `${key}번 줄`));
+    const pzLine = cfg.role === 'melody' && (cfg.inst === 'ajaeng' || cfg.inst === 'ajaeng_syn');   // 아쟁 주법(208번)
+    if (pzLine) sec.append(tipNode('div', 'ed-pzhint', '주법: 악보의 pizz.·arco를 따릅니다. 표시가 빠졌으면 음마다 \u2018여기부터 뜯기/활\u2019(다음 표시까지) 또는 \u2018이 음만\u2019을 고르세요.'));
     let has = false;
     for (const v of ['R', 'L']) {
       const rl = noteList(rb, v), cl = noteList(cb, v); if (!rl.length) continue;
@@ -3391,6 +3434,14 @@ function renderEditor() {
           tb.title = on ? '붙임줄을 풀어 다시 칩니다' : '앞 음(같은 높이)과 붙임줄로 이어, 다시 치지 않고 앞 음을 길게 울립니다'; tb.setAttribute('aria-pressed', on ? 'true' : 'false');
           tb.addEventListener('click', () => setEdit(key, bi, v, ord, re, { tie: !on }));
           row.append(tb);
+        }
+        if (pzLine && re.midis && re.midis.length) {   // 아쟁 주법: 뜯기(pizz.)·활(arco) — 악보에 표시가 빠진 곳을 고친다(208번)
+          const box = tipNode('span', 'ed-pz'), chip = tipNode('i', ce.pz ? 'on' : '', ce.pz ? '뜯기 pizz.' : '활 arco');
+          const ps = document.createElement('select'); ps.title = '주법: 뜯기(pizz.)·활(arco)'; ps.setAttribute('aria-label', '주법');
+          for (const [val, lab] of PZ_OPTS) { const o = document.createElement('option'); o.value = val; o.textContent = lab; ps.append(o); }
+          ps.value = (rec && rec.pz) || '';
+          ps.addEventListener('change', () => setEdit(key, bi, v, ord, re, { pz: ps.value }));
+          box.append(chip, ps); row.append(box);
         }
         if (changed) { const rv = tipNode('button', 'ed-rev', '↺ 되돌리기'); rv.type = 'button'; rv.addEventListener('click', () => setEdit(key, bi, v, ord, re, null)); row.append(rv); }
         sec.append(row);
@@ -3732,7 +3783,7 @@ async function buildAudio(onProgress, o = null, bg = false) {
   if (!forSave) state.dirty = false;   // 만드는 사이에 설정을 바꾸면 다시 true가 되어 다음 재생 때 다시 만든다
   percSounds();   // 타악 소리(음색 탭의 음색이 바뀌었으면 거른 사본으로)
   bankFailed.clear();
-  for (const v of Object.values(currentMelodic())) { const b = bankOf(v.inst); if (b) await loadBank(b); }
+  for (const v of Object.values(currentMelodic())) for (const b of banksOf(v.inst)) await loadBank(b);
   const failed = Object.values(currentMelodic()).map(v => bankOf(v.inst)).filter(b => b && bankFailed.has(b));
   if (failed.length) showMsg(`${[...new Set(failed)].map(b => INSTRUMENTS[b].name.replace(' (녹음)', '')).join(', ')} 녹음 소리를 받지 못해 합성음으로 연주합니다. 인터넷 연결을 확인하고 다시 재생해 보세요.`);
   const { from, to } = o, snd = soundOpts();
@@ -4892,7 +4943,7 @@ function applySelection(first = false) {
     const sourceScore = item?.sourceScore || sc;
     const sourceLineId = item && Object.prototype.hasOwnProperty.call(item, 'sourceLineId') ? item.sourceLineId : id;
     if (!state.lineRaw[k]) state.lineRaw[k] = sourceScore.xml ? analyzeXmlLine(sourceScore, sourceLineId) : alignRaw(sourceScore, sourceLineId, analyzeLine(sourceScore, sourceLineId));
-    if (!state.lineRes[k]) state.lineRes[k] = applyEdits(state.lineRaw[k], sourceScore, sourceLineId == null ? 'p' : String(sourceLineId));
+    if (!state.lineRes[k]) state.lineRes[k] = lineResOf(state.lineRaw[k], sourceScore, sourceLineId == null ? 'p' : String(sourceLineId));
     return { id, key: k, r: state.lineRes[k], sc: sourceScore };
   });
   for (const { key } of results) autoOct(key);
@@ -5567,13 +5618,30 @@ function buildMusicXml() {
         }
       }
       // 연주 지시 글자(pizz.·arco·div.·Solo·빠르게 등): 악보에서 읽은 자리에 그대로
+      // pizz.·arco에는 <sound pizzicato>를 붙여 피날레·뮤즈스코어도 뜯는 소리로 재생(208번). 음 수정으로 아쟁 주법을 고친 줄은
+      // 악보 글자 대신 고친 결과(음마다 e.pz)가 바뀌는 자리에 pizz.·arco를 새로 적는다
+      const pzEdited = !perc && state.bars.some(b => b.events.some(e => mine(e) && e.pzEd));
+      const pzSound = on => on == null ? '' : `<sound pizzicato="${on ? 'yes' : 'no'}"/>`;
       for (const w of (res && res.marks && res.marks.words) || []) {
         if (!(w.p0 >= 0) || !w.text) continue;
         const nt = w.text.replace(/\s+/g, ''), tt = (state.title || '').replace(/\s+/g, '');
         if (tt.length >= 2 && (nt === tt || (tt.length >= 3 && nt.includes(tt)))) continue;   // 쪽마다 위에 찍힌 곡 제목(머리글)은 빼기
         if (/^(([^\s,])\2+[,\s]*)+$/.test(w.text.trim())) continue;   // '세세'·'징징,징징'처럼 한 글자만 되풀이: 글꼴을 잘못 읽은 글자라 옮기지 않는다
+        const pw = perc ? null : pizzWord(w.text);
+        if (pzEdited && pw != null) continue;
         const [bi, pos] = atP(w.p0), latin = /^[A-Za-z .,()'"\-]+$/.test(w.text);
-        add(bi, pos, `<direction placement="${w.above === false ? 'below' : 'above'}"><direction-type><words${latin ? ' font-style="italic"' : ''}>${esc(w.text)}</words></direction-type>@STAFF@</direction>`);
+        add(bi, pos, `<direction placement="${w.above === false ? 'below' : 'above'}"><direction-type><words${latin ? ' font-style="italic"' : ''}>${esc(w.text)}</words></direction-type>@STAFF@${pzSound(pw)}</direction>`);
+      }
+      if (pzEdited) {
+        let on = false;
+        const evs = [];
+        state.bars.forEach((b, k) => b.events.forEach(e => { if (mine(e) && e.midis && e.midis.length && !e.tie) evs.push([k + e.t.v / (b.barLen.v || 1), !!e.pz]); }));
+        evs.sort((a, b) => a[0] - b[0]);
+        for (const [p, pz] of evs) {
+          if (pz === on) continue;
+          on = pz; const [bi, pos] = atP(p);
+          add(bi, pos, `<direction placement="above"><direction-type><words font-style="italic">${pz ? 'pizz.' : 'arco'}</words></direction-type>@STAFF@${pzSound(pz)}</direction>`);
+        }
       }
       return { ln, perc, pcb, oct, mine, allM, avg, res, lb: res ? res.bars : null, oneLine: !!(item && item.oneLine), cls, dirs, lastNote: new Map(), endAt: new Map(), ttPend: new Set() };
     });

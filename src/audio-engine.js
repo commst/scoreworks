@@ -282,9 +282,11 @@ export function renderPlan(bars, order, opts) {
         }
         // 스타카토: 적힌 길이의 절반쯤만 소리 내고 끊는다 (선율 악기)
         const sdur = e.stacc && !e.ten && opts.stacc !== false ? Math.max(0.06, Math.min(dsec * 0.5, 0.35)) : dsec;
-        const nt = { t: tsH, inst: mel.inst, midis, dur: sdur, gain: (e.accent ? ACC_MEL : 0.75) * dl * lg, line: e.line, voice: e.voice, bi,
+        // 아쟁 pizz.(뜯기, 208번): 앱이 악보의 pizz.~arco 구간과 음 수정의 '주법'으로 e.pz를 단다 → 뜯는 소리로, 농현 없이
+        const pz = !!e.pz && (mel.inst === 'ajaeng' || mel.inst === 'ajaeng_syn');
+        const nt = { t: tsH, inst: pz ? 'ajaeng_pizz' : mel.inst, midis, dur: sdur, gain: (e.accent ? ACC_MEL : 0.75) * dl * lg, line: e.line, voice: e.voice, bi,
           dynL: e.dynL || null, dynOff: e.dynOff || 0,
-          trem: !!e.roll && !e.trill, trill: e.trill && opts.trill !== false ? (e.trillInt || 2) : 0, nong: mel.nong === false ? false : e.vib ? 'force' : true,   // 'force': 농현 표시(물결선, 182번) — 길이와 상관없이 농현
+          trem: !!e.roll && !e.trill, trill: e.trill && opts.trill !== false ? (e.trillInt || 2) : 0, nong: pz || mel.nong === false ? false : e.vib ? 'force' : true,   // 'force': 농현 표시(물결선, 182번) — 길이와 상관없이 농현
           graces: e.graceMidis ? e.graceMidis.map(m => m + 12 * (mel.oct || 0) + (opts.shift || 0)) : null };
         notes.push(nt); for (const m of midis) lastOf.set(e.line + '|' + m, nt);
         continue;

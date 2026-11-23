@@ -1,6 +1,12 @@
 # ScoreWorks(옛 이름 합주연습기) 인수인계 메모
 
-새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-18, CHANGELOG 205번까지)
+새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-23, CHANGELOG 208번까지)
+
+## 208번(11-23) 아쟁 pizz.·arco — 끝남
+
+- 뜯기 소리 = 켠 아쟁 녹음 음색 + 뜯는 줄 합성(`tools/make_ajaeng_pizz.py` → banks/ajaeng_pizz, 사용자가 비교 4가지 중 1번을 고름). 실제 뜯은 녹음을 구하면 같은 이름 뱅크로 바꾸면 됨
+- 앱 `markPizz`(marks.words의 pizz.~arco + 수정 기록 pz: 'pf'·'af'·'p1'·'a1') → e.pz → renderPlan이 아쟁 줄만 ajaeng_pizz. 해석기는 그대로
+- 아쟁 주법을 건드리면 `node test/pizzmark.mjs` + `node test/pwpizz.cjs index.html [mobile]`(뒤 MusicXML은 /tmp/pwpizz-*.musicxml → xsdcheck.py)
 
 ## 남은 일 (11-18, 205번까지 — 사용자: 하지 말고 기록만)
 
