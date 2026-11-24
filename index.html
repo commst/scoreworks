@@ -193,6 +193,11 @@ body.picking .b, body.picking .sv-page, body.picking #svPages > * { cursor: cros
 .edit-dlg .ed-orig { font-size: 11.5px; color: var(--muted); }
 .edit-dlg select { padding: 4px 6px; border: 1px solid var(--line); border-radius: 7px; background: var(--card); font-size: 12.5px; }
 .edit-dlg .ed-warn { color: var(--warn); font-size: 12px; margin: 4px 0; }
+.perc-segs { display: grid; gap: 6px; margin-top: 4px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.perc-segs .ps-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.perc-segs .ps-row input[type=number] { width: 4.5em; }
+.perc-segs .ps-auto { margin: 0; }
+.perc-segs .ps-add { justify-self: start; }
 .edit-dlg .ed-pz { display: inline-flex; align-items: center; gap: 5px; }
 .edit-dlg .ed-pz i { font-style: normal; font-size: 12px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
 .edit-dlg .ed-pz i.on { background: color-mix(in srgb, var(--accent) 14%, var(--card)); border-color: var(--accent); color: var(--ink); }
@@ -1928,7 +1933,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 24일</h3>
-    <h4>기능 업데이트 <small>3</small></h4><ul class="hlist">
+    <h4>기능 업데이트 <small>4</small></h4><ul class="hlist">
+      <li><details><summary>타악 줄 마디별로 다른 악기 소리</summary><p>한 줄에 여러 타악기가 적힌 악보는 악보에 적힌 악기 이름(cym.·대북·windbell.·(징) 등)이 나오는 마디부터 그 악기 소리로 바꿔 칩니다. [악기] 탭에서 타악 줄을 펼치면 '구간별 소리' 표에서 마디마다 소리를 직접 정할 수 있고, ✎ 음 수정 창에서도 타악 음마다 '이 음만'·'여기부터' 소리를 고를 수 있습니다. MIDI·MusicXML에도 바꾼 악기로 들어갑니다.</p></details></li>
       <li><details><summary>글리산도(gliss.) 연주</summary><p>음표에서 비스듬히 오르내리는 글리산도 선(gliss.)과 비스듬한 물결선을 읽어, 가야금·거문고·양금·피아노는 그 곡의 음계를 따라 선 끝까지 줄을 훑는 소리로 연주합니다(예: 프론티어 가야금 20·52마디). 부는·켜는 악기는 아직 적힌 음만 냅니다.</p></details></li>
       <li><details><summary>빨간 선이 고른 빠르기로</summary><p>악보로 보기의 빨간 선이 마디 안에서 시간에 맞춰 고르게 움직여 메트로놈 박과 맞습니다. 예전처럼 음표 자리를 따라가게 하려면 도구줄의 '빨간 선 음표 따라'를 켜세요.</p></details></li>
       <li><details><summary>메트로놈 치는 단위 고르기</summary><p>[연주] 칸의 '메트로놈 치는 단위'에서 박마다·박 + 반박·4분음표마다·8분음표마다·16분음표마다를 고릅니다. 마디 첫 박은 강하게, 분박은 작게 칩니다.</p></details></li>
@@ -6110,7 +6116,7 @@ function renderPlan(bars, order, opts) {
   const BUKS = new Set(['북', '북녹음', '북짧게']), bukRef = {};
   const keyOf = (line, v) => (line != null ? opts.sounds[line + ':' + v] : undefined) ?? opts.sounds[v];
   for (const b of bars) for (const e of b.events) {
-    if (e.line == null || e.pos == null || e.tie || (opts.melodic && opts.melodic[e.line] && e.midis)) continue;
+    if (e.line == null || e.pos == null || e.tie || e.snd || (opts.melodic && opts.melodic[e.line] && e.midis)) continue;   // 다른 악기로 바꾼 음(210번)은 기본 북 자리 세기에서 뺌
     if (!(BUKS.has(keyOf(e.line, 'R')) && BUKS.has(keyOf(e.line, 'L')))) continue;
     const c = bukRef[e.line] || (bukRef[e.line] = {}); c[e.pos] = (c[e.pos] || 0) + 1;
   }
@@ -6216,7 +6222,8 @@ function renderPlan(bars, order, opts) {
         continue;
       }
       if (tied(e)) continue;
-      let key = (e.line != null ? opts.sounds[e.line + ':' + e.voice] : undefined) ?? opts.sounds[e.voice];
+      // e.snd: 마디별로 바꾼 타악 소리(210번 — 악보 글자·구간별 소리 표·음 수정). 없으면 줄 설정(윗성부·아랫성부 소리)
+      let key = e.snd || ((e.line != null ? opts.sounds[e.line + ':' + e.voice] : undefined) ?? opts.sounds[e.voice]);
       if (!key || key === 'off' || lg <= 0) continue;
       let ts = cur + clk(e.t.v);
       if (e.x != null) { const pd = (e.sus || e.dur).v; marks.push({ t: ts, e: ts + (e.t.v + pd <= L + 1e-9 ? clk(e.t.v + pd) - clk(e.t.v) : pd * s), bi, line: e.line, x: e.x }); }
@@ -6225,7 +6232,7 @@ function renderPlan(bars, order, opts) {
       if (e.ten && opts.stacc !== false) dl *= 1.08;   // 타악 테누토: 조금 세게
       if (key === '꽹과리' && e.xh) key = '꽹과리막음';
       if (BUKS.has(key)) {
-        if (e.line != null && bukRef[e.line] != null && e.pos != null) {
+        if (e.line != null && bukRef[e.line] != null && e.pos != null && !e.snd) {   // 높이로 북 소리 나누기는 줄 설정 소리일 때만
           const d = bukRef[e.line] - e.pos;   // 기본 북보다 몇 칸 위
           if (d >= 2) { key = keyOf(e.line, 'R'); sh = Math.max(-6, Math.min(6, 2 * (d - 4))); }
           else { key = keyOf(e.line, 'L'); sh = Math.max(-6, Math.min(6, 2 * d)); }
@@ -8058,7 +8065,8 @@ function applyEdits(raw, sc, srcKey) {
         applied++; e.edited = true;
         if (rec.m && e.midis) e.midis = rec.m.slice();
         if (rec.tie === true && e.midis && e.midis.length) { e.tie = true; e.tieEd = true; }   // 앞 음과 붙임줄로 잇기(168번)
-        if (rec.pz && e.midis && e.midis.length) e.pzEd = rec.pz;   // 아쟁 주법(208번): 'p1'·'a1' 이 음만 뜯기·활, 'pf'·'af' 여기부터 뜯기·활 — markPizz가 e.pz로
+        if (rec.pz && e.midis && e.midis.length) e.pzEd = rec.pz;
+        if (rec.ps) e.psEd = rec.ps;   // 타악 소리(210번): 'f:소리' 여기부터, '1:소리' 이 음만 — percSndMap이 e.snd로   // 아쟁 주법(208번): 'p1'·'a1' 이 음만 뜯기·활, 'pf'·'af' 여기부터 뜯기·활 — markPizz가 e.pz로
         if (rec.d) {
           const nd = parseFr(rec.d), delta = nd.sub(e.dur);
           if (e.sus) e.sus = e.sus.add(delta);
@@ -8106,6 +8114,102 @@ function markPizz(res) {
   return { ...res, bars, pizzUsed: true };
 }
 const lineResOf = (raw, sc, srcKey) => markPizz(applyEdits(raw, sc, srcKey));
+const PERC_NAME = /윈드\s*차임|윈드\s*벨|wind\s*(chime|bell)|w\.\s*chime|제금|봉고|bongo|탬버린|템버린|tamb|트라이앵글|triang|카바사|카바스|cabasa|마라카스|maracas|쉐이커|셰이커|shaker|장구|장고|북|대고|징|(?:^|[^가-힣])공(?:$|[^가-힣])|gong|tam-?\s*tam|꽹|쇠|심벌|cym|sym\b|sym\.|바라|타악|perc|drum|드럼|하이\s*햇|hi-?\s*hat|b\.\s*d\b|목탁|모듬|스네어|스내어|snare/i;
+// ----- 타악 줄 마디별 소리 바꾸기 (210번) -----
+// 한 줄에 여러 타악기가 적힌 악보(예: 미락흘 'Cymbals·windbell·징·대북', 바르도 '바라 / 트라이앵글 / 우드블럭')는 바뀌는 곳에 악기 이름을 적는다
+// ('cym.'·'대북'·'windbell.'·'(트라이앵글)'). 음마다 e.snd(소리 이름)를 정하는 순서: ① 악보 글자(자동, 줄마다 끌 수 있음 c.autoWords)
+// ② 줄 카드 '구간별 소리' 표(c.segs: [{bar, v: '*'|'R'|'L', snd}], 같은 마디면 글자보다 나중) ③ 음 수정(✎)의 '소리'(e.psEd: 'f:소리' 여기부터, '1:소리' 이 음만).
+// 다음 표시가 나올 때까지 이어지고, 소리가 정해지지 않은 음은 줄 설정(윗성부·아랫성부 소리)대로
+const PERC_GROUPS = [/꽹|쇠/, /징/, /심벌|cym|sym\b|crash/i, /바라|제금/, /장구|장고/, /윈드\s*(차임|벨)|wind\s*(chime|bell)|차임/i, /트라이앵글|triang/i, /탬버린|템버린|tamb/i,
+  /(?:^|[^가-힣])공(?:$|[^가-힣])|gong|tam-?\s*tam/i, /봉고|bongo/i, /팀파니|timp/i, /스네어|snare/i, /하이\s*햇|hi-?\s*hat/i, /카바사|cabasa|마라카스|maracas|쉐이커|셰이커|shaker/i, /북|대고|drum/i];
+// 글자 → 'reset'(줄 설정으로 — 악기 이름이 둘 이상, 예: '꽹과리 징') · [윗성부, 아랫성부] 소리 · null(악기 이름 아님: '타악 솔로', '북편' 등)
+function percWordSound(t) {
+  if (!PERC_NAME.test(t) || /타악|perc|편|solo|솔로/i.test(t)) return null;
+  if (PERC_GROUPS.filter(r => r.test(t)).length >= 2) return 'reset';
+  return percDefaults(t);
+}
+function percSndMap(key, r) {
+  const c = state.lineCfg[key]; if (!c || c.role !== 'perc' || !r || !r.bars) return null;
+  const item = state.lineList.find(l => cfgKey(l.id) === key), lineDef = percDefaults((item && item.label) || '');
+  const M = { R: [], L: [] }, add = (v, p, snd, pri) => { for (const x of v === 'R' || v === 'L' ? [v] : ['R', 'L']) M[x].push([p, snd, pri]); };
+  if (c.autoWords !== false) for (const w of (r.marks && r.marks.words) || []) {
+    const d = percWordSound(w.text || ''); if (!d || !(w.p0 >= 0)) continue;
+    const p = w.p0 - 0.03;   // 글자는 음 머리보다 조금 앞뒤에 찍힘
+    if (d === 'reset' || (d[0] === lineDef[0] && d[1] === lineDef[1])) add('*', p, null, 0);   // 줄 이름의 악기로 돌아옴 → 줄 설정(사용자가 고른 소리)대로
+    else { add('R', p, d[0], 0); add('L', p, d[1], 0); }
+  }
+  const byNum = new Map(); r.bars.forEach((b, i) => { if (!byNum.has(b.number)) byNum.set(b.number, i); });
+  for (const sg of c.segs || []) { const bi = byNum.get(+sg.bar); if (bi != null) add(sg.v, bi - 0.01, sg.snd || null, 1); }
+  const evs = [];
+  r.bars.forEach((b, bi) => b.events.forEach(e => { if (e.voice === 'R' || e.voice === 'L') evs.push({ e, p: bi + e.t.v / (b.barLen.v || 1) }); }));
+  for (const x of evs) { const ed = x.e.psEd; if (ed && ed[0] === 'f') add(x.e.voice, x.p - 1e-6, ed.slice(2) || null, 2); }
+  if (!M.R.length && !M.L.length && !evs.some(x => x.e.psEd)) return null;
+  const out = new Map();
+  for (const v of ['R', 'L']) {
+    const mk = M[v].sort((a, b) => a[0] - b[0] || a[2] - b[2]); let k = 0, cur = null;
+    for (const x of evs.filter(q => q.e.voice === v).sort((a, b) => a.p - b.p)) {
+      while (k < mk.length && mk[k][0] <= x.p) cur = mk[k++][1];
+      const ed = x.e.psEd, snd = ed && ed[0] === '1' ? ed.slice(2) : cur;
+      if (snd) out.set(x.e, snd);
+    }
+  }
+  return out;
+}
+const sndName = k => (SOUND_OPTIONS.find(o => o[0] === k) || [k, k])[1];
+// 합친 마디(state.bars)의 음 → 줄 해석 결과의 원래 음 (applySelection이 기록). 구간별 소리 표를 바꾸면 다시 합치지 않고 소리만 다시 정한다
+const EV_SRC = new WeakMap();
+// 줄 카드의 '구간별 소리' (210번): 악보 글자로 바뀐 곳 목록(읽기 전용) + 직접 넣는 표(시작 마디·성부·소리, [+]·[−]) + 글자 자동 켜고 끄기
+function percSegsUi(key, c) {
+  const box = document.createElement('div'); box.className = 'wide perc-segs';
+  const draw = () => {
+    box.innerHTML = '';
+    const head = document.createElement('div'); head.className = 'ps-head';
+    head.innerHTML = '<b>구간별 소리</b> <span class="hint">한 줄에 여러 타악기가 적힌 악보: 그 마디부터 다음 표시까지 다른 소리로</span>';
+    box.append(head);
+    const al = document.createElement('label'); al.className = 'chk';
+    al.innerHTML = '<input type="checkbox"> 악보에 적힌 악기 이름으로 바꾸기 <span class="hint">(cym.·대북·(징)처럼)</span>';
+    const ac = al.querySelector('input'); ac.checked = c.autoWords !== false;
+    ac.addEventListener('change', () => { c.autoWords = ac.checked ? undefined : false; segChanged(); });
+    box.append(al);
+    const r = state.lineRes[key], W = [];
+    if (r && r.marks && c.autoWords !== false) for (const w of r.marks.words || []) { const d = percWordSound(w.text || ''); if (d && w.p0 >= 0 && r.bars[Math.floor(w.p0)]) W.push(`${r.bars[Math.floor(w.p0)].number}마디 '${w.text.trim()}' → ${d === 'reset' ? '줄 설정' : d[0] === d[1] ? sndName(d[0]) : sndName(d[0]) + '·' + sndName(d[1])}`); }
+    if (W.length) { const p = document.createElement('p'); p.className = 'hint ps-auto'; p.textContent = '악보에서 읽음: ' + W.join(', '); box.append(p); }
+    const segs = c.segs || [];
+    segs.forEach((sg, i) => {
+      const row = document.createElement('div'); row.className = 'ps-row';
+      const bar = document.createElement('input'); bar.type = 'number'; bar.min = 1; bar.className = 'mini'; bar.value = sg.bar; bar.title = '이 마디부터'; bar.setAttribute('aria-label', '시작 마디');
+      bar.addEventListener('change', () => { sg.bar = Math.max(1, +bar.value || 1); segs.sort((a, b) => a.bar - b.bar); segChanged(); });
+      const vs = document.createElement('select'); vs.className = 'mini'; vs.setAttribute('aria-label', '성부');
+      for (const [v, l] of [['*', '두 성부'], ['R', '윗성부'], ['L', '아랫성부']]) { const o = document.createElement('option'); o.value = v; o.textContent = l; vs.append(o); }
+      vs.value = sg.v || '*'; vs.addEventListener('change', () => { sg.v = vs.value; segChanged(); });
+      const ss = document.createElement('select'); ss.className = 'mini'; ss.setAttribute('aria-label', '소리');
+      for (const [v, l] of [['', '줄 설정대로'], ...SOUND_OPTIONS]) { const o = document.createElement('option'); o.value = v; o.textContent = l; ss.append(o); }
+      ss.value = sg.snd || ''; ss.addEventListener('change', () => { sg.snd = ss.value; segChanged(); });
+      const del = document.createElement('button'); del.type = 'button'; del.className = 'mini'; del.textContent = '−'; del.title = '이 줄 지우기';
+      del.addEventListener('click', () => { segs.splice(i, 1); if (!segs.length) delete c.segs; segChanged(); draw(); });
+      const lab = document.createElement('span'); lab.textContent = '마디부터';
+      row.append(bar, lab, vs, ss, del); box.append(row);
+    });
+    const add = document.createElement('button'); add.type = 'button'; add.className = 'mini ps-add'; add.textContent = '+ 구간 추가';
+    add.addEventListener('click', () => {
+      const last = segs[segs.length - 1], from = +$('from').value || 1;
+      (c.segs = segs).push({ bar: last ? last.bar + 1 : from, v: '*', snd: '' }); segChanged(); draw();
+    });
+    box.append(add);
+  };
+  const segChanged = () => { if (c.segs && !c.segs.length) delete c.segs; changed(); scheduleAutoSave(); };
+  draw(); box._redraw = draw;   // 줄 카드는 줄을 해석하기 전에 그려질 수 있어 applySelection 뒤에 다시 그림(악보에서 읽은 곳 목록)
+  return box;
+}
+function refreshPercSnd() {
+  const maps = {};
+  for (const b of state.bars) for (const ev of b.events) {
+    if (ev.line == null) continue;
+    if (!(ev.line in maps)) maps[ev.line] = percSndMap(ev.line, state.lineRes[ev.line]);
+    const m = maps[ev.line], src = EV_SRC.get(ev), snd = m && src ? m.get(src) : undefined;
+    if (snd) ev.snd = snd; else delete ev.snd;
+  }
+}
 function srcInfo(key) {
   const item = state.lineList.find(l => cfgKey(l.id) === key);
   const sc = (item && item.sourceScore) || state.score;
@@ -8135,7 +8239,8 @@ function setEdit(key, bi, v, ord, rawEv, patch) {
     if (rec.d && rec.d === o.d) delete rec.d;
     if (rec.tie != null && !(rec.tie === true && !rawEv.tie) && !(rec.tie === false && rawEv.tie)) delete rec.tie;   // 원래와 같으면 지움
     if (!rec.pz) delete rec.pz;   // 주법 '악보대로'
-    if (rec.m || rec.d || rec.tie != null || rec.pz) B[id] = rec; else delete B[id];
+    if (!rec.ps) delete rec.ps;   // 타악 소리 '줄 설정대로'
+    if (rec.m || rec.d || rec.tie != null || rec.pz || rec.ps) B[id] = rec; else delete B[id];
   }
   if (!Object.keys(B).length) delete L[bi];
   if (!Object.keys(L).length) delete E.lines[srcKey];
@@ -8191,6 +8296,8 @@ function renderEditor() {
     const rb = raw.bars[bi], cb = cur.bars[bi], cfg = state.lineCfg[key] || {};
     const sec = tipNode('div', 'ed-line'); sec.append(tipNode('b', '', lineLabel(id) || `${key}번 줄`));
     const pzLine = cfg.role === 'melody' && (cfg.inst === 'ajaeng' || cfg.inst === 'ajaeng_syn');   // 아쟁 주법(208번)
+    const psm = cfg.role === 'perc' ? percSndMap(key, state.lineRes[key]) : null;   // 타악 마디별 소리(210번)
+    if (cfg.role === 'perc') sec.append(tipNode('div', 'ed-pzhint', '소리: 줄 설정·악보 글자·구간별 소리대로 납니다. 다른 악기로 치는 음은 \u2018이 음만\u2019 또는 \u2018여기부터\u2019(다음 표시까지)와 소리를 고르세요.'));
     if (pzLine) sec.append(tipNode('div', 'ed-pzhint', '주법: 악보의 pizz.·arco를 따릅니다. 표시가 빠졌으면 음마다 \u2018여기부터 뜯기/활\u2019(다음 표시까지) 또는 \u2018이 음만\u2019을 고르세요.'));
     let has = false;
     for (const v of ['R', 'L']) {
@@ -8212,7 +8319,7 @@ function renderEditor() {
           });
           if (rec && rec.m) row.append(tipNode('span', 'ed-orig', `원래 ${re.midis.map(pitchName).join('·')}`));
         } else if (!pitched) {
-          const snd = cfg[v] || (v === 'R' ? '윗성부' : '아랫성부');
+          const effS = (psm && psm.get(ce)) || cfg[v], snd = effS ? sndName(effS) : (v === 'R' ? '윗성부' : '아랫성부');
           row.append(tipNode('span', '', `${snd}${re.roll ? ' 굴림' : ''}${re.accent ? ' (강세)' : ''}`));
         } else row.append(tipNode('span', 'ed-orig', '쉼'));
         const sel = document.createElement('select'); sel.title = '음 길이'; sel.setAttribute('aria-label', '음 길이');
@@ -8235,6 +8342,18 @@ function renderEditor() {
           ps.value = (rec && rec.pz) || '';
           ps.addEventListener('change', () => setEdit(key, bi, v, ord, re, { pz: ps.value }));
           box.append(chip, ps); row.append(box);
+        }
+        if (cfg.role === 'perc') {   // 타악 소리 바꾸기(210번): 범위(이 음만·여기부터) + 소리 — 오선에 음높이로 적힌 타악 줄도
+          const box = tipNode('span', 'ed-pz'), cur0 = (rec && rec.ps) || '';
+          const sc0 = document.createElement('select'); sc0.title = '소리 바꾸기 범위'; sc0.setAttribute('aria-label', '소리 범위');
+          for (const [val, lab] of [['', '소리: 그대로'], ['1', '이 음만'], ['f', '여기부터']]) { const o = document.createElement('option'); o.value = val; o.textContent = lab; sc0.append(o); }
+          const ss = document.createElement('select'); ss.title = '이 음(부터)의 소리'; ss.setAttribute('aria-label', '소리');
+          for (const [val, lab] of SOUND_OPTIONS) { const o = document.createElement('option'); o.value = val; o.textContent = lab; ss.append(o); }
+          sc0.value = cur0 ? cur0[0] : ''; ss.value = cur0 ? cur0.slice(2) : ((psm && psm.get(ce)) || cfg[v] || '따');
+          ss.disabled = !cur0;
+          const put = () => { ss.disabled = !sc0.value; setEdit(key, bi, v, ord, re, { ps: sc0.value ? sc0.value + ':' + ss.value : '' }); };
+          sc0.addEventListener('change', put); ss.addEventListener('change', () => { if (sc0.value) put(); });
+          box.append(sc0, ss); row.append(box);
         }
         if (changed) { const rv = tipNode('button', 'ed-rev', '↺ 되돌리기'); rv.type = 'button'; rv.addEventListener('click', () => setEdit(key, bi, v, ord, re, null)); row.append(rv); }
         sec.append(row);
@@ -8440,7 +8559,6 @@ function percDefaults(name) {
   if (/카바사|카바스|cabasa|마라카스|maracas|쉐이커|셰이커|shaker/i.test(name)) return ['카바사', '카바사'];
   return ['따', '궁'];
 }
-const PERC_NAME = /윈드\s*차임|윈드\s*벨|wind\s*(chime|bell)|w\.\s*chime|제금|봉고|bongo|탬버린|템버린|tamb|트라이앵글|triang|카바사|카바스|cabasa|마라카스|maracas|쉐이커|셰이커|shaker|장구|장고|북|대고|징|(?:^|[^가-힣])공(?:$|[^가-힣])|gong|tam-?\s*tam|꽹|쇠|심벌|cym|sym\b|sym\.|바라|타악|perc|drum|드럼|하이\s*햇|hi-?\s*hat|b\.\s*d\b|목탁|모듬|스네어|스내어|snare/i;
 function defaultCfg(l, firstMelody) {
   const pitched = l.clef === 'pitched';
   const perc = !pitched || PERC_NAME.test(l.label || '');
@@ -8583,6 +8701,7 @@ async function buildAudio(onProgress, o = null, bg = false) {
   const full = (state.manualOrder || playbackOrder(state.bars, { repeats: o.repeats })).filter(k => state.bars[k]);
   let order = full.filter(k => state.bars[k].number >= from && state.bars[k].number <= to);
   if (!order.length) order = state.bars.map((b, i) => i).filter(k => state.bars[k].number >= from && state.bars[k].number <= to);
+  refreshPercSnd();   // 구간별 소리 표·글자 자동 설정이 바뀌었을 수 있음(210번)
   const plan = renderPlan(state.bars, order, {
     tempoRows: state.tempoRows, speed: o.speed / 100, sounds: currentSounds(), useLvl: o.dyn,
     melodic: currentMelodic(), lineGain: currentGains(),
@@ -9155,7 +9274,7 @@ function settingsKey() {
 }
 // 줄을 가리키는 열쇠: 더한 악보·파트보는 그 PDF 지문으로(올릴 때마다 바뀌는 번호가 아니라)
 function stableKey(l) { return l.sourceScore ? l.sourceScore.fp + ':' + (l.sourceLineId == null ? 'p' : l.sourceLineId) : 'main:' + cfgKey(l.id); }
-const CFG_FIELDS = ['role', 'inst', 'oct', 'octUser', 'vol', 'R', 'L', 'nong', 'pan', 'pairOff', 'rename'];
+const CFG_FIELDS = ['role', 'inst', 'oct', 'octUser', 'vol', 'R', 'L', 'nong', 'pan', 'pairOff', 'rename', 'segs', 'autoWords'];   // segs·autoWords: 타악 구간별 소리(210번)
 function readSettings(key) { if (!key) return null; try { const t = localStorage.getItem(SET_KEY + key); return t ? JSON.parse(t) : null; } catch (e) { return null; } }
 function collectSettings() {
   const lines = {};
@@ -9775,7 +9894,7 @@ function applySelection(first = false) {
     const name = lineLabel(id);
     r.bars.forEach((b, bi) => {
       const k = byNum.get(b.number); if (k == null) return;
-      for (const e of b.events) bars[k].events.push({ ...e, line: key, lvl: dynLevelAt(r.marks.dyn, bi + e.t.v / b.barLen.v), dynL: r.marks.dyn, dynOff: bi - k });   // dynL·dynOff: 트레몰로처럼 긴 음 안의 셈여림 변화용(그 줄의 셈여림, 기준 줄과 마디 번호 차이)
+      for (const e of b.events) { const ev = { ...e, line: key, lvl: dynLevelAt(r.marks.dyn, bi + e.t.v / b.barLen.v), dynL: r.marks.dyn, dynOff: bi - k }; EV_SRC.set(ev, e); bars[k].events.push(ev); }   // dynL·dynOff: 트레몰로처럼 긴 음 안의 셈여림 변화용(그 줄의 셈여림, 기준 줄과 마디 번호 차이)
       for (const w of b.warnings) bars[k].warnings.push(multi ? `${name}: ${w}` : w);
       for (const h of hiddenGaps(b)) (bars[k].hidden = bars[k].hidden || []).push({ ...h, line: key });
       // 음이 남음(196번): 이 줄이 박자표보다 길게 읽혀 마디를 늘린 길이
@@ -9806,6 +9925,8 @@ function applySelection(first = false) {
   for (const b of bars) if (b.events.length && (b.note === '쉼' || b.note === '롤 연장')) b.note = '';
   const prevBars = state.bars;
   state.bars = bars;
+  refreshPercSnd();   // 타악 마디별 소리(210번)
+  document.querySelectorAll('.perc-segs').forEach(x => { if (x._redraw && !x.contains(document.activeElement)) x._redraw(); });
   // 악보 보기: 기준 줄의 마디 위치. 추가한 악보가 기준 줄이 되면 다른 PDF가 보이므로, 마디 수가 같으면 올린 총보의 줄을 쓰고, 앞서 쓰던 줄이 그대로 맞으면 그 줄을 계속 쓴다
   {
     const okGeo = x => x && x.r.geo && x.sc && x.sc.doc && x.r.bars.length === master.r.bars.length;
@@ -9961,6 +10082,7 @@ function renderLineList() {
       const pc = pl.querySelector('input'); pc.checked = !c.pairOff;
       pc.addEventListener('change', () => { c.pairOff = !pc.checked; scheduleAutoSave(); });
       cfg.appendChild(pl);
+      cfg.appendChild(percSegsUi(key, c));   // 구간별 소리(210번)
     }
     if (c.role !== 'off') {
       const v = document.createElement('div'); v.className = 'wide k-vol';
@@ -10132,6 +10254,7 @@ function downloadBytes(data, name, type) {
 }
 // MIDI: 연주 순서(도돌이표대로 반복 설정을 따름)대로 펼친 전곡. 줄마다 한 트랙, 타악은 10번 채널(GM 드럼). 빠르기 표·박자표 반영(rit.·accel.·연습 속도는 넣지 않음)
 function buildMidi() {
+  refreshPercSnd();   // 구간별 소리를 바꾼 뒤 재생하지 않고 바로 내보내도 반영(210번)
   const TPQ = 480, W = TPQ * 4, lines = exportLines();
   const order = (state.manualOrder || playbackOrder(state.bars, { repeats: $('optRepeat').checked })).filter(k => state.bars[k]);
   const meta = [], tracks = lines.map(() => []);
@@ -10155,7 +10278,7 @@ function buildMidi() {
             const nt = { start: t0, end: t0 + dur, m, v: e.accent ? 112 : 80 }; tracks[li].push(nt); open[li].set(m, nt);
           }
         } else if (ln.c.role === 'perc' && !e.tie) {
-          const key = ln.c[e.voice === 'L' ? 'L' : 'R']; const m = GM_DRUM[key]; if (!m || key === 'off') continue;
+          const key = e.snd || ln.c[e.voice === 'L' ? 'L' : 'R']; const m = GM_DRUM[key];   // e.snd: 마디별로 바꾼 소리(210번) if (!m || key === 'off') continue;
           const dur = Math.max(30, Math.min(Math.round(e.dur.v * W), TPQ));
           tracks[li].push({ start: t0, end: t0 + dur, m, v: e.accent ? 115 : key === '꽹과리막음' ? 60 : 84, drum: true });
         }
@@ -10200,6 +10323,7 @@ function buildMidi() {
 // 그 밖에 셈여림(p·f·꺾쇠·cresc.)을 그 자리에, 빠르기(♩.=52 등)·rit.·accel.·a tempo, 연습 번호, 늘임표, 1·2번 괄호, 세뇨·코다·D.S.·D.C.·Fine,
 // 같은 마디 되풀이(%), 여러 마디 쉼(파트보), 못갖춘마디, 원래 악보의 줄 바꿈·쪽 바꿈
 function buildMusicXml() {
+  refreshPercSnd();   // 구간별 소리를 바꾼 뒤 재생하지 않고 바로 내보내도 반영(210번)
   // 4분음표 = 3360: 2·3·5·7로 나뉘어 셋잇단·다섯잇단·일곱잇단과 128분음표까지 정확히 (예전 96은 다섯·일곱잇단을 적지 못해 1~2짜리 조각이 생겼다)
   const DIV = 3360, Q = DIV, W = DIV * 4, lines = exportLines(), esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const NAT = [0, 2, 4, 5, 7, 9, 11], LET = 'CDEFGAB';
@@ -10303,8 +10427,10 @@ function buildMusicXml() {
     const c = g.lines[0].c;
     if (c.role === 'perc') {
       const keys = []; for (const ln of g.lines) for (const v of ['R', 'L']) { const k = ln.c[v]; if (k && k !== 'off' && !keys.includes(k)) keys.push(k); }
+      // 마디별로 바꾼 소리(210번)도 악기로 — 피날레·뮤즈스코어에서 그 음은 그 악기 소리로
+      const lk = new Set(g.lines.map(ln => ln.key)); for (const b of state.bars) for (const e of b.events) if (e.snd && e.snd !== 'off' && lk.has(e.line) && !keys.includes(e.snd)) keys.push(e.snd);
       g.inst = keys.map((k, j) => ({ id: `P${i + 1}-I${j + 1}`, key: k, name: (SOUND_OPTIONS.find(o => o[0] === k) || [k, k])[1], midi: GM_DRUM[k] || 38 }));
-      g.instOf = (ln, voice) => { const k = ln.c[voice === 'L' ? 'L' : 'R']; const x = g.inst.find(o => o.key === k); return x ? x.id : null; };
+      g.instOf = (ln, voice, e) => { const k = (e && e.snd) || ln.c[voice === 'L' ? 'L' : 'R']; const x = g.inst.find(o => o.key === k); return x ? x.id : null; };
     } else { chan++; if (chan === 10) chan++; g.chan = ((chan - 1) % 16) + 1; }
   });
   let gi = 0;
@@ -10538,7 +10664,7 @@ function buildMusicXml() {
             ps.forEach((pd, pi) => {
               heads.forEach((h, j) => {
                 const idx = h.pos != null ? mid - h.pos : e.voice === 'L' ? mid - 3 : mid + 1;
-                objs.push({ d: pd, voice, st: p, perc: true, inst: g.instOf ? g.instOf(S.ln, e.voice) : null, chord: j > 0, low: e.voice === 'L', dstep: LET[((idx % 7) + 7) % 7], doct: Math.floor(idx / 7), accent: pi === 0 && e.accent, xh: h.xh, stacc: pi === ps.length - 1 && e.stacc, roll: pi === 0 && e.roll && !!e.rollDur, trill: pi === 0 && e.roll && !e.rollDur, twoV, tieStart: pi < ps.length - 1, tieStop: pi > 0, inner: pi > 0 });   // 굴림: 빗금(트레몰로)으로 적힌 것은 빗금, tr로 적힌 것은 tr
+                objs.push({ d: pd, voice, st: p, perc: true, inst: g.instOf ? g.instOf(S.ln, e.voice, e) : null, chord: j > 0, low: e.voice === 'L', dstep: LET[((idx % 7) + 7) % 7], doct: Math.floor(idx / 7), accent: pi === 0 && e.accent, xh: h.xh, stacc: pi === ps.length - 1 && e.stacc, roll: pi === 0 && e.roll && !!e.rollDur, trill: pi === 0 && e.roll && !e.rollDur, twoV, tieStart: pi < ps.length - 1, tieStop: pi > 0, inner: pi > 0 });   // 굴림: 빗금(트레몰로)으로 적힌 것은 빗금, tr로 적힌 것은 tr
               });
               p += pd;
             });
@@ -11955,7 +12081,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-24 06:39';
+const APP_VERSION = '2026-11-24 09:13';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();

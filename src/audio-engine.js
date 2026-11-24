@@ -213,7 +213,7 @@ export function renderPlan(bars, order, opts) {
   const BUKS = new Set(['북', '북녹음', '북짧게']), bukRef = {};
   const keyOf = (line, v) => (line != null ? opts.sounds[line + ':' + v] : undefined) ?? opts.sounds[v];
   for (const b of bars) for (const e of b.events) {
-    if (e.line == null || e.pos == null || e.tie || (opts.melodic && opts.melodic[e.line] && e.midis)) continue;
+    if (e.line == null || e.pos == null || e.tie || e.snd || (opts.melodic && opts.melodic[e.line] && e.midis)) continue;   // 다른 악기로 바꾼 음(210번)은 기본 북 자리 세기에서 뺌
     if (!(BUKS.has(keyOf(e.line, 'R')) && BUKS.has(keyOf(e.line, 'L')))) continue;
     const c = bukRef[e.line] || (bukRef[e.line] = {}); c[e.pos] = (c[e.pos] || 0) + 1;
   }
@@ -319,7 +319,8 @@ export function renderPlan(bars, order, opts) {
         continue;
       }
       if (tied(e)) continue;
-      let key = (e.line != null ? opts.sounds[e.line + ':' + e.voice] : undefined) ?? opts.sounds[e.voice];
+      // e.snd: 마디별로 바꾼 타악 소리(210번 — 악보 글자·구간별 소리 표·음 수정). 없으면 줄 설정(윗성부·아랫성부 소리)
+      let key = e.snd || ((e.line != null ? opts.sounds[e.line + ':' + e.voice] : undefined) ?? opts.sounds[e.voice]);
       if (!key || key === 'off' || lg <= 0) continue;
       let ts = cur + clk(e.t.v);
       if (e.x != null) { const pd = (e.sus || e.dur).v; marks.push({ t: ts, e: ts + (e.t.v + pd <= L + 1e-9 ? clk(e.t.v + pd) - clk(e.t.v) : pd * s), bi, line: e.line, x: e.x }); }
@@ -328,7 +329,7 @@ export function renderPlan(bars, order, opts) {
       if (e.ten && opts.stacc !== false) dl *= 1.08;   // 타악 테누토: 조금 세게
       if (key === '꽹과리' && e.xh) key = '꽹과리막음';
       if (BUKS.has(key)) {
-        if (e.line != null && bukRef[e.line] != null && e.pos != null) {
+        if (e.line != null && bukRef[e.line] != null && e.pos != null && !e.snd) {   // 높이로 북 소리 나누기는 줄 설정 소리일 때만
           const d = bukRef[e.line] - e.pos;   // 기본 북보다 몇 칸 위
           if (d >= 2) { key = keyOf(e.line, 'R'); sh = Math.max(-6, Math.min(6, 2 * (d - 4))); }
           else { key = keyOf(e.line, 'L'); sh = Math.max(-6, Math.min(6, 2 * d)); }

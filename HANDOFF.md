@@ -1,6 +1,11 @@
 # ScoreWorks(옛 이름 합주연습기) 인수인계 메모
 
-새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-24, CHANGELOG 209번까지)
+새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-24, CHANGELOG 210번까지)
+
+## 210번(11-24) 타악 마디별 소리 — 끝남
+
+- percWordSound(악보 글자) + c.segs(줄 카드 표) + 수정 기록 ps → percSndMap → refreshPercSnd(e.snd, EV_SRC) → renderPlan·MIDI·MusicXML. 시험 `node test/percsnd.mjs`, `node test/pwpercsnd.cjs index.html [mobile]`(미락흘 Cymbals 파트보 004d79b5)
+- 남은 것: 칸 자리(오선 높이)별로 악기를 나누는 악보는 아직 윗·아랫성부·X 머리로만 — 사용자 악보가 이런 꼴이면 '칸 자리별 소리'를 더할 것
 
 ## 209번(11-24) 사용자 제보 6가지 — 끝남, 답 기다리는 것 2가지
 
