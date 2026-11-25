@@ -240,6 +240,20 @@ body.picking .b, body.picking .sv-page, body.picking #svPages > * { cursor: cros
 .sv-tools .zoom button { min-width: 34px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--card); color: var(--ink); font: 600 13px/1.2 var(--font-body); cursor: pointer; }
 .sv-wrap { position: relative; height: min(78vh, 980px); overflow: auto; border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--paper) 70%, #8884); padding: 10px; overscroll-behavior: contain; }
 .sv-wrap:has(> .sv-empty) { height: auto; }
+/* 인식 악보(Verovio로 그린 오선보)와 나란히 보기 — 213번 */
+.sv-panes.side { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.sv-panes.side.rows { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.sv-panes.side.rows > .sv-wrap { height: calc(min(78vh, 980px) / 2); }
+.rec-wrap { background: #fff; padding: 6px 4px; }
+.rec-sheet { position: relative; }
+.rec-chunk { position: relative; overflow: hidden; cursor: pointer; }
+.rec-chunk svg { display: block; width: 100%; height: auto; color: #111; }
+.sv-editing .rec-chunk { cursor: cell; }
+.rec-wrap .sv-hl, .rec-wrap .sv-cur, .rec-wrap .sv-ehl, .rec-wrap .sv-mark { position: absolute; }
+.rec-wrap g.note.rec-on, .rec-wrap g.note.rec-on * { fill: var(--c, #e0442a); stroke: var(--c, #e0442a); }
+.rec-msg { padding: 30px 12px; text-align: center; color: var(--muted); font-size: 14px; }
+.rec-msg button { margin-top: 10px; }
+.view-switch button[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
 .sv-page { position: relative; margin: 0 auto 12px; background: #fff; box-shadow: 0 1px 4px #0003; cursor: pointer; }
 .sv-page canvas { display: block; width: 100%; height: 100%; }
 .sv-page .sv-pno { position: absolute; right: 6px; bottom: 4px; font-size: 11px; color: #888; pointer-events: none; }
@@ -970,6 +984,7 @@ body.files-open .lv-inner, body.help-open .hv-inner { max-width: 900px; margin: 
 .stage .view-switch { display: inline-grid; width: auto; grid-auto-flow: column; grid-template-columns: none; border: 0; border-radius: 9px; background: var(--chip); padding: 3px; margin: 0 0 8px; gap: 2px; }
 .stage .view-switch button { padding: 7px 16px; border-radius: 7px; font-size: 14px; background: transparent; color: var(--ink); border: 0 !important; }
 .stage .view-switch button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+@media (max-width: 600px) { .stage .view-switch button { padding: 7px 10px; font-size: 13px; } }
 .drop { background: var(--drop-bg); border-color: var(--drop-line); }
 
 /* 태블릿 가로 */
@@ -1076,6 +1091,11 @@ body.files-open .app2 > #msg, body.help-open .app2 > #msg, body.sheet-open .app2
 /* 악보로 보기: 악보 칸이 화면 남은 높이를 다 쓰게 */
 #scoreView { scroll-margin-top: calc(var(--tbh) + 6px); }
 body.sv-mode .score-view:not(.sv-full) .sv-wrap { height: calc(100vh - var(--tbh) - var(--dockh) - 72px); height: calc(100dvh - var(--tbh) - var(--dockh) - 72px); min-height: 260px; }
+body.sv-mode .score-view:not(.sv-full) .sv-panes.side.rows > .sv-wrap { height: calc((100dvh - var(--tbh) - var(--dockh) - 78px) / 2); min-height: 160px; }
+.score-view.sv-full .sv-panes { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.score-view.sv-full .sv-panes.side { display: grid; grid-template-rows: minmax(0, 1fr); }
+.score-view.sv-full .sv-panes.side.rows { grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
+.score-view.sv-full .sv-panes > .sv-wrap { flex: 1; height: auto; min-height: 0; }
 @media (max-width: 900px) {
   body.sv-mode .stage .summary, body.sv-mode .stage .bar-actions, body.sv-mode .stage .bars-panel > details.help, body.sv-mode .stage .warnlist { display: none; }
   .sv-tools { gap: 6px 8px; margin: 4px 0 6px; }
@@ -1083,6 +1103,7 @@ body.sv-mode .score-view:not(.sv-full) .sv-wrap { height: calc(100vh - var(--tbh
   .sv-tools .zoom { font-size: 0; } .sv-tools .zoom > * { font-size: 13px; }
   .sv-tools .sv-part select { max-width: 9.5em; }
   body.sv-mode .score-view:not(.sv-full) .sv-wrap { height: calc(100dvh - var(--tbh) - var(--dockh) - 96px); }
+  body.sv-mode .score-view:not(.sv-full) .sv-panes.side.rows > .sv-wrap { height: calc((100dvh - var(--tbh) - var(--dockh) - 102px) / 2); min-height: 140px; }
 }
 /* 휴대폰 가로처럼 낮은 화면: 연주 막대를 두 줄로 줄이고 설정 서랍은 왼쪽에서 */
 @media (max-width: 900px) and (max-height: 540px) {
@@ -1374,6 +1395,10 @@ body, button, input, select, textarea { font-family: var(--font-body); }
     <dl>
       <dt>MusicXML 올리기</dt>
       <dd>PDF 말고 <b>MusicXML</b>(.musicxml, .xml, 압축된 .mxl) 파일도 총보·파트보·악보 추가 칸에 그대로 올릴 수 있습니다. 뮤즈스코어·도리코·시벨리우스·피날레에서 '내보내기 → MusicXML'로 만든 파일입니다. 음 높이·길이·빠르기·셈여림·도돌이표·연습 번호가 파일에 그대로 들어 있어 PDF처럼 잘못 읽는 일이 없습니다. 파트(악기)마다 한 줄이고, 피아노처럼 오선이 둘인 파트는 윗줄·아랫줄로 나뉩니다. 쪽 그림이 없어 악보로 보기는 안 되고 마디맵으로 봅니다. PDF와 섞어 올려도 됩니다.</dd>
+      <dt>원본 PDF · 인식 악보 · 나란히</dt>
+      <dd>악보 칸 위의 [원본 PDF · 인식 악보 · 나란히 · 마디맵]으로 볼 것을 고릅니다. <b>인식 악보</b>는 프로그램이 읽어 낸 내용(내보낼 MusicXML과 같은 것)을 깨끗한 오선보로 그려 보여 주고, <b>나란히</b>는 원본 PDF와 인식 악보를 함께 놓아(컴퓨터는 좌우, 세로로 긴 화면은 위아래) 틀리게 읽은 곳을 눈으로 견줄 수 있게 합니다. 한쪽을 넘기면 다른 쪽도 같은 마디로 따라옵니다.
+        두 보기 모두 재생하면 지금 마디(노란 칸)·빨간 선·소리 나는 음표를 따라가고, 마디를 누르면 그 마디부터 재생합니다. [✎ 음 고치기]·'OO만' 보기·크기 −/+도 함께 씁니다. 휴대폰은 처음에 첫 줄 하나만 보여 줍니다('보기'에서 '총보 전체'로 바꿀 수 있음).
+        MusicXML로 올린 악보처럼 쪽 그림이 없는 악보도 인식 악보로 볼 수 있습니다. 인식 악보를 처음 열 때 악보 그리기 도구(약 2MB)를 한 번 받습니다.</dd>
       <dt>1. 올리기</dt>
       <dd>새 악보를 올리거나 같은 악보를 다시 올리면 앞 악보의 정보를 모두 지우고 새로 읽습니다(저장해 둔 이 악보의 설정·음 수정은 다시 불러옴). 읽을 수 없는 악보(스캔 PDF·손상된 파일)는 이유를 보여 주고 첫 화면으로 돌아갑니다.
         총보 PDF를 올리면 악보를 읽은 뒤 왼쪽 <b>[악기]</b> 탭(휴대폰·태블릿은 아래 [악기] 단추)에 악보 줄이 위에서부터 차례로 나옵니다. 줄마다 악보에 적힌 이름과 그 줄의 첫 단 그림이 보입니다. 이름이 잘리거나 없으면 그림으로 확인하세요. 같은 카드의 <b>악보 추가</b>로 총보에 없는 악기(피아노·건반 등)의 악보를 더 올려 함께 연주할 수 있습니다. 총보에 있는 악기를 파트보로 바꾸고 싶으면, [악기] 탭에서 그 줄을 <b>끄기</b>로 하고 그 악기의 파트보를 악보 추가로 올리면 됩니다(총보의 줄 대신 파트보 줄이 연주됨).</dd>
@@ -1828,8 +1853,10 @@ body, button, input, select, textarea { font-family: var(--font-body); }
         <h2 id="tBars">마디맵</h2>
       </div>
       <div class="view-switch" role="group" aria-label="보기 방식">
-        <button type="button" id="viewScore" aria-pressed="false">악보로 보기</button>
-        <button type="button" id="viewMap" aria-pressed="true">마디맵으로 보기</button>
+        <button type="button" id="viewScore" aria-pressed="false" title="올린 악보 PDF를 그대로 봅니다">원본 PDF</button>
+        <button type="button" id="viewRec" aria-pressed="false" title="읽어 낸 내용(내보낼 MusicXML)을 오선보로 그려 봅니다">인식 악보</button>
+        <button type="button" id="viewSide" aria-pressed="false" title="원본 PDF와 인식 악보를 나란히 놓고 같은 마디를 함께 봅니다">나란히</button>
+        <button type="button" id="viewMap" aria-pressed="true">마디맵</button>
       </div>
       <div class="legend map-only"><span><span class="dot R"></span>윗성부</span><span><span class="dot L"></span>아랫성부</span></div>
       <div class="summary" id="summary"></div>
@@ -1842,8 +1869,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       <details class="help">
         <summary>설명 보기</summary>
         <dl>
-          <dt>악보로 보기 · 마디맵으로 보기</dt>
-          <dd>위의 [악보 / 마디맵] 단추로 두 가지 보기를 고릅니다. <b>마디맵으로 보기</b>는 마디마다 칸으로 리듬을 보여 주고, <b>악보로 보기</b>는 올린 악보 PDF를 그대로 보여 줍니다.
+          <dt>원본 PDF · 인식 악보 · 나란히 · 마디맵</dt>
+          <dd>위의 단추로 보기를 고릅니다. <b>원본 PDF</b>는 올린 악보 PDF를 그대로, <b>인식 악보</b>는 읽어 낸 내용(내보낼 MusicXML)을 오선보로 그려, <b>나란히</b>는 둘을 함께(컴퓨터는 좌우, 세로로 긴 화면은 위아래 — 한쪽을 넘기면 다른 쪽도 같은 마디로) 보여 줍니다. <b>마디맵</b>은 마디마다 칸으로 리듬을 보여 줍니다. 쪽 그림이 없는 악보(MusicXML로 올린 악보·예시 장단)는 인식 악보로 봅니다.
             악보 보기에서는 연주하는 동안 지금 마디가 노란 칸, 지금 위치가 빨간 선으로 음표를 따라 움직이고, 다음 단·다음 쪽으로 넘어가면 악보 칸이 따라 내려갑니다(화면 전체는 움직이지 않음). '연주 위치 따라가기'를 끄면 악보를 직접 넘겨 볼 수 있습니다.
             악보를 누르면 그 마디부터 재생하고, [−]·[+]로 크기를 바꿉니다(휴대폰에서 총보가 작으면 키워 보세요). <b>[전체화면 보기]</b>를 누르면 화면 전체에 악보만 보이고, 아래 연주 막대(■ 정지 · ▶ 재생 · 지금 마디와 진행 막대 · 마디 이동 ◀◀ [n] ▶▶ · 속도 −/+)로 연주를 다룹니다(위쪽 ✕ 닫기나 Esc로 돌아옴). <b>음표 따라가기</b>를 켜 두면 재생 중 소리 나는 음표 머리가 악기 갈래 색으로 바뀝니다. 고른 보기와 크기는 이 기기에 기억됩니다.
             총보는 켠 줄 가운데 기준 줄이 있는 단 전체를 표시합니다. 예시 장단과 마디 위치를 읽지 못한 악보는 악보 보기를 할 수 없습니다.</dd>
@@ -1877,7 +1904,10 @@ body, button, input, select, textarea { font-family: var(--font-body); }
           <button type="button" class="btn sv-more" id="svMore" aria-expanded="false" aria-controls="scoreView" title="따라가기·숨은 쉼표·겹쳐 보기·전체화면 같은 보기 설정을 펼치고 접습니다">보기 설정 ▾</button>
         </div>
         <p class="sv-edit-hint" id="svEditHint" hidden>✎ 음 고치기 중: 고칠 마디를 누르면 음정·음 길이를 고치는 창이 열립니다. 다 고쳤으면 [✎ 음 고치기]를 다시 눌러 끄세요(끄면 마디를 눌러 그 마디부터 재생).</p>
-        <div class="sv-wrap" id="svWrap" tabindex="0" role="region" aria-label="악보 쪽"></div>
+        <div class="sv-panes" id="svPanes">
+          <div class="sv-wrap" id="svWrap" tabindex="0" role="region" aria-label="악보 쪽"></div>
+          <div class="sv-wrap rec-wrap" id="recWrap" tabindex="0" role="region" aria-label="인식 악보" hidden></div>
+        </div>
         <div class="sv-fdock sv-only-full" role="region" aria-label="전체화면 연주 막대">
           <button class="dock-stop" id="svfStop" type="button" aria-label="재생 정지(처음으로)" title="정지(처음으로)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12v12H6z"/></svg></button>
           <button class="play" id="svPlay" type="button" aria-label="재생" title="재생 · 일시정지 (스페이스바)"><svg viewBox="0 0 24 24" id="svfIcon" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg></button>
@@ -1933,7 +1963,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 25일</h3>
-    <h4>기능 업데이트 <small>2</small></h4><ul class="hlist">
+    <h4>기능 업데이트 <small>3</small></h4><ul class="hlist">
+      <li><details><summary>인식 악보 보기 · 나란히 보기</summary><p>악보 칸 위 단추가 <b>[원본 PDF · 인식 악보 · 나란히 · 마디맵]</b>이 됐습니다. <b>인식 악보</b>는 프로그램이 읽어 낸 내용(내보낼 MusicXML과 같은 것)을 깨끗한 오선보로 그려 보여 주고, <b>나란히</b>는 원본 PDF와 함께 놓아 틀리게 읽은 곳을 쉽게 찾게 합니다(한쪽을 넘기면 다른 쪽도 같은 마디로). 재생하면 지금 마디·소리 나는 음표를 따라가고, 마디를 누르면 거기부터 재생합니다. 음을 고치면 고친 마디가 바로 다시 그려집니다. MusicXML로 올린 악보도 이제 악보로 볼 수 있습니다. 휴대폰은 처음에 첫 줄 하나만 크게 보여 줍니다.</p></details></li>
       <li><details><summary>새 이름 ScoreWorks Studio</summary><p>악보를 대조하고 고쳐 쓰는 기능(오선보로 보기·편집·율명·정간보)을 차례로 더해 가면서 이름을 <b>ScoreWorks Studio</b>로 바꿨습니다. 주소와 저장한 설정·음 수정은 그대로입니다.</p></details></li>
       <li><details><summary>휴대폰 화면 정리</summary><p>휴대폰 악보로 보기에서 따라가기·숨은 쉼표·겹쳐 보기 같은 설정과 [전체화면 보기]를 <b>[보기 설정 ▾]</b> 안에 접어, 악보가 더 넓게 보입니다. 연주 막대의 속도 조절을 재생 단추 줄로 올려 막대가 한 줄 낮아졌습니다. 글자를 크게 하거나 가로로 돌려도 화면이 넘치지 않는지 점검했습니다.</p></details></li>
     </ul>
@@ -2877,25 +2908,45 @@ let overTimer = null;   // 겹쳐 보기 다시 그리기 지연(overStale)
 const fixPix = new Map();   // '줄|마디' → Set(음 시각|음 이름) : 그림을 재서 찾은 보라   // 205번 — 시작할 때 화면 그리기가 쓰므로 여기서 선언
 let fixIdx = null, fixTimer = 0, fixScanState = null;   // fixScanState: { done, total, page } 전체 검사 진행
 let svOverData = null;   // MusicXML 겹쳐 보기 자료 — 시작할 때 악보로 보기를 펼치며(svKey 바꿀 때) 쓰므로 여기서 선언(113번)
-try { const v = JSON.parse(localStorage.getItem(PREF_VIEW) || '{}'); if (v.mode === 'score') viewMode = 'score'; if (v.zoom >= 1 && v.zoom <= 3) svZoom = v.zoom; if (v.follow === false) $('svFollow').checked = false; if (v.notes === false) $('svNotes').checked = false; if (v.curNotes === true) $('svCurNotes').checked = true; } catch (e) {}
-function saveViewPref() { try { localStorage.setItem(PREF_VIEW, JSON.stringify({ mode: viewMode, zoom: svZoom, follow: $('svFollow').checked, notes: $('svNotes').checked, curNotes: $('svCurNotes').checked })); } catch (e) {} }
-function setView(mode) {
+// 인식 악보 상태(213번) — 시작할 때 setView가 쓰므로 여기서 선언(113번: 선언 전 접근 = 앱 전체 멈춤)
+const REC = { qt: 0, again: false, full: false, key: '', xml: '', doc: null, parts: [], partKeys: [], evIds: null, idx: new Map(), chunks: [], tok: 0, width: 0, hl: null, cur: null, ehl: null, on: [], noteKey: '', status: '', sync: 0, phoneDef: '' };
+let svSrc = 'pdf';   // 악보 보기에서 무엇을: 'pdf' 원본 PDF · 'rec' 인식 악보 · 'side' 나란히(213번)
+try { const v = JSON.parse(localStorage.getItem(PREF_VIEW) || '{}'); if (v.mode === 'score') viewMode = 'score'; if (v.src === 'rec' || v.src === 'side') svSrc = v.src; if (v.zoom >= 1 && v.zoom <= 3) svZoom = v.zoom; if (v.follow === false) $('svFollow').checked = false; if (v.notes === false) $('svNotes').checked = false; if (v.curNotes === true) $('svCurNotes').checked = true; } catch (e) {}
+function saveViewPref() { try { localStorage.setItem(PREF_VIEW, JSON.stringify({ mode: viewMode, src: svSrc, zoom: svZoom, follow: $('svFollow').checked, notes: $('svNotes').checked, curNotes: $('svCurNotes').checked })); } catch (e) {} }
+// 쪽 그림(PDF 마디 위치)이 없는 악보(MusicXML로 올린 악보·예시 장단·마디 위치를 못 읽은 PDF)는 인식 악보만 볼 수 있다
+function svHasPdf() { return !!state.scoreGeo; }
+function svSrcEff() { return svHasPdf() ? svSrc : 'rec'; }
+function setView(mode, src) {
   viewMode = mode === 'score' ? 'score' : 'map';
+  if (src) svSrc = src;
+  const eff = svSrcEff(), pdfOk = svHasPdf();
   for (const id of ['viewMap', 'viewMap2']) $(id).setAttribute('aria-pressed', String(viewMode === 'map'));
-  for (const id of ['viewScore', 'viewScore2']) $(id).setAttribute('aria-pressed', String(viewMode === 'score'));
-  $('tBars').textContent = viewMode === 'score' ? '악보' : '마디맵';
+  $('viewScore2').setAttribute('aria-pressed', String(viewMode === 'score'));
+  for (const [id, v] of [['viewScore', 'pdf'], ['viewRec', 'rec'], ['viewSide', 'side']]) {
+    $(id).setAttribute('aria-pressed', String(viewMode === 'score' && eff === v));
+    if (v !== 'rec') { if (pdfOk) $(id).removeAttribute('aria-disabled'); else $(id).setAttribute('aria-disabled', 'true'); }
+  }
+  $('svWrap').hidden = viewMode === 'score' && eff === 'rec'; $('recWrap').hidden = !(viewMode === 'score' && eff !== 'pdf');
+  $('svPanes').classList.toggle('side', eff === 'side'); recSideLayout();
+  $('tBars').textContent = viewMode === 'score' ? (eff === 'rec' ? '인식 악보' : eff === 'side' ? '원본 PDF · 인식 악보' : '악보') : '마디맵';
   if (viewMode !== 'score' && $('scoreView').classList.contains('sv-full')) setFull(false);
   $('bars').hidden = viewMode === 'score'; $('scoreView').hidden = viewMode !== 'score';
   document.querySelectorAll('.map-only').forEach(e => { e.hidden = viewMode === 'score'; });
   document.body.classList.toggle('sv-mode', viewMode === 'score');
-  $('barsHint').textContent = viewMode === 'score' ? '악보에서 마디를 누르면 그 마디부터 재생합니다. 연주 중인 마디는 노란 칸으로 표시됩니다.' : '마디를 누르면 그 마디부터 재생합니다. 스페이스바·재생 단추는 일시정지(다시 누르면 이어서), ⏹ 정지는 처음으로.';
+  $('barsHint').textContent = viewMode === 'score' ? (eff === 'rec' ? '인식 악보: 읽어 낸 내용(내보낼 MusicXML)을 오선보로 그렸습니다. ' : '') + '악보에서 마디를 누르면 그 마디부터 재생합니다. 연주 중인 마디는 노란 칸으로 표시됩니다.' : '마디를 누르면 그 마디부터 재생합니다. 스페이스바·재생 단추는 일시정지(다시 누르면 이어서), ⏹ 정지는 처음으로.';
   if (viewMode === 'score') { hideBarTip(0); buildScoreView(); if (state.playing && lastNow != null) svShow(state.rendered ? (state.rendered.plan.barTimes.find(b => b.number === lastNow) || {}).idx ?? -1 : -1, true); }
   saveViewPref();
 }
 $('viewMap').addEventListener('click', () => setView('map'));
+for (const [id, v] of [['viewRec', 'rec'], ['viewSide', 'side']]) $(id).addEventListener('click', () => {
+  if (v === 'side' && !svHasPdf()) { showMsg('이 악보는 쪽 그림(PDF 마디 위치)이 없어 인식 악보만 볼 수 있습니다.'); return; }
+  const k = svCurrent; svKey = null; setView('score', v); if (k >= 0) { svCurrent = -1; svShow(k, true); } try { $('scoreView').scrollIntoView({ block: 'start' }); } catch (e) {}
+});
 // 연주 칸의 같은 단추: 보기를 바꾸고 그 칸으로 옮겨 간다
 for (const [id, mode] of [['viewScore2', 'score'], ['viewMap2', 'map']]) $(id).addEventListener('click', () => { setView(mode); $('tBars').closest('section').scrollIntoView({ block: 'start', behavior: 'smooth' }); });
-$('viewScore').addEventListener('click', () => { setView('score'); try { $('scoreView').scrollIntoView({ block: 'start' }); } catch (e) {} });
+$('viewScore').addEventListener('click', () => {
+  if (!svHasPdf() && state.bars.length) { showMsg(state.score ? '이 악보는 쪽 그림(PDF 마디 위치)이 없어 원본 PDF로 볼 수 없습니다. 인식 악보로 보여 드립니다.' : '예시 장단에는 악보 그림이 없습니다. 인식 악보로 보여 드립니다.'); }
+  const k = svCurrent; if (svSrc !== 'pdf') svKey = null; setView('score', svHasPdf() ? 'pdf' : undefined); if (k >= 0) { svCurrent = -1; svShow(k, true); } try { $('scoreView').scrollIntoView({ block: 'start' }); } catch (e) {} });
 $('svFollow').addEventListener('change', saveViewPref);
 $('svCurNotes').addEventListener('change', saveViewPref);
 $('svNotes').addEventListener('change', () => { saveViewPref(); if (!$('svNotes').checked) svNotesClear(); });
@@ -2913,7 +2964,8 @@ $('svEdit').addEventListener('click', () => setSvEdit(!svEditing));
 // 내 파트만 크게 보기: 켠 줄 중 하나를 고르면 그 줄 오선만 잘라 이어 보여 준다
 function renderPartSel() {
   const sel = $('svPartSel'); if (!sel) return;
-  const opts = state.score && state.scoreGeo ? state.lineIds.map(id => cfgKey(id)).filter(k => { const r = state.lineRes[k]; return r && r.geo && r.bars.length === state.bars.length; }) : [];
+  let opts = state.score && state.scoreGeo ? state.lineIds.map(id => cfgKey(id)).filter(k => { const r = state.lineRes[k]; return r && r.geo && r.bars.length === state.bars.length; }) : [];
+  if (viewMode === 'score' && svSrcEff() !== 'pdf') { const on = exportLines().map(l => l.key); opts = on.length > 1 || svPart ? on : []; }   // 인식 악보: 켠 줄 모두(쪽 그림 없어도)
   if (svPart && !opts.includes(svPart)) svPart = null;
   const want = [''].concat(opts.map(k => k + ':' + lineLabel(state.lineIds.find(i => cfgKey(i) === k)))).join('|');
   if (sel.dataset.opts !== want) {
@@ -3000,6 +3052,7 @@ function svPanelOf(r) {
 const svPct = (v, o, len) => ((v - o) / len * 100) + '%';
 function buildScoreView() {
   renderPartSel();
+  if (viewMode === 'score' && svSrcEff() !== 'pdf') { clearTimeout(REC.qt); REC.qt = setTimeout(recBuildSerial, 30); }
   const wrap = $('svWrap'), G = svGeo(), part = !!svPartRes();
   const key = G ? (G.sc.fp || G.sc.title) + '|' + svZoom + '|' + (part ? 'part:' + svPart + ':' + [...new Set(G.geo.filter(Boolean).map(g => g.page + '.' + g.staff))].join(',') : [...new Set(G.geo.filter(Boolean).map(g => g.page))].join(',')) : 'none';   // 음을 고쳐 마디 위치만 조금 바뀌어도 쪽을 다시 그리지 않는다
   if (key === svKey && wrap.firstChild) return;
@@ -3140,15 +3193,20 @@ function svPlace(k, scroll) {
 }
 function svShow(k, scroll) {
   if (viewMode !== 'score') return;
-  if (k == null || k < 0) { svCurrent = -1; if (svHl) svHl.hidden = true; if (svCur) svCur.hidden = true; return; }
-  if (k === svCurrent && svHl && !svHl.hidden) return;
-  svCurrent = k; const r = svRect(k), P0 = svPanelOf(r); if (P0) svRender([...svPages.entries()].find(([, q]) => q === P0)[0]);
+  if (k == null || k < 0) { svCurrent = -1; if (svHl) svHl.hidden = true; if (svCur) svCur.hidden = true; recShow(-1); return; }
+  const src = svSrcEff();
+  if (k === svCurrent && (src === 'rec' ? REC.hl && !REC.hl.hidden : svHl && !svHl.hidden)) return;
+  svCurrent = k;
+  if (src !== 'pdf') recShow(k, scroll);
+  if (src === 'rec') return;
+  const r = svRect(k), P0 = svPanelOf(r); if (P0) svRender([...svPages.entries()].find(([, q]) => q === P0)[0]);
   svPlace(k, scroll);
 }
 // 재생 선: 처음 설정은 마디 안에서 시간에 맞춰 고른 빠르기로(209번 — 메트로놈 박과 맞게. 음표를 따라가면 음표 간격이 고르지 않은 마디에서
 // 선이 멈칫하거나 휙 넘어가 박과 어긋나 보였다). '빨간 선 음표 따라'를 켜면 예전처럼 피날레식으로 음표 자리를 따라 움직인다(음표 자리를 모르면 고르게)
 function svCursor(k, f) {
   if (k !== svCurrent) svShow(k, true);
+  if (svSrcEff() !== 'pdf') { recCursor(k, f); if (svSrcEff() === 'rec') return; }
   const r = svRect(k), P = svPanelOf(r); if (!P || !P.w) return;
   const g = svGeo().geo[k];
   let pts = g.pts && g.pts.length ? g.pts.slice() : [[0, r.x0 + 6]];
@@ -3166,7 +3224,7 @@ function svCursor(k, f) {
 }
 // 음표 표시: 재생 계획의 marks(음마다 시작·끝 시각, 마디, 줄, 머리 가로 자리)에서 지금 소리 나는 음을 골라, 그 줄의 PDF 음표 머리(geo.heads)에
 // 갈래 색 동그라미를 겹친다. 'OO만' 보기면 그 줄만, 총보 전체면 보이는 PDF와 같은 악보의 켠 줄들(추가한 악보는 다른 PDF라 뺌)
-function svNotesClear() { for (const d of svNoteDivs) d.hidden = true; svNoteKey = ''; }
+function svNotesClear() { for (const d of svNoteDivs) d.hidden = true; svNoteKey = ''; recNotesClear(); }
 function svLineInfo(key) {
   const r = state.lineRes[key]; if (!r || !r.geo) return null;
   let v = svLineGeo.get(key);
@@ -3180,6 +3238,7 @@ function svLineInfo(key) {
 }
 function svNotesAt(t) {
   const plan = state.rendered && state.rendered.plan, M = plan && plan.marks;
+  if (svSrcEff() !== 'pdf') { recNotesAt(t, M); if (svSrcEff() === 'rec') { if (svNoteKey) svNotesClear(); return; } }
   if (!M || !M.length || viewMode !== 'score' || !$('svNotes').checked || !state.scoreGeo) { if (svNoteKey) svNotesClear(); return; }
   let lo = 0, hi = M.length;   // marks는 시작 시각 순: t 이하인 마지막 + 1
   while (lo < hi) { const m = (lo + hi) >> 1; if (M[m].t <= t + 0.005) lo = m + 1; else hi = m; }
@@ -3216,8 +3275,9 @@ function svHit(pi, el, ev) {
   G.geo.forEach((g, k) => { if (!g || g.page !== P.page || (P.staff != null && g.staff !== P.staff)) return; const r = svRect(k); if (!r || x < r.x0 || x > r.x1) return; const d = y < r.y0 ? r.y0 - y : y > r.y1 ? y - r.y1 : 0; if (d < bd) { bd = d; best = k; } });
   return best;
 }
-function svClick(pi, el, ev) {
-  const best = svHit(pi, el, ev);
+function svClick(pi, el, ev) { svBarAction(svHit(pi, el, ev)); }
+// 악보(원본·인식)에서 마디를 눌렀을 때: 마디 골라 넣기 · 음 고치기 창 · 그 마디부터 재생
+function svBarAction(best) {
   if (best < 0 || !state.bars[best]) return;
   if (pickBar(state.bars[best].number)) return;
   if (svEditing) {   // 음 고치기: 마디맵의 ✎ 수정과 같은 창
@@ -3245,6 +3305,253 @@ function setSvEdit(on) {
   $('scoreView').classList.toggle('sv-editing', on);
   if (!on && svEhl) svEhl.hidden = true;
 }
+// ---------- 인식 악보 보기(213번): 화면용 MusicXML(음 id = 수정 기록 키)을 Verovio로 오선보로 그린다 ----------
+// 마디 몇 개씩 조각(chunk)으로 나눠 차례로 그린다(큰 총보도 첫 조각이 바로 보이게). 조각 끝의 덜 찬 단은 잘라 다음 조각이 그 마디부터 그린다(Studio renderChunk).
+// 따라가기: 재생 계획 marks의 음(ev) → 그 음의 id 앞부분(n줄_오선_마디_성부순번) → SVG의 data-id. 마디는 조각 안 g.measure 순서(화면용에서는 여러 마디 쉼표를 묶지 않음)
+const SV_PHONE = !!(window.matchMedia && matchMedia('(max-width: 600px)').matches);
+function recMsg(t, retry) {
+  const w = $('recWrap'); w.textContent = ''; const d = tipNode('div', 'rec-msg', t);
+  if (retry) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = '다시 시도'; b.addEventListener('click', () => { REC.key = ''; recBuildSerial(); }); d.appendChild(document.createElement('br')); d.appendChild(b); }
+  w.appendChild(d); REC.status = t;
+}
+// 화면용 MusicXML을 마디 [from, to)로 자른다. 첫 마디에는 그 앞까지의 박자·조표·음자리표 등을 붙인다. keep: 남길 파트 id(Set) — 'OO만' 보기
+const REC_ATTR = ['divisions', 'key', 'time', 'staves', 'staff-details', 'clef', 'transpose'];
+function recSlice(from, to, keep) {
+  const doc = REC.doc, root = doc.documentElement, ser = new XMLSerializer();
+  let out = '<?xml version="1.0" encoding="UTF-8"?>\n<score-partwise version="4.0">\n';
+  for (const ch of root.children) {
+    if (ch.tagName === 'part') continue;
+    if (ch.tagName === 'credit' && from > 0) continue;
+    if (ch.tagName === 'part-list' && keep) { out += '<part-list>' + [...ch.children].filter(x => x.tagName === 'score-part' && keep.has(x.getAttribute('id'))).map(x => ser.serializeToString(x)).join('') + '</part-list>\n'; continue; }
+    out += ser.serializeToString(ch) + '\n';
+  }
+  for (const P of REC.parts) {
+    if (keep && !keep.has(P.id)) continue;
+    out += `<part id="${P.id}">\n`;
+    // 앞 마디들에서 마지막으로 적힌 속성(번호가 있는 것은 번호마다)
+    const last = new Map();
+    for (let i = 0; i < from && i < P.ms.length; i++) for (const a of P.ms[i].getElementsByTagName('attributes')) for (const c of a.children) if (REC_ATTR.includes(c.tagName)) last.set(c.tagName + '#' + (c.getAttribute('number') || ''), c);
+    for (let i = from; i < to && i < P.ms.length; i++) {
+      let m = P.ms[i];
+      if (i === from) {
+        m = m.cloneNode(true);
+        for (const pr of [...m.getElementsByTagName('print')]) pr.remove();
+        if (last.size) {
+          let a = [...m.children].find(c => c.tagName === 'attributes');
+          if (!a) { a = doc.createElement('attributes'); m.insertBefore(a, m.firstChild); }
+          const has = new Set([...a.children].map(c => c.tagName + '#' + (c.getAttribute('number') || '')));
+          const add = [...last.entries()].filter(([k]) => !has.has(k)).map(([, c]) => c.cloneNode(true));
+          add.sort((x, y) => REC_ATTR.indexOf(x.tagName) - REC_ATTR.indexOf(y.tagName));
+          // MusicXML 순서: divisions, key, time, staves, …, clef, staff-details, transpose
+          const order = ['divisions', 'key', 'time', 'staves', 'part-symbol', 'instruments', 'clef', 'staff-details', 'transpose', 'directive', 'measure-style'];
+          const all = [...a.children, ...add].sort((x, y) => order.indexOf(x.tagName) - order.indexOf(y.tagName));
+          a.textContent = ''; for (const c of all) a.appendChild(c);
+        }
+      }
+      out += ser.serializeToString(m) + '\n';
+    }
+    out += '</part>\n';
+  }
+  return out + '</score-partwise>\n';
+}
+function recKeepParts() {
+  if (!svPart) return null;
+  const i = REC.partKeys.findIndex(ks => ks.includes(svPart));
+  return i >= 0 ? new Set(['P' + (i + 1)]) : null;
+}
+function recChunkEnd(a, N, staves) {
+  const size = Math.max(4, Math.min(40, Math.round(200 / Math.max(1, staves))));
+  let b = Math.min(N, a + size); if (N - b < size / 3) b = N;
+  return b;
+}
+function recWidth() { const w = $('recWrap'); return Math.max(260, (w.clientWidth || 800) - 12); }
+// 화면용 MusicXML을 다시 만들고(음 고치기·줄 켜고 끄기 뒤에도), 바뀐 것만 다시 그린다
+// 겹쳐 부르지 않게 하나씩(음을 연달아 고칠 때)
+let recBusy = null;
+// 전체를 그리는 중이면 그만두고 새로(줄을 켜고 끈 뒤 앞 그림을 끝까지 기다리지 않게)
+async function recBuildSerial() { if (recBusy) { if (REC.full) { REC.tok++; REC.key = ''; } REC.again = true; return; } recBusy = recBuild().catch(e => console.warn('인식 악보', e)).finally(() => { recBusy = null; if (REC.again) { REC.again = false; recBuildSerial(); } }); }
+async function recBuild() {
+  const wrap = $('recWrap');
+  if (viewMode !== 'score' || svSrcEff() === 'pdf' || wrap.hidden) return;
+  if (!state.bars.length || !exportLines().length) { REC.key = ''; recMsg('켠 줄이 없습니다. 왼쪽 줄 목록에서 볼 악기를 켜 주세요.'); return; }
+  // 휴대폰: 처음에는 기준 줄 하나만(총보 전체는 너무 작음) — 보기에서 '총보 전체'를 고르면 그대로 둠
+  const fp = (state.score && (state.score.fp || state.score.title)) || 'ex';
+  if (SV_PHONE && REC.phoneDef !== fp) { REC.phoneDef = fp; if (!svPart) { const k = exportLines()[0].key; if (k) { svPart = k; renderPartSel(); } } }
+  let xml, xo = { ids: true, evIds: new Map() };
+  try { xml = buildMusicXml(xo); } catch (e) { console.warn('인식 악보', e); recMsg('인식 악보를 만들지 못했습니다: ' + e.message); return; }
+  REC.evIds = xo.evIds; REC.partKeys = xo.partKeys || [];
+  if (xml !== REC.xml) { REC.xml = xml; REC.doc = new DOMParser().parseFromString(xml, 'application/xml'); REC.parts = [...REC.doc.documentElement.children].filter(p => p.tagName === 'part').map(p => ({ id: p.getAttribute('id'), ms: [...p.children].filter(m => m.tagName === 'measure') })); }
+  const keep = recKeepParts(), width = recWidth(); REC.width = width;
+  const key = JSON.stringify(REC.partKeys) + '|' + (REC.parts[0] ? REC.parts[0].ms.length : 0) + '|' + svZoom + '|' + Math.round(width / 24) + '|' + (keep ? [...keep].join() : '') + '|' + fp;
+  if (key === REC.key && REC.chunks.length) {   // 크기·파트가 같으면 고친 마디가 든 조각만 다시
+    const tok = REC.tok; let n = 0;
+    for (const c of REC.chunks) { const src = recSlice(c.from, c.to, keep); if (src === c.src) continue; await recRender(c, src, width, false); n++; if (tok !== REC.tok) return; }
+    if (n) recAfterDraw();
+    return;
+  }
+  REC.key = key; const tok = ++REC.tok; REC.full = true;
+  REC.chunks = []; REC.idx = new Map(); REC.hl = REC.cur = REC.ehl = null; REC.on = []; REC.noteKey = '';
+  const N = REC.parts.length ? REC.parts[0].ms.length : 0;
+  if (!N) { recMsg('그릴 마디가 없습니다.'); return; }
+  recMsg(typeof SWS === 'object' ? '악보 그리기 도구를 받는 중… (처음 한 번, 약 2MB)' : '악보 그리기 도구가 없습니다.');
+  try { await SWS.verovioReady(); } catch (e) { if (tok === REC.tok) recMsg('악보 그리기 도구(Verovio)를 받지 못했습니다. 인터넷 연결을 확인해 주세요.', true); REC.key = ''; return; }
+  if (tok !== REC.tok) return;
+  wrap.textContent = '';
+  const sheet = document.createElement('div'); sheet.className = 'rec-sheet'; wrap.appendChild(sheet);
+  const staves = REC.parts.filter(P => !keep || keep.has(P.id)).reduce((n, P) => n + (P.ms[0] && P.ms[0].getElementsByTagName('staves')[0] ? +P.ms[0].getElementsByTagName('staves')[0].textContent || 1 : 1), 0);
+  const t0 = performance.now();
+  for (let a = 0, i = 0; a < N; i++) {
+    const el = document.createElement('div'); el.className = 'rec-chunk'; sheet.appendChild(el);
+    el.addEventListener('click', ev => recClick(ev)); el.addEventListener('mousemove', ev => recHover(ev)); el.addEventListener('mouseleave', () => { if (REC.ehl) REC.ehl.hidden = true; });
+    const c = { from: a, to: recChunkEnd(a, N, staves), el, src: '' }; REC.chunks.push(c);
+    try { await recRender(c, recSlice(c.from, c.to, keep), width, true); }
+    catch (e) { console.warn('인식 악보', e); if (tok === REC.tok) { el.appendChild(tipNode('div', 'rec-msg', `${c.from + 1}~${c.to}번째 마디를 그리지 못했습니다: ${e.message}`)); } }
+    if (tok !== REC.tok) return;
+    a = c.to;
+    if (i === 0 || performance.now() - t0 > 400 * (i + 1)) { recAfterDraw(); await new Promise(r => setTimeout(r, 0)); if (tok !== REC.tok) return; }
+  }
+  recAfterDraw(); REC.full = false; REC.status = 'done';
+  document.documentElement.dataset.recDone = String(tok);
+}
+async function recRender(c, src, width, decide) {
+  const E = await SWS.engrave(src, { width, zoom: Math.round(svZoom * (SV_PHONE ? 80 : 100)), first: c.from === 0, breaks: 'auto' });
+  let h = ''; for (let p = 1; p <= E.pages; p++) h += E.svg(p);
+  c.el.style.height = ''; c.el.innerHTML = h; c.src = src;
+  const N = REC.parts.length ? REC.parts[0].ms.length : 0;
+  if (decide && c.to < N) {   // 마지막 단을 잘라 다음 조각이 그 마디부터
+    const sys = c.el.querySelectorAll('g.system'), ms = c.el.querySelectorAll('g.measure');
+    if (sys.length >= 2 && ms.length === c.to - c.from) {
+      const last = sys[sys.length - 1], keepN = ms.length - last.querySelectorAll('g.measure').length;
+      if (keepN > 0) {
+        const cut = last.getBoundingClientRect().top - c.el.getBoundingClientRect().top;
+        last.remove(); c.to = c.from + keepN; c.src = recSlice(c.from, c.to, recKeepParts());
+        c.el.style.height = Math.max(0, Math.round(cut)) + 'px';
+      }
+    }
+  }
+  c.ms = [...c.el.querySelectorAll('g.measure')];
+  if (c.ms.length !== c.to - c.from) console.warn('인식 악보: 마디 수가 다름', c.from, c.to, c.ms.length);
+}
+// 그린 뒤: 음 id 찾아보기 표, 고친 마디 ✎, 지금 마디 다시 표시
+function recAfterDraw() {
+  REC.idx = new Map();
+  for (const c of REC.chunks) for (const el of c.el.querySelectorAll('g.note[data-id^="n"]')) {
+    const id = el.getAttribute('data-id'), p = id.split('_'); if (p.length < 4) continue;
+    const k = p.slice(0, 3).join('_') + '_' + p[3].replace(/c\d+$/, '');
+    let a = REC.idx.get(k); if (!a) REC.idx.set(k, a = []); a.push(el);
+  }
+  REC.noteKey = ''; REC.on = REC.on.filter(el => el.isConnected);
+  for (const m of document.querySelectorAll('#recWrap .sv-mark')) m.remove();
+  state.bars.forEach((b, k) => {
+    if (!b.events.some(e => e.edited)) return;
+    const r = recRect(k); if (!r) return;
+    const m = tipNode('span', 'sv-mark', '✎'); m.style.left = r.x + 'px'; m.style.top = r.y + 'px'; m.title = `${b.number}마디: 고친 음이 있음`; r.c.el.appendChild(m);
+  });
+  if (svCurrent >= 0) { const k = svCurrent; recShow(k, false); }
+  document.documentElement.dataset.recDrawn = String(REC.chunks.reduce((n, c) => n + (c.ms ? c.ms.length : 0), 0));
+}
+// 마디 k(state.bars 번호)의 조각 안 자리(px): { c, x, y, w, h }
+function recMeasEl(k) { const c = REC.chunks.find(c => k >= c.from && k < c.to && c.ms); return c ? { c, el: c.ms[k - c.from] } : null; }
+function recRect(k) {
+  const m = recMeasEl(k); if (!m || !m.el) return null;
+  const cb = m.c.el.getBoundingClientRect(), r = m.el.getBoundingClientRect();
+  // 마디 칸: 그 마디의 오선들(위아래 끝) — g.measure 테두리에는 위·아래 글자도 들어 있어 오선 테두리로 좁힌다
+  const st = [...m.el.querySelectorAll(':scope > g.staff')].map(s => s.getBoundingClientRect()).filter(b => b.height > 0);
+  const y0 = st.length ? Math.min(...st.map(b => b.top)) : r.top, y1 = st.length ? Math.max(...st.map(b => b.bottom)) : r.bottom;
+  return { c: m.c, x: r.left - cb.left, y: y0 - cb.top - 6, w: r.width, h: y1 - y0 + 12 };
+}
+function recShow(k, scroll) {
+  if (k == null || k < 0) { if (REC.hl) REC.hl.hidden = true; if (REC.cur) REC.cur.hidden = true; return; }
+  const r = recRect(k); if (!r) { if (REC.hl) REC.hl.hidden = true; return; }
+  if (!REC.hl) { REC.hl = document.createElement('div'); REC.hl.className = 'sv-hl'; REC.hl.appendChild(document.createElement('b')); }
+  if (REC.hl.parentNode !== r.c.el) r.c.el.appendChild(REC.hl);
+  REC.hl.hidden = false; Object.assign(REC.hl.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' });
+  REC.hl.firstChild.textContent = `${state.bars[k] ? state.bars[k].number : ''}마디`;
+  if (scroll && $('svFollow').checked) {
+    const wrap = $('recWrap'), y = r.c.el.offsetTop + r.y, yb = y + r.h, far = Math.abs(y - wrap.scrollTop) > wrap.clientHeight * 1.5;
+    if (y < wrap.scrollTop + 10 || yb > wrap.scrollTop + wrap.clientHeight - 10) { REC.sync = performance.now() + 600; wrap.scrollTo({ top: Math.max(0, y - wrap.clientHeight * 0.22), behavior: far ? 'auto' : 'smooth' }); }
+  }
+}
+function recCursor(k, f) {
+  const r = recRect(k); if (!r) { if (REC.cur) REC.cur.hidden = true; return; }
+  if (!REC.cur) { REC.cur = document.createElement('div'); REC.cur.className = 'sv-cur'; }
+  if (REC.cur.parentNode !== r.c.el) r.c.el.appendChild(REC.cur);
+  // 마디 첫 음(없으면 마디 왼쪽 끝)부터 마디선 앞까지 고르게
+  const m = recMeasEl(k), cb = r.c.el.getBoundingClientRect(), n0 = m && m.el.querySelector('g.note, g.rest, g.mRest, g.chord');
+  const xa = n0 ? Math.max(r.x + 2, n0.getBoundingClientRect().left - cb.left - 4) : r.x + 6, xb = Math.max(xa + 2, r.x + r.w - 4);
+  REC.cur.hidden = false; Object.assign(REC.cur.style, { left: (xa + (xb - xa) * f) + 'px', top: r.y + 'px', height: r.h + 'px' });
+}
+function recNotesClear() { for (const el of REC.on) el.classList.remove('rec-on'); REC.on = []; REC.noteKey = ''; }
+function recNotesAt(t, M) {
+  if (!M || !M.length || !$('svNotes').checked || !REC.evIds || !REC.idx.size) { if (REC.on.length) recNotesClear(); return; }
+  let lo = 0, hi = M.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (M[m].t <= t + 0.005) lo = m + 1; else hi = m; }
+  const only = svPart && recKeepParts() ? svPart : null, keys = [];
+  for (let i = lo - 1, n = 0; i >= 0 && n < 3000; i--, n++) {
+    const m = M[i]; if (m.t < t - 30) break;
+    if (m.e <= t || !m.ev || (only && m.line !== only)) continue;
+    const id = REC.evIds.get(m.ev); if (id) keys.push(id);
+  }
+  const key = keys.join(';'); if (key === REC.noteKey) return;
+  recNotesClear(); REC.noteKey = key;
+  for (const id of keys) {
+    const els = REC.idx.get(id); if (!els) continue;
+    const ln = id.split('_')[0].slice(1), L = REC.partKeys[+ln], info = L && svLineInfo(L[0]);
+    for (const el of els) { el.classList.add('rec-on'); if (info) el.style.setProperty('--c', info.color); REC.on.push(el); }
+  }
+}
+// 누른 자리의 마디: g.measure를 찾아 state.bars 번호로
+function recHit(ev) {
+  const c = REC.chunks.find(c => c.el === ev.currentTarget); if (!c || !c.ms) return -1;
+  for (let i = 0; i < c.ms.length; i++) { const b = c.ms[i].getBoundingClientRect(); if (ev.clientX >= b.left && ev.clientX <= b.right && ev.clientY >= b.top - 20 && ev.clientY <= b.bottom + 20) return c.from + i; }
+  return -1;
+}
+function recClick(ev) { svBarAction(recHit(ev)); }
+function recHover(ev) {
+  if (!svEditing) return;
+  const k = recHit(ev), r = k >= 0 && recRect(k);
+  if (!r) { if (REC.ehl) REC.ehl.hidden = true; return; }
+  if (!REC.ehl) { REC.ehl = document.createElement('div'); REC.ehl.className = 'sv-ehl'; REC.ehl.appendChild(document.createElement('b')); }
+  if (REC.ehl.parentNode !== r.c.el) r.c.el.appendChild(REC.ehl);
+  REC.ehl.hidden = false; Object.assign(REC.ehl.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' });
+  REC.ehl.firstChild.textContent = `✎ ${state.bars[k].number}마디 고치기`;
+}
+// 나란히: PC(가로가 넓은 화면)는 좌우, 세로로 긴 화면은 위아래
+function recSideLayout() {
+  const p = $('svPanes'); p.classList.toggle('rows', p.classList.contains('side') && (window.innerWidth < 760 || window.innerHeight > window.innerWidth * 1.05));
+}
+let recResizeT = 0;
+window.addEventListener('resize', () => {
+  if (viewMode !== 'score') return;
+  recSideLayout();
+  clearTimeout(recResizeT); recResizeT = setTimeout(() => { if (svSrcEff() !== 'pdf' && REC.width !== recWidth()) { REC.width = recWidth(); recBuildSerial(); } }, 400);
+});
+// 나란히: 한쪽을 넘기면 다른 쪽도 같은 마디가 칸 높이 1/3에 오게
+function svBarTopPdf(k) { const r = svRect(k), P = svPanelOf(r); return P && P.w ? P.el.offsetTop + (r.y0 - P.oy) / P.h * P.el.offsetHeight : null; }
+function svBarAtPdf(y) {
+  const G = svGeo(); if (!G) return -1; let best = -1, bd = Infinity;
+  G.geo.forEach((g, k) => { if (!g) return; const r = svRect(k), P = svPanelOf(r); if (!P || !P.w) return; const a = P.el.offsetTop + (r.y0 - P.oy) / P.h * P.el.offsetHeight, b = P.el.offsetTop + (r.y1 - P.oy) / P.h * P.el.offsetHeight, d = y < a ? a - y : y > b ? y - b : 0; if (d < bd) { bd = d; best = k; } });
+  return best;
+}
+function recBarTop(k) { const r = recRect(k); return r ? r.c.el.offsetTop + r.y : null; }
+function recBarAt(y) {
+  let best = -1, bd = Infinity;
+  for (const c of REC.chunks) { if (!c.ms) continue; const cb = c.el.getBoundingClientRect(); c.ms.forEach((m, i) => { const r = recRect(c.from + i); if (!r) return; const a = c.el.offsetTop + r.y, b = a + r.h, d = y < a ? a - y : y > b ? y - b : 0; if (d < bd) { bd = d; best = c.from + i; } }); }
+  return best;
+}
+function svSideSync(from) {
+  if (svSrcEff() !== 'side' || viewMode !== 'score') return;
+  if (state.playing && $('svFollow').checked) return;   // 재생 중에는 두 칸이 저마다 따라감
+  const now = performance.now(); if (now < REC.sync) return;
+  const A = from === 'pdf' ? $('svWrap') : $('recWrap'), B = from === 'pdf' ? $('recWrap') : $('svWrap');
+  const k = from === 'pdf' ? svBarAtPdf(A.scrollTop + A.clientHeight / 3) : recBarAt(A.scrollTop + A.clientHeight / 3); if (k < 0) return;
+  const y = from === 'pdf' ? recBarTop(k) : svBarTopPdf(k); if (y == null) return;
+  REC.sync = now + 250; B.scrollTop = Math.max(0, y - B.clientHeight / 3);
+}
+let svSyncRaf = 0;
+for (const [id, from] of [['svWrap', 'pdf'], ['recWrap', 'rec']]) $(id).addEventListener('scroll', () => { if (svSyncRaf || performance.now() < REC.sync) return; svSyncRaf = requestAnimationFrame(() => { svSyncRaf = 0; svSideSync(from); }); }, { passive: true });
+// 시험용
+window.__recState = () => ({ tok: REC.tok, nbars: state.bars.length, hl: REC.hl && !REC.hl.hidden ? REC.hl.textContent : '', status: REC.status, chunks: REC.chunks.map(c => [c.from, c.to, c.ms ? c.ms.length : -1]), idx: REC.idx.size, on: REC.on.length, part: svPart, src: svSrcEff() });
 // 고친 마디에 ✎ 표시 (마디맵의 번호 옆 ✎와 같은 뜻)
 function svMarks() {
   if (viewMode !== 'score' || !state.scoreGeo) return;
@@ -5744,6 +6051,7 @@ function buildMusicXml(xo) {
     });
   }
   const oneGroup = groups.length === 1 && groups[0].lines.length === 1;
+  if (SCREEN) xo.partKeys = groups.map(g => g.lines.map(ln => ln.key));   // 인식 악보 보기: 파트(P1…) → 그 파트의 줄 열쇠들('OO만' 보기)
   groups.forEach((g, li) => {
     const SS = g.lines.map(ln => {
       // 옥타브 설정(태평소처럼 한 옥타브 낮게 적은 악기 등): 예전에는 음 이름을 옮겨 적어 피날레·뮤즈스코어에서 PDF보다 한 옥타브 높게 보였음 →
@@ -5844,7 +6152,7 @@ function buildMusicXml(xo) {
       const evs = [];
       const G = Q / 8, S16 = Q / 4;
       // 화면용 id: 수정 기록과 같은 순번(noteList·tieList) — '성부순번'(R0) / 붙임줄로 이어 온 음은 'RT0'
-      const SID = SCREEN ? (() => { const m = new Map(), ob = { events: b.events.filter(mine) }; for (const v of ['R', 'L']) { noteList(ob, v).forEach((e, i) => m.set(e, v + i)); tieList(ob, v).forEach((e, i) => m.set(e, v + 'T' + i)); } return m; })() : null;   // 합친 마디(state.bars)에서 이 줄의 음만
+      const SID = SCREEN ? (() => { const m = new Map(), ob = { events: b.events.filter(mine) }; for (const v of ['R', 'L']) { noteList(ob, v).forEach((e, i) => m.set(e, v + i)); tieList(ob, v).forEach((e, i) => m.set(e, v + 'T' + i)); } if (xo.evIds) for (const [e, s] of m) xo.evIds.set(e, 'n' + li + '_' + (vb / 4) + '_' + bi + '_' + s); return m; })() : null;   // 합친 마디(state.bars)에서 이 줄의 음만
       for (const e of b.events.filter(mine)) {
         let st = Math.round(e.t.v * W), nat = Math.round((e.sus || e.dur).v * W);
         // snap: 잇단음표가 반쯤만 읽힌 마디(셋잇단과 보통 음이 한 박에 섞임) — 그런 음만 16분음표 칸에 맞춘다 (뮤즈스코어가 '깨진 파일'로 여기지 않게)
@@ -6062,7 +6370,7 @@ function buildMusicXml(xo) {
       const grpAt = st => { let k = 0; while (k + 1 < bounds.length - 1 && bounds[k + 1] <= st) k++; return k; };
       const clefCh = SS.map((S, si) => !S.perc && S.cls[bi] !== lastCl[si]);
       const styles = SS.flatMap((S, si) => (mrep[si][bi] || []).map(x => `<measure-style${two ? ` number="${si + 1}"` : ''}>${x}</measure-style>`));
-      if (mrest[bi]) styles.push(`<measure-style><multiple-rest>${mrest[bi]}</multiple-rest></measure-style>`);
+      if (mrest[bi] && !SCREEN) styles.push(`<measure-style><multiple-rest>${mrest[bi]}</multiple-rest></measure-style>`);
       if (ts !== lastTs || K !== lastKey || bi === 0 || clefCh.some(Boolean) || styles.length) {
         m += `<attributes>${bi === 0 ? `<divisions>${DIV}</divisions>` : ''}${K !== lastKey || bi === 0 ? `<key><fifths>${K}</fifths></key>` : ''}${ts !== lastTs || bi === 0 ? `<time><beats>${bs}</beats><beat-type>${bt}</beat-type></time>` : ''}`;
         if (bi === 0 && two) m += `<staves>2</staves>`;

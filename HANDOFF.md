@@ -1,25 +1,27 @@
 # ScoreWorks(옛 이름 합주연습기) 인수인계 메모
 
-새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-24, CHANGELOG 210번까지)
+새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-25, CHANGELOG 213번까지)
 
 
 ## ★ Studio 기능 접목 (11-25~) — 기획·롤백
 
 - 기획서: https://claude.ai/artifact/FPMxjgJ9zvfyQKNb2rjgXB (프로젝트 문서 claude/studio/HANDOFF.md 4장에 요점). 이름은 **ScoreWorks Studio**(211번), 모드 이름은 [연습 | 편집], 동작은 '수정'
 - 정할 것 답(사용자 11-25): 1 이 기획으로, 2 [편집]은 모두에게 보이되 GitHub 공유 저장은 토큰 있는 사람만, 3 Studio 웹 주소는 기능을 다 옮기면 내림(배포한 적 없음), 4 마디 나누기·합치기는 5단계까지 써 본 뒤, 5 25현 가야금은 율명 아래 **줄 번호**(기본 조율은 아직 모름), 6 .mxl 열기 더함
-- 진행: 211 이름·휴대폰 화면, **212 0단계 끝**(src/studio + studio-bundle.js(SWS), Verovio jsDelivr 지연, buildMusicXml({ids:true}) 음 id = 수정 기록 키, 시험 test/pwstudio0.cjs)
-- **순서 바꿈(11-25)**: 마디맵을 먼저 지우면 쪽 그림이 없는 악보(MusicXML로 올린 악보·예시 장단·마디 위치를 못 읽은 PDF — 앱 3009행 근처 sv-empty 안내)는 볼 화면이 없어짐 → **2단계(인식 악보 보기)를 먼저**, 그 뒤 1단계(마디맵 지우기). 인식 악보는 MusicXML에서 그리므로 이런 악보도 보임
-- **다음 할 일 = 2단계 인식 악보 보기(보기 전용)** — 만들 것:
-  1. 가운데 보기 단추: [원본 PDF] [인식 악보] [나란히] (지금 view-switch #viewScore·#viewMap 자리, 마디맵 단추는 1단계 때 뺌). 쪽 그림이 없으면 [인식 악보]가 기본
-  2. 인식 악보 칸: `window.__swScreenXml()` → `SWS.engrave(xml, {width, zoom, breaks})`. Studio main.ts의 조각 그리기(chunk: renderChunk·chunkEnd·draw·redrawMeasures, 마디 몇 개씩 따로 그려 보이는 것부터)를 가져올 것 — 화면용 MusicXML을 마디 범위로 자르는 방법이 필요(buildMusicXml에 xo.from·xo.to를 더하거나, 그린 MusicXML을 .swc로 읽어 Studio musicxml-out으로 조각 내기). Verovio를 받는 동안·실패 시 안내 글
-  3. 따라가기: 재생 계획 plan.marks(음마다 시각·마디·줄) + SVG data-id(n<li>_<si>_<bi>_<성부순번>_…)로 지금 음 칠하기, 지금 마디로 스크롤. 누르면 그 마디부터 재생(연습 모드)
-  4. 'OO만' 보기(#svPartSel)와 크기 −/+를 같이 씀. 휴대폰은 기본 줄 하나
-  5. 나란히: PC는 좌우, 세로로 좁으면 위아래, 같은 마디를 1/3 높이에 맞춰 함께 움직임
-  6. 시험: test/pwstudio0.cjs처럼 Verovio를 로컬로 바꿔 끼움. 다섯 곡에서 열림, 월광 첫 조각 3초 안, pwboot, pwzoom
+- 진행: 211 이름·휴대폰 화면, 212 0단계 끝(src/studio + studio-bundle.js(SWS), Verovio jsDelivr 지연, buildMusicXml({ids:true}) 음 id = 수정 기록 키, 시험 test/pwstudio0.cjs), **213 2단계 끝 — 인식 악보·나란히 보기(보기 전용)**
+- **순서 바꿈(11-25)**: 2단계(인식 악보 보기)를 1단계(마디맵 지우기)보다 먼저 — 쪽 그림 없는 악보(MusicXML 악보·예시 장단·마디 위치 못 읽은 PDF)도 볼 화면이 있게. 213번으로 됨
+- 213번 구조(자세한 것은 CHANGELOG 213):
+  - 보기 단추 [원본 PDF #viewScore][인식 악보 #viewRec][나란히 #viewSide][마디맵 #viewMap]. viewMode는 그대로 'score'|'map', 악보 안에서 무엇을 볼지는 `svSrc`('pdf'|'rec'|'side', hapju-view.src), 쪽 그림이 없으면 `svSrcEff()`='rec'
+  - 상태는 `REC`(앞쪽에 선언 — 113번 규칙). recBuild: buildMusicXml({ids, evIds}) → DOMParser → recSlice(from,to,keep) → SWS.engrave → 조각(.rec-chunk, c.ms = g.measure 목록, 마디 k = c.from + 순서). 화면용에서는 multiple-rest를 넣지 않음(1:1 맞춤). 같은 구조면 잘라 본 글이 달라진 조각만 다시
+  - 훅: svShow→recShow, svCursor→recCursor, svNotesAt→recNotesAt(marks.ev → REC.evIds → REC.idx(data-id 앞 네 칸)), svClick·recClick→svBarAction, renderPartSel(인식 악보면 켠 줄 모두), buildScoreView→recBuildSerial(30ms 뒤, 하나씩)
+  - 엔진 marks에 `ev`(그 음)를 실음, x가 없는 음도 담음(PDF 쪽 svNotesAt은 x로 거름)
+  - engrave.ts: 쪽 폭 하한 300(휴대폰 크기 +), Verovio 로그는 오류만
+  - 시험 `NODE_PATH=/opt/npm-tools/node_modules node test/pwrec.cjs [접두어] [phone]`(ALL=1). Verovio는 /home/claude/work/vrv(`npm i verovio@6.4.1`)
+- **다음 할 일 = 1단계 마디맵 지우기** — 마디맵에만 있는 것(마디 칸 ✎ 수정·경고 목록 [마디로]·타임라인/상세 미리보기·마디 골라 넣기 등)을 먼저 악보 보기로 옮길 것. 그 뒤 사용설명서(manual.pdf) 그림·글을 한꺼번에 갱신(213번 화면 포함 — 미뤄 둠)
+- 213에서 남은 것: 조각 경계를 넘는 붙임줄·이음줄·꺾쇠는 끊겨 보임, 인식 악보에서 [MusicXML 겹쳐 보기]·[⚠ 경고]·[✎ 악보대로]는 원본 PDF 쪽 기능(인식 악보만 볼 때는 효과 없음)
 - 단계: 0 준비 → 1 마디맵 지우기 → 2 대조(인식 악보 + 나란히) → 3 수정·바로 듣기 → 4 구조 편집 → 5 율명·구음·정간보 → 6 태블릿·휴대폰 → 7 마디 나누기·합치기
 - **롤백(사용자 요구)**: 단계마다 배포 전 판을 브랜치로 남김 — `rollback/sw-before-studio`(210번, 접목 전), 이후 `rollback/before-<번호>`. 이 작업 공간은 **태그 올리기가 403으로 막힘** → 브랜치 사용
   - 되돌리기(앱이 올린 settings/ 커밋을 지우지 않게 reset 대신 파일만 되돌림): `git fetch origin main rollback/<이름> && git checkout origin/main -B main && git checkout origin/rollback/<이름> -- src index.html version.json build.py && python3 build.py && git commit -am "롤백: <이름> 판으로" && git push origin main`
-  - 남긴 브랜치: `rollback/sw-before-studio`(210), `rollback/before-212`(211)
+  - 남긴 브랜치: `rollback/sw-before-studio`(210), `rollback/before-212`(211), `rollback/before-213`(212)
   - 저장 형식은 더하기만(hapju-edits 등에 새 칸을 더하되 옛 판이 읽는 칸은 그대로) → 옛 판으로 돌아가도 단원 설정·수정 기록이 깨지지 않음. 새 기록은 옛 판에서는 무시됨
 
 ## 210번(11-24) 타악 마디별 소리 — 끝남

@@ -10,8 +10,9 @@ export function verovioReady(): Promise<any> {
   if (!tkPromise) tkPromise = (async () => {
     // 변수 주소라 묶는 도구(esbuild)가 건드리지 않고 브라우저가 그때 받는다
     const modUrl = VRV_BASE + 'verovio-module.mjs', esmUrl = VRV_BASE + 'verovio.mjs';
-    const [{ default: createVerovioModule }, { VerovioToolkit }] = await Promise.all([import(/* @vite-ignore */ modUrl), import(/* @vite-ignore */ esmUrl)]);
+    const [{ default: createVerovioModule }, { VerovioToolkit, enableLog, LOG_ERROR }] = await Promise.all([import(/* @vite-ignore */ modUrl), import(/* @vite-ignore */ esmUrl)]);
     const M = await createVerovioModule();
+    try { enableLog(LOG_ERROR, M); } catch (e) { /* 옛 판 */ }   // 경고(단 맞춤 등)를 콘솔에 수천 줄 쏟지 않게 — 오류만(213번)
     return new VerovioToolkit(M);
   })().catch(e => { tkPromise = null; throw e; });   // 받지 못하면 다음에 다시 시도
   return tkPromise;
@@ -25,7 +26,7 @@ export async function engrave(xml: string, o: EngraveOpts): Promise<Engraved> {
   const scale = Math.round(40 * o.zoom / 100);   // Verovio scale 40 ≈ 화면에서 읽기 좋은 크기
   tk.setOptions({
     scale,
-    pageWidth: Math.max(800, Math.round(o.width * 100 / scale)),
+    pageWidth: Math.max(300, Math.round(o.width * 100 / scale)),   // 휴대폰에서 크기 +가 먹히게(예전 800이면 좁은 화면에서 늘 같은 배치, 213번)
     pageHeight: 60000, adjustPageHeight: true,   // 화면에서는 한 쪽을 길게(넘기지 않고 내려 보기)
     pageMarginTop: o.first === false ? 10 : 60, pageMarginBottom: 10, pageMarginLeft: 50, pageMarginRight: 50,
     breaks: o.breaks || 'auto', header: o.first === false ? 'none' : 'auto', footer: 'none',

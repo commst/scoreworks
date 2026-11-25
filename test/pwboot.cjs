@@ -12,6 +12,9 @@ const states = {
   tone: { 'hapju.tab': 'tone', 'hapju-tone': JSON.stringify({ master: { lo: 3, hi: -2 }, inst: { gayageum: { vol: 150, mid: 4 }, daegeum: { lo: -6 } }, perc: { '장구': { vol: 60, hi: 6 }, '북': { lo: 5 } } }) },
   toneBroken: { 'hapju-tone': '{"inst":7,"perc":"x","master":[1]', 'hapju.tab': 'tone' },
   toneOdd: { 'hapju-tone': JSON.stringify({ master: 'a', inst: { nope: { vol: 'x', lo: 99 }, gayageum: null }, perc: { '없음': { vol: -5 } } }) },
+  recView: { 'hapju-view': JSON.stringify({ mode: 'score', src: 'rec', zoom: 1.25 }) },   // 213번: 인식 악보(Verovio를 못 받아도 시작은 됨)
+  sideView: { 'hapju-view': JSON.stringify({ mode: 'score', src: 'side', zoom: 2 }) },
+  srcOdd: { 'hapju-view': JSON.stringify({ mode: 'map', src: 'zzz' }) },
   broken: { 'hapju-view': '{bad json', 'hapju.tab': 'nope', 'hapju-prefs': '[' },
 };
 // 탭 × 보기 조합 전부

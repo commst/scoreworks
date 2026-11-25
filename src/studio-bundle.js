@@ -44,7 +44,7 @@ var SWS = (() => {
   function verovioReady() {
     if (!tkPromise) tkPromise = (async () => {
       const modUrl = VRV_BASE + "verovio-module.mjs", esmUrl = VRV_BASE + "verovio.mjs";
-      const [{ default: createVerovioModule }, { VerovioToolkit }] = await Promise.all([import(
+      const [{ default: createVerovioModule }, { VerovioToolkit, enableLog, LOG_ERROR }] = await Promise.all([import(
         /* @vite-ignore */
         modUrl
       ), import(
@@ -52,6 +52,10 @@ var SWS = (() => {
         esmUrl
       )]);
       const M = await createVerovioModule();
+      try {
+        enableLog(LOG_ERROR, M);
+      } catch (e) {
+      }
       return new VerovioToolkit(M);
     })().catch((e) => {
       tkPromise = null;
@@ -64,7 +68,8 @@ var SWS = (() => {
     const scale = Math.round(40 * o.zoom / 100);
     tk.setOptions({
       scale,
-      pageWidth: Math.max(800, Math.round(o.width * 100 / scale)),
+      pageWidth: Math.max(300, Math.round(o.width * 100 / scale)),
+      // 휴대폰에서 크기 +가 먹히게(예전 800이면 좁은 화면에서 늘 같은 배치, 213번)
       pageHeight: 6e4,
       adjustPageHeight: true,
       // 화면에서는 한 쪽을 길게(넘기지 않고 내려 보기)
