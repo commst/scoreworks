@@ -1,6 +1,6 @@
 # ScoreWorks(옛 이름 합주연습기) 인수인계 메모
 
-새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-25, CHANGELOG 219번까지)
+새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-25, CHANGELOG 221번까지)
 
 
 ## ★ Studio 기능 접목 (11-25~) — 기획·롤백
@@ -19,14 +19,16 @@
 - **217 1단계 끝 — 마디맵 지움**: viewMode 늘 'score', svSyncView, 마디 미리보기는 svTipHover(마우스 0.6초)·svLongDown(길게 0.45초) → barTipContent([타임라인|상세]·[✎ 수정]), warnGo → svGoBar/recGoBar, 첫 화면(body.welcome)에서는 인식 악보 안 그림. 시험 test/pwnomap.cjs
 - **218 사용설명서 갱신 끝**(그림 tools/manual/mancap11.cjs, 훅 window.__svBarRect)
 - **219 3단계 1차 끝 — 편집 모드·검사기**(자세한 것은 CHANGELOG 219): [연습|✎ 편집](#svPractice/#svEdit, 악보 칸 도구줄), 상태 `ED`(REC 앞에 선언), edNoteAt → edSelect(id) → edCtx(줄·마디·raw/cur 음·수정 기록) → edRender(#edInsp) → edPatch = setEdit. 판정 edJudge(그 마디 recSlice → xmlReadBack(n.id) → xmlNoteXY ↔ geo.heads). 보이게 edReveal/edRevealPdf(REC.sync로 함께 넘기기 잠깐 멈춤). 이 마디 듣기 ED.playOne(svShow). 훅 window.__ed, window.__barClick(n). 시험 test/pwed.cjs(FROM=100)
-- **다음 할 일(3단계 2차)**: 겹쳐 보기에서 '악보와 다르게'(수정 기록 memo·판정) 음을 빨강 대신 주황 ✎ + 확인할 곳에서 빼기 + [악보와 다르게 고친 곳 n] 목록, ✓ 맞음(마디 확인 표시 — 저장은 더하기만), 구음 적기, 원본 PDF 머리 눌러 고르기, 끌어서 높이(마우스·펜). 그 뒤 4단계 구조 편집
+- **220 — 불러오면 원본 PDF + 3단계 2차 끝**(자세한 것은 CHANGELOG 220): clearScoreUi에서 svSrc='pdf'. xmlCheck `edEvAt` → p.intent(주황 점선 ✎ `.sv-ovn.intent`, 짝 없는 머리 mk.iMiss 주황 네모, 확인할 곳·악보대로 고치기에서 빠짐), `svOverData.intents` → #svDiff [✎ 악보와 다르게 n]·openDiffSheet(diffIdx, fixRender에서 셈 — overStale은 편집 중·목록 있을 때도 fixSoon). ✓ 맞음 = 수정 기록 마디 칸 `ok: 1`(setBarOk·barOk, applyEdits → rb.okd, countEdits(e, all)·countOks), 겹쳐 보기 `.sv-okd`. PDF 머리 고르기 edPdfNoteAt(EV_SRC → 화면용 id, edEnsureIds). 끌어서 높이 edDragDown/edDragTo/edDragEnd(마우스·펜, midiToDia). 편집 자판은 .edit-back 창이 있으면 안 받음. 시험 test/pwed2.cjs
+- **221 — 나란히: 인식 악보 단 = PDF 단**(사용자 제보 11-25): REC.enc이면 recSlice가 기준 geo의 쪽·오선이 바뀌는 마디에 `<print new-system>`, Verovio breaks 'encoded', 그릴 폭 recEncFactor(PDF 단 마디 수 ÷ 3, 휴대폰 ÷ 2) → 넘치면 recOverflow만큼 한 번 더(최대 6배), c.encF. 시험 test/pwside.cjs(훅 __recSys). 남은 것: 단이 아주 빽빽하면(16분음표 많은 7~8마디) 글자가 작음 — 사용자가 [크기 +]로 키우거나, 필요하면 나란히 기본 크기를 올릴 것
+- **다음 할 일**: 4단계 구조 편집(음 넣기·지우기·쉼표·화음·둘째 성부 = '마디 다시 쓰기', 원래 마디 지문이 같을 때만 적용). 구음 적기는 5단계(율명·구음)와 함께 — 인식 악보 글자는 MusicXML 가사 칸이 필요해 내보내기와 함께 정함
 - 남은 시험 문제: pwovfix2 'Ctrl+Z 뒤 단추 1개' 한 줄 실패(218번 판도 같음 — 원인 미확인). 예전 시험(pwedit·pwshare)은 219번에서 마디맵 없는 화면으로 옮김. 다른 시험에도 `#bars .b`(마디 칸)를 쓰는 것이 남아 있으면 같은 방식(__openEditor·__barClick)으로 옮길 것
 - 214(긴급): MuseScore 3 PDF('MScore' 글꼴이 SMuFL 번호)를 못 읽던 것 고침 — 글꼴마다 두 번호표 맞는 수로 고름. 샘플 신아리랑 73929564 — 비공개 샘플 저장소에는 사용자가 직접 올리기로 함(11-25). 216: 음표를 거의 못 읽은 악보 경고(glyphStats·readHealth, test/pwreadwarn.cjs), 옛 저장 설정 바로잡기(줄 설정 pitched, test/pwcfgfix.cjs)
 - 213에서 남은 것: 조각 경계를 넘는 붙임줄·이음줄·꺾쇠는 끊겨 보임, 인식 악보에서 [MusicXML 겹쳐 보기]·[⚠ 경고]·[✎ 악보대로]는 원본 PDF 쪽 기능(인식 악보만 볼 때는 효과 없음)
 - 단계: 0 준비 → 1 마디맵 지우기 → 2 대조(인식 악보 + 나란히) → 3 수정·바로 듣기 → 4 구조 편집 → 5 율명·구음·정간보 → 6 태블릿·휴대폰 → 7 마디 나누기·합치기
 - **롤백(사용자 요구)**: 단계마다 배포 전 판을 브랜치로 남김 — `rollback/sw-before-studio`(210번, 접목 전), 이후 `rollback/before-<번호>`. 이 작업 공간은 **태그 올리기가 403으로 막힘** → 브랜치 사용
   - 되돌리기(앱이 올린 settings/ 커밋을 지우지 않게 reset 대신 파일만 되돌림): `git fetch origin main rollback/<이름> && git checkout origin/main -B main && git checkout origin/rollback/<이름> -- src index.html version.json build.py && python3 build.py && git commit -am "롤백: <이름> 판으로" && git push origin main`
-  - 남긴 브랜치: `rollback/sw-before-studio`(210), `rollback/before-212`(211), `rollback/before-213`(212), `rollback/before-218`(217), `rollback/before-219`(218)
+  - 남긴 브랜치: `rollback/sw-before-studio`(210), `rollback/before-212`(211), `rollback/before-213`(212), `rollback/before-218`(217), `rollback/before-219`(218), `rollback/before-220`(219)
   - 저장 형식은 더하기만(hapju-edits 등에 새 칸을 더하되 옛 판이 읽는 칸은 그대로) → 옛 판으로 돌아가도 단원 설정·수정 기록이 깨지지 않음. 새 기록은 옛 판에서는 무시됨
 
 ## 210번(11-24) 타악 마디별 소리 — 끝남

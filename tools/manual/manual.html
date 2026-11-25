@@ -295,7 +295,7 @@ th { background: var(--soft); font-weight: 700; }
 
 <!-- 8 -->
 <h2>8. 악보 보기와 음 고치기</h2>
-<p>가운데 악보 칸은 세 가지로 봅니다. 위의 <span class="btn">원본 PDF</span> <span class="btn">인식 악보</span> <span class="btn">나란히</span> 단추로 고르고, 고른 것은 이 기기에 기억됩니다. 어느 보기든 마디를 누르면 그 마디부터 재생하고, 연주 중에는 지금 마디를 따라갑니다.</p>
+<p>가운데 악보 칸은 세 가지로 봅니다. 위의 <span class="btn">원본 PDF</span> <span class="btn">인식 악보</span> <span class="btn">나란히</span> 단추로 고릅니다. 악보를 새로 불러오면 늘 <b>원본 PDF</b>로 시작합니다. 어느 보기든 마디를 누르면 그 마디부터 재생하고, 연주 중에는 지금 마디를 따라갑니다.</p>
 <h3>원본 PDF</h3>
 <p><span class="btn">원본 PDF</span>는 올린 PDF를 그대로 보여 줍니다. 연주하는 동안 지금 마디는 <b>노란 칸</b>, 지금 위치는 <b>빨간 선</b>으로 음표를 따라 움직이고, 다음 단·다음 쪽으로 넘어가면 악보가 따라 내려갑니다. <b>음표 따라가기</b>를 켜 두면(처음 켜짐) 지금 소리 나는 음표 머리가 악기 갈래 색(관악 초록·현악 파랑·타악 주홍·그 밖 보라)으로 바뀝니다.</p>
 <figure><img src="img/12_score_play.png"><figcaption>연습 번호 D부터 재생 중. 36마디에 노란 칸과 빨간 선, 소리 나는 소금 음표 머리가 초록으로.</figcaption></figure>
@@ -320,7 +320,7 @@ th { background: var(--soft); font-weight: 700; }
   <li>마디를 여러 조각으로 나눠 그리기 때문에 조각 경계를 넘는 붙임줄·이음줄이 끊겨 보일 수 있습니다(소리와 내보내기에는 영향 없음).</li>
 </ul>
 <h3>나란히</h3>
-<p><span class="btn">나란히</span>는 원본 PDF와 인식 악보를 함께 놓습니다. 컴퓨터처럼 넓은 화면은 좌우, 휴대폰·세로 화면은 위아래로 나뉩니다. 한쪽을 넘기면 다른 쪽도 같은 마디로 따라오고, 재생 중에는 두 칸이 저마다 지금 마디를 따라갑니다.</p>
+<p><span class="btn">나란히</span>는 원본 PDF와 인식 악보를 함께 놓습니다. 컴퓨터처럼 넓은 화면은 좌우, 휴대폰·세로 화면은 위아래로 나뉩니다. 한쪽을 넘기면 다른 쪽도 같은 마디로 따라오고, 재생 중에는 두 칸이 저마다 지금 마디를 따라갑니다. 나란히에서는 인식 악보도 <b>원본 PDF와 같은 마디에서 줄을 바꿔</b>(PDF 한 단 = 인식 악보 한 단) 두 칸의 마디 배치가 같습니다. 칸 폭에 맞춰 작게 그려지니 필요하면 <span class="btn">+</span>로 키우세요.</p>
 <figure><img src="img/32_side.png"><figcaption>나란히: 왼쪽 원본 PDF 44마디와 오른쪽 인식 악보 44마디가 함께 노란 칸으로.</figcaption></figure>
 <div class="box ex"><span class="t">예시: 잘못 읽힌 음 찾기</span> 나란히로 놓고 재생하며 두 칸의 같은 마디를 견줘 봅니다. 원본은 레인데 인식 악보는 레♯이면, <span class="btn">✎ 편집</span>을 켜고 인식 악보의 그 음을 눌러 고칩니다(아래 '편집 모드').</div>
 <h3>마디 미리보기</h3>
@@ -339,8 +339,8 @@ th { background: var(--soft); font-weight: 700; }
 <p>악보 칸 위 <span class="btn">연습</span> <span class="btn">✎ 편집</span>에서 <b>편집</b>을 켜면 마디를 눌러도 재생하지 않고 음을 고르게 됩니다. 컴퓨터에서는 원본과 인식 악보가 <b>나란히</b> 놓이고, 다시 <span class="btn">연습</span>을 누르면 원래 보기로 돌아갑니다.</p>
 <figure><img src="img/34_edit.png"><figcaption>편집 모드: 102마디 소금 음을 한 옥타브 올린 모습. 인식 악보의 고른 음은 파랑, 원본 PDF의 같은 음표에는 파란 동그라미, 오른쪽이 검사기입니다.</figcaption></figure>
 <ol class="steps">
-  <li><b>인식 악보에서 음을 누릅니다.</b> 그 음이 파랗게 골라지고, 원본 PDF의 같은 음표 머리에 파란 동그라미가 그려지며, 오른쪽(휴대폰은 아래)에 <b>검사기</b>가 열립니다.</li>
-  <li>검사기에서 고칩니다. 높이 <b>↓8 ♭ ♯ ↑8</b>, 길이 <b>온·2분·4분·8분·16분·32분·점</b>(잇단음표는 옆 목록), <b>⌒ 앞 음과 잇기</b>(붙임줄). 길이를 바꾸면 같은 성부의 뒤 음들이 따라 밀립니다.</li>
+  <li><b>인식 악보에서 음을 누릅니다</b>(원본 PDF의 음표 머리를 눌러도 됩니다). 그 음이 파랗게 골라지고, 원본 PDF의 같은 음표 머리에 파란 동그라미가 그려지며, 오른쪽(휴대폰은 아래)에 <b>검사기</b>가 열립니다.</li>
+  <li>검사기에서 고칩니다. 높이 <b>↓8 ♭ ♯ ↑8</b>, 길이 <b>온·2분·4분·8분·16분·32분·점</b>(잇단음표는 옆 목록), <b>⌒ 앞 음과 잇기</b>(붙임줄). 길이를 바꾸면 같은 성부의 뒤 음들이 따라 밀립니다. 마우스·펜으로는 인식 악보의 <b>음 머리를 위아래로 끌어</b> 높이를 바꿀 수도 있습니다(반 칸마다 조표를 따른 한 음, 끄는 동안 바뀔 음 이름이 보임).</li>
   <li><span class="btn pri">▶ 이 마디</span>로 고친 대로 그 마디만 들어 봅니다(그 마디가 끝나면 멈춤). <span class="btn">◀ 앞 음</span> <span class="btn">뒤 음 ▶</span>으로 옆 음으로 옮깁니다.</li>
   <li>고친 음은 <b>보라색</b>이 되고, 인식 악보가 바로 다시 그려집니다. <span class="btn">↺ 되돌리기</span>는 그 음을 원래대로, <span class="kbd">Ctrl</span>+<span class="kbd">Z</span>는 방금 한 수정을 취소합니다.</li>
 </ol>
@@ -351,6 +351,7 @@ th { background: var(--soft); font-weight: 700; }
   <tr><td><b>⚠ PDF 음표와 다르게 읽혔을 수 있음</b></td><td>아직 고치지 않은 음인데 PDF 음표 자리와 맞지 않습니다. 원본과 견줘 보세요.</td></tr>
   <tr><td>PDF와 견줄 수 없는 음</td><td>쪽 그림이 없는 악보(MusicXML로 올린 악보 등), 타악 소리, 붙임줄로 이어 온 음.</td></tr>
 </table>
+<p><b>악보와 다르게 고친 곳</b>은 겹쳐 보기에서 빨강(확인할 곳) 대신 <b>주황 점선 ✎</b>로 보이고, 원래 자리의 PDF 음표 머리도 주황 네모가 됩니다. MusicXML 확인 창의 확인할 곳에서도 빠지고, 도구줄의 <span class="btn">✎ 악보와 다르게 n</span>을 누르면 메모와 함께 모아 봅니다. 검사기의 <span class="btn">✓ 이 마디 맞음</span>은 그 악기의 그 마디를 PDF와 견줘 맞다고 표시합니다 — 겹쳐 보기에 초록 ✓가 붙고 확인할 곳에서 빠지며, 수정과 함께 저장·공유됩니다.</p>
 <p class="small">견주는 잣대는 '겹쳐 보기'(9장)와 같습니다. 음표의 자리(박 위치와 오선 위 높이)만 보므로 같은 자리의 ♯·♭(임시표) 차이는 가리지 못합니다 — ♯·♭은 눈으로 확인하세요.</p>
 <div class="box tip"><span class="t">컴퓨터 자판</span> <span class="kbd">←</span> <span class="kbd">→</span> 앞·뒤 음, <span class="kbd">↑</span> <span class="kbd">↓</span> 반음, <span class="kbd">Ctrl</span>+<span class="kbd">↑</span>/<span class="kbd">↓</span> 옥타브, <span class="kbd">1</span>~<span class="kbd">6</span> 길이(온~32분), <span class="kbd">.</span> 점, <span class="kbd">스페이스바</span> 이 마디 듣기, <span class="kbd">Esc</span> 고르기 풀기.</div>
 <p>아쟁 주법(뜯기·활)이나 타악 소리처럼 검사기에 없는 것, 또는 한 마디의 모든 줄을 한꺼번에 보려면 검사기의 <span class="btn">마디 음 목록</span>을 누르세요. 아래 '음 목록 창'이 열립니다.</p>
@@ -358,7 +359,7 @@ th { background: var(--soft); font-weight: 700; }
 <p>자동으로 읽다 보니 음 높이나 길이가 악보와 다르게 들리는 마디가 있을 수 있습니다. 직접 고칠 수 있습니다.</p>
 <div class="box ex"><span class="t">예시</span> 21마디 소금의 둘째 음이 레♯으로 들리는데 악보는 레다 → 21마디 ✎ 수정 → 둘째 음의 ♭을 한 번 누름 → 닫기.</div>
 <ol class="steps">
-  <li>마디 미리보기의 <span class="btn">✎ 수정</span>, 편집 모드에서 <b>원본 PDF</b>의 마디 누르기, 검사기의 <span class="btn">마디 음 목록</span>, 확인 필요 목록의 <span class="btn">✎ 고치기</span> 가운데 하나로 엽니다.</li>
+  <li>마디 미리보기의 <span class="btn">✎ 수정</span>, 편집 모드에서 <b>원본 PDF</b>의 음표가 없는 곳 누르기, 검사기의 <span class="btn">마디 음 목록</span>, 확인 필요 목록의 <span class="btn">✎ 고치기</span> 가운데 하나로 엽니다.</li>
   <li>음마다 <b>♭·♯</b>(반음), <b>↓8·↑8</b>(옥타브)로 높이를, 목록에서 길이를 고릅니다. 길이를 바꾸면 같은 성부의 뒤 음들이 따라 밀립니다. 타악은 길이만 고칩니다.</li>
   <li><span class="btn">▶ 이 마디부터 듣기</span>로 확인하고 닫습니다. 고친 마디에는 ✎가 붙고, 이 기기에 바로 저장됩니다. 인식 악보에서는 고친 음이 바로 다시 그려집니다.</li>
   <li>되돌리기: 음마다 ↺, 마디마다 [이 마디 모두 되돌리기], 방금 한 수정은 <span class="kbd">Ctrl</span>+<span class="kbd">Z</span>.</li>

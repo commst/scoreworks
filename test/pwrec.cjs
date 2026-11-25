@@ -29,7 +29,8 @@ const HTML = 'file://' + require('path').resolve(process.env.HTML || __dirname +
   // ② PDF
   await p.setInputFiles('#pdfInput', t);
   await p.waitForFunction(() => document.querySelectorAll('#lineList .lcard').length >= 1 && /읽었습니다/.test(document.getElementById('fileInfo').textContent), null, { timeout: 120000 });
-  await drawnAll();
+  ok('악보를 불러오면 원본 PDF 보기(220번)', (await st()).src === 'pdf');
+  await click('#viewRec'); await drawnAll();
   const tk0 = (await st()).tok;
   const t0 = Date.now();
   if (process.env.ALL) await p.evaluate(() => document.getElementById('allOn').click());   // ALL=1: 모든 줄 켜고
