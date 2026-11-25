@@ -1,6 +1,6 @@
 # ScoreWorks(옛 이름 합주연습기) 인수인계 메모
 
-새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-25, CHANGELOG 225번까지)
+새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-25, CHANGELOG 226번까지)
 
 
 ## ★ Studio 기능 접목 (11-25~) — 기획·롤백
@@ -25,6 +25,7 @@
 - **223 — 마디 정보 줄**(사용자가 고른 1+4안): svTipPref('strip' 처음·'hover'·'off', hapju-view.tip), svInfoShow(#svInfo, [상세 ▸] → showBarTip). 시험 pwnomap
 - **224 — 인식 악보 긴 악기 이름 여러 줄**(사용자 11-25: 이름이 길면 두세 줄로 접더라도 마디 폭을 넓게): buildMusicXml 화면용(SCREEN)만 `wrapPartName`(폭 12, '/'·','·'·'·빈칸 뒤, `&#10;` → Verovio 여러 줄). 시험 test/pwname.cjs
 - **225 — 5단계 율명·구음·정간보**(자세한 것은 CHANGELOG 225): 아래 글자 svLab('none'·'yul'·'gu')·svBase → recXmlOpts()(recBuild·edEnsureIds 같은 글) → buildMusicXml 화면용 lyricObjs(가사 칸), 파일은 적은 구음(rec.gu → e.gu)만 가사. 정간보 svSrc 'jg'(svSrcEff, svSyncView, buildScoreView → jgBuildSoon, svShow → jgShow, svCursor·svNotesAt·svGoBar 분기), SWS.parseMusicXml + renderJeonggan. 시험 test/pwyul.cjs
+- **226 — 길이 단추를 음표 모양으로**(사용자 11-25): 음표판·검사기 길이(온~32분·점·셋잇단)와 넣기·지우기 모드 단추에 직접 그린 SVG 아이콘(noteIcon 등, currentColor). 단추 title·aria-label은 그대로라 시험 선택자 그대로
 - **25현 가야금 줄 번호는 보류**: 사용자에게 늘봄 기본 조율(1~25현 음) 또는 곡마다 조현표인지 물어봄(11-25) — 답을 받으면 율명 아래 줄 번호(lyricObjs에 줄 하나 더)
 - **다음 할 일**: 6단계 태블릿·휴대폰(손가락 끌어 넣기·옮기기 — 길게 눌러 끌기, 음표판 손가락 끌어 넣기, 줄 사이 11px 기준 크기). 5단계에서 남은 것: 정간보에 장구 말고 다른 타악은 아직 비어 있음, 산조가야금 줄 구음(12현)은 25현 쓰는 늘봄에는 안 넣음, 한자 율명 고르기
 - 남은 시험 문제: pwovfix2 'Ctrl+Z 뒤 단추 1개' 한 줄 실패(218번 판도 같음 — 원인 미확인). 예전 시험(pwedit·pwshare)은 219번에서 마디맵 없는 화면으로 옮김. 다른 시험에도 `#bars .b`(마디 칸)를 쓰는 것이 남아 있으면 같은 방식(__openEditor·__barClick)으로 옮길 것
