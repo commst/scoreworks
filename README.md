@@ -307,7 +307,9 @@ scoreworks/
 │  ├─ outline-templates.js  위 인식에 쓰는 기호 견본 (tools/gen_outline_templates.py로 생성)
 │  ├─ audio-engine.js       연주 계획(템포·반복·셈여림)과 타악 소리 섞기
 │  ├─ melody-engine.js      선율 악기 소리 (녹음 뱅크 재생 + 합성음)
-│  └─ samples.json          장구·꽹과리·징·북·바라·심벌·하이햇·베이스드럼 녹음 (16bit PCM, 32kHz, base64)
+│  ├─ samples.json          장구·꽹과리·징·북·바라·심벌·하이햇·베이스드럼 녹음 (16bit PCM, 32kHz, base64)
+│  ├─ studio/               Studio에서 가져온 TypeScript(인식 악보 그리기 Verovio·율명·정간보·구음·편집 연산·.swc 읽기, 212번~)
+│  └─ studio-bundle.js      위를 묶은 것(전역 SWS) — tools/build-studio.mjs가 만듦, 직접 고치지 말 것
 ├─ banks/                   선율 악기 녹음 뱅크
 │  ├─ <악기>.mp3            음들을 이어 붙인 녹음 (32kHz 모노)
 │  └─ <악기>.json           음 목록
@@ -362,6 +364,8 @@ python3 build.py
 2. 한 파일 판은 `banks/*.mp3`를 base64 글자로 바꿔 `<script type="text/plain" id="bank-<악기>">`로 html 끝에 붙이고, 음 목록(json)은 코드 안에 넣습니다.
 3. 웹 페이지 머리(`<!doctype html>` 등)를 씌워 저장합니다.
 4. **옛 브라우저 문법 검사**: `node test/syntaxcheck.cjs index.html 2020`으로 앱 스크립트가 ES2020 문법만 쓰는지 봅니다. `??=`·`||=`·`&&=`(ES2021) 같은 새 문법이 하나라도 있으면 Safari 13.x·Chrome 80~84 같은 브라우저는 스크립트 전체를 읽지 못해 앱이 시작되지 않으므로 빌드를 멈춥니다(검사 도구 acorn이 없으면 건너뜀).
+
+**Studio 기능 묶음**(212번): `src/studio/*.ts`를 고쳤으면 빌드 전에 `NODE_PATH=/opt/npm-tools/node_modules node tools/build-studio.mjs`(esbuild)로 `src/studio-bundle.js`를 다시 만듭니다. build.py는 이 파일을 `/*__STUDIO__*/` 자리에 넣을 뿐이라 파이썬만 있으면 됩니다. Verovio(오선 그리기)는 앱에 넣지 않고 jsDelivr(`verovio@6.4.1/dist/`)에서 인식 악보를 처음 그릴 때 받습니다.
 
 코드를 고칠 때는 `dist/`가 아니라 **`src/`를 고치고** 다시 빌드하세요. `dist/`는 저장소에 넣지 않습니다(`.gitignore`).
 
@@ -461,6 +465,8 @@ python3 tools/gen_outline_templates.py <fonts 폴더> src/outline-templates.js
 | `node test/pwsvscroll.cjs [html] [phone]` | 악보로 보기 스크롤 시험(187번): 소나기 총보를 일시정지한 채 끝까지·처음까지 스크롤해 보이는 쪽에 그림이 있는지(쪽 그림 지우기는 보이는 쪽을 빼고) |
 | `node test/pizzmark.mjs [악보.pdf…]`, `node test/pwpizz.cjs <html> [desktop\|mobile]` | 아쟁 주법(208번): 악보 pizz.·arco 구간, 음 수정의 '주법', 재생 계획의 뜯는 소리, MusicXML pizz.·arco(`/tmp/pwpizz-*.musicxml` → xsdcheck.py). 기본 샘플은 월광 소아쟁(5139dcdd)·바르도 소아쟁(01391308) |
 | `node test/glissplan.mjs`, `node test/metrodiv.mjs` | 글리산도 재생 계획(프론티어 가야금 20·52마디), 메트로놈 치는 단위(209번) |
+| `node test/pwstudio0.cjs [접두어]` (`ALL=1`이면 모든 줄) | Studio 접목 0단계(212번): 시작 때 Verovio 안 받음, SWS 실림, 화면용 MusicXML 음 id(꼴·겹침), Verovio SVG에 같은 id, .swc 읽기, 파일용엔 id 없음. Verovio는 `/home/claude/work/vrv`에 `npm i verovio@6.4.1` 해 둔 것으로 바꿔 끼움 |
+| `node test/pwzoom.cjs [접두어]` | 휴대폰 확대·축소·회전(211번): 좁은 폭·가로·돌리기에서 가로 넘침·오류 (`SHOT=<폴더>`면 화면 사진) |
 | `node test/pwboot.cjs index.html` | 시작 시험: 저장된 설정(악보로 보기·탭·자동 저장 등) 여러 가지로 열어 끝까지 시작되는지. 화면 코드를 고치면 꼭 |
 | `NODE_PATH=/opt/npm-tools/node_modules node test/pwspill.cjs <접두어> [out.json]` | 총보를 열고 모든 줄을 켠 뒤 재생 마디(state.bars)에서 마디 길이를 넘어 잘리는 음을 줄·마디별로 셈(170번 점검 도구). out.json에 마디 길이 목록도 |
 | `node test/pwxml.cjs <접두어…>` → `xsdcheck.py`·`xmlcheck.py`·`integrity.py`·`msall.sh` | MusicXML 내보내기 검사(표준 규칙, 원래 음 대비, 붙임줄·이음줄·잇단 짝, 뮤즈스코어로 열기) |

@@ -2337,6 +2337,9 @@ pdfjsReady.catch(e => console.error('pdf.js', e));
 /*__ENGINE__*/
 
 /*__MELODY__*/
+// ---------- Studio 기능 묶음(SWS: 인식 악보 그리기·율명·정간보·편집 연산 — src/studio, 212번) ----------
+/*__STUDIO__*/
+window.SWS = SWS;   // 모듈 스크립트라 전역으로 내보냄(시험·콘솔)
 
 const $ = id => document.getElementById(id);
 const SOUND_OPTIONS = [['따', '장구 따 (채편)'], ['궁', '장구 궁 (북편)'], ['덩', '장구 덩'], ['꽹과리', '꽹과리'], ['꽹과리막음', '꽹과리 막음'], ['북', '북 (합성음)'], ['북녹음', '북 (녹음, 낮고 길게)'], ['북짧게', '북 (녹음, 높고 짧게)'], ['북테', '북 테 (합성음)'], ['징', '징'], ['바라', '바라'], ['심벌', '심벌 (크래시)'], ['하이햇', '하이햇'], ['베이스드럼', '베이스드럼'], ['스네어', '스네어드럼'], ['봉고높게', '봉고 (높은 쪽)'], ['봉고', '봉고 (낮은 쪽)'], ['팀파니높게', '팀파니 (높은 음 G)'], ['팀파니', '팀파니 (낮은 음 C)'], ['탬버린', '탬버린'], ['트라이앵글', '트라이앵글'], ['카바사', '카바사 (마라카스·셰이커)'], ['윈드차임', '윈드차임'], ['클릭', '클릭음'], ['off', '소리 끄기']];
@@ -5562,7 +5565,12 @@ function buildMidi() {
 //       8분음표 이하는 박마다 빔, 셋잇단음표 괄호, 꾸밈음, 타악은 악보에 적힌 줄·칸 위치와 X 머리, 굴림
 // 그 밖에 셈여림(p·f·꺾쇠·cresc.)을 그 자리에, 빠르기(♩.=52 등)·rit.·accel.·a tempo, 연습 번호, 늘임표, 1·2번 괄호, 세뇨·코다·D.S.·D.C.·Fine,
 // 같은 마디 되풀이(%), 여러 마디 쉼(파트보), 못갖춘마디, 원래 악보의 줄 바꿈·쪽 바꿈
-function buildMusicXml() {
+// 시험·인식 악보 보기용: 화면용 MusicXML(음 id 붙음) — 212번
+window.__swScreenXml = () => buildMusicXml({ ids: true });
+window.__swFileXml = () => buildMusicXml();
+function buildMusicXml(xo) {
+  // xo.ids: 화면용(인식 악보 보기) — 음마다 id(줄·오선·마디·성부·순번)를 붙임. 파일로 내보낼 때는 붙이지 않음(내보낸 파일이 전과 같게, 212번)
+  const SCREEN = !!(xo && xo.ids);
   refreshPercSnd();   // 구간별 소리를 바꾼 뒤 재생하지 않고 바로 내보내도 반영(210번)
   // 4분음표 = 3360: 2·3·5·7로 나뉘어 셋잇단·다섯잇단·일곱잇단과 128분음표까지 정확히 (예전 96은 다섯·일곱잇단을 적지 못해 1~2짜리 조각이 생겼다)
   const DIV = 3360, Q = DIV, W = DIV * 4, lines = exportLines(), esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -5835,6 +5843,8 @@ function buildMusicXml() {
       // 한 화음으로 묶여 원래 악보처럼 적힌다 (예: 솔을 이어 가는 동안 미♭을 새로 침)
       const evs = [];
       const G = Q / 8, S16 = Q / 4;
+      // 화면용 id: 수정 기록과 같은 순번(noteList·tieList) — '성부순번'(R0) / 붙임줄로 이어 온 음은 'RT0'
+      const SID = SCREEN ? (() => { const m = new Map(), ob = { events: b.events.filter(mine) }; for (const v of ['R', 'L']) { noteList(ob, v).forEach((e, i) => m.set(e, v + i)); tieList(ob, v).forEach((e, i) => m.set(e, v + 'T' + i)); } return m; })() : null;   // 합친 마디(state.bars)에서 이 줄의 음만
       for (const e of b.events.filter(mine)) {
         let st = Math.round(e.t.v * W), nat = Math.round((e.sus || e.dur).v * W);
         // snap: 잇단음표가 반쯤만 읽힌 마디(셋잇단과 보통 음이 한 박에 섞임) — 그런 음만 16분음표 칸에 맞춘다 (뮤즈스코어가 '깨진 파일'로 여기지 않게)
@@ -5842,8 +5852,8 @@ function buildMusicXml() {
         const pc = !snap && !perc && e.midis && e.pcs && e.pcs.length > 1 ? e.pcs.map(f => Math.round(f.v * W)) : null;
         if (pc && pc.every(v => v > 0) && pc.reduce((a, c) => a + c, 0) === nat) {
           let p = st;
-          pc.forEach((d, k) => { evs.push({ st: p, nat: d, e: k === 0 ? { ...e, pcs: null, stacc: false } : { ...e, pcs: null, tie: true, tieTimes: null, accent: false, ten: false, trill: false, vib: false, slurS: 0, slurE: 0, slurNs: null, slurNe: null, graceMidis: null, stacc: k === pc.length - 1 && e.stacc } }); p += d; });
-        } else evs.push({ e, st, nat });
+          pc.forEach((d, k) => { evs.push({ st: p, nat: d, sid: SID && SID.get(e) && (k ? SID.get(e) + 'c' + k : SID.get(e)), e: k === 0 ? { ...e, pcs: null, stacc: false } : { ...e, pcs: null, tie: true, tieTimes: null, accent: false, ten: false, trill: false, vib: false, slurS: 0, slurE: 0, slurNs: null, slurNe: null, graceMidis: null, stacc: k === pc.length - 1 && e.stacc } }); p += d; });
+        } else evs.push({ e, st, nat, sid: SID && SID.get(e) });
       }
       const R = evs.filter(x => x.e.voice !== 'L'), Lv = evs.filter(x => x.e.voice === 'L');
       // 같은 때 시작하는 음은 한 화음으로 (붙임줄로 이어 온 음과 새로 치는 음이 같이 있어도). 음마다 이어 온 음인지 기억. 타악은 자리(pos)마다 머리
@@ -5851,7 +5861,7 @@ function buildMusicXml() {
         const out = [];
         for (const x of [...list].sort((a, c) => a.st - c.st)) {
           const h = out.find(y => y.st === x.st && !!y.e.midis === !!x.e.midis);
-          const ms = (x.e.midis || []).map(m => ({ m, tie: !!x.e.tie, tt: x.e.tie && x.e.tieTimes && x.e.tieTimes.length ? x.e.tieTimes : null, dia: x.e.dia ? x.e.dia[m] : undefined })), hs = x.e.midis ? [] : [{ pos: x.e.pos, xh: !!x.e.xh }];
+          const ms = (x.e.midis || []).map(m => ({ m, sid: x.sid, tie: !!x.e.tie, tt: x.e.tie && x.e.tieTimes && x.e.tieTimes.length ? x.e.tieTimes : null, dia: x.e.dia ? x.e.dia[m] : undefined })), hs = x.e.midis ? [] : [{ pos: x.e.pos, xh: !!x.e.xh, sid: x.sid }];
           if (h) {
             for (const n of ms) { const o = h.ms.find(o => o.m === n.m); if (!o) h.ms.push(n); else if (!n.tie) o.tie = false; else if (o.tie) o.tt = o.tt && n.tt ? [...new Set([...o.tt, ...n.tt])] : null; }   // 같은 음을 한 성부는 잇고 다른 성부는 새로 치면 새로 치는 쪽
             for (const n of hs) if (!h.hs.some(o => o.pos === n.pos)) h.hs.push(n);
@@ -5904,19 +5914,19 @@ function buildMusicXml() {
             ps.forEach((pd, pi) => {
               heads.forEach((h, j) => {
                 const idx = h.pos != null ? mid - h.pos : e.voice === 'L' ? mid - 3 : mid + 1;
-                objs.push({ d: pd, voice, st: p, perc: true, inst: g.instOf ? g.instOf(S.ln, e.voice, e) : null, chord: j > 0, low: e.voice === 'L', dstep: LET[((idx % 7) + 7) % 7], doct: Math.floor(idx / 7), accent: pi === 0 && e.accent, xh: h.xh, stacc: pi === ps.length - 1 && e.stacc, roll: pi === 0 && e.roll && !!e.rollDur, trill: pi === 0 && e.roll && !e.rollDur, twoV, tieStart: pi < ps.length - 1, tieStop: pi > 0, inner: pi > 0 });   // 굴림: 빗금(트레몰로)으로 적힌 것은 빗금, tr로 적힌 것은 tr
+                objs.push({ sid: SCREEN && h.sid ? h.sid + '_' + pi + '_' + j : undefined, d: pd, voice, st: p, perc: true, inst: g.instOf ? g.instOf(S.ln, e.voice, e) : null, chord: j > 0, low: e.voice === 'L', dstep: LET[((idx % 7) + 7) % 7], doct: Math.floor(idx / 7), accent: pi === 0 && e.accent, xh: h.xh, stacc: pi === ps.length - 1 && e.stacc, roll: pi === 0 && e.roll && !!e.rollDur, trill: pi === 0 && e.roll && !e.rollDur, twoV, tieStart: pi < ps.length - 1, tieStop: pi > 0, inner: pi > 0 });   // 굴림: 빗금(트레몰로)으로 적힌 것은 빗금, tr로 적힌 것은 tr
               });
               p += pd;
             });
           } else {
-            const ms = [], tied = new Set(), diaOf = {}, ttOf = {};
-            for (const n of x.ms) { const mm = Math.round(n.m + oct + shift); if (!ms.includes(mm)) ms.push(mm); if (n.tie) tied.add(mm); if (n.tie && n.tt) ttOf[mm] = n.tt; if (n.dia != null && !oct && !shift) diaOf[mm] = n.dia; }
+            const ms = [], tied = new Set(), diaOf = {}, ttOf = {}, sidOf = {};
+            for (const n of x.ms) { const mm = Math.round(n.m + oct + shift); if (SCREEN && n.sid && !sidOf[mm]) sidOf[mm] = n.sid; if (!ms.includes(mm)) ms.push(mm); if (n.tie) tied.add(mm); if (n.tie && n.tt) ttOf[mm] = n.tt; if (n.dia != null && !oct && !shift) diaOf[mm] = n.dia; }
             ms.sort((a, c) => a - c);
             if (e.graceMidis && e.graceMidis.length && !e.tie) for (const g of e.graceMidis) objs.push({ grace: true, d: 0, voice, st, midi: Math.round(g + oct + shift), K });
             let p = st, prevPiece = null;
             const fresh = !e.tie;   // 꾸밈·셈여림 표시는 새로 치는 음에만
             ps.forEach((pd, pi) => {
-              const piece = ms.map((mm, j) => ({ d: pd, voice, st: p, midi: mm, dia: diaOf[mm], K, chord: j > 0, accent: fresh && pi === 0 && e.accent, stacc: fresh && pi === ps.length - 1 && e.stacc, ten: fresh && pi === 0 && e.ten, trill: fresh && pi === 0 && e.trill, vib: j === 0 && pi === 0 && !!e.vib, roll: j === 0 && fresh && pi === 0 && !!e.roll && !e.trill, twoV,
+              const piece = ms.map((mm, j) => ({ sid: SCREEN && sidOf[mm] ? sidOf[mm] + '_' + pi + '_' + j : undefined, d: pd, voice, st: p, midi: mm, dia: diaOf[mm], K, chord: j > 0, accent: fresh && pi === 0 && e.accent, stacc: fresh && pi === ps.length - 1 && e.stacc, ten: fresh && pi === 0 && e.ten, trill: fresh && pi === 0 && e.trill, vib: j === 0 && pi === 0 && !!e.vib, roll: j === 0 && fresh && pi === 0 && !!e.roll && !e.trill, twoV,
                 slurS: j === 0 && pi === 0 && !!e.slurS, slurE: j === 0 && pi === ps.length - 1 && !!e.slurE,
                 slurNs: j === 0 && pi === 0 && e.slurNs && e.slurNs.length ? e.slurNs : null, slurNe: j === 0 && pi === ps.length - 1 && e.slurNe && e.slurNe.length ? e.slurNe : null }));
               piece.forEach((o, j) => {
@@ -6074,6 +6084,7 @@ function buildMusicXml() {
         const brokenTup = (() => { const acc = {}; for (const o of o2) { if (o.backup || o.chord || o.grace || o.dirXml) continue; const v = o.voice; if (o.tupS) acc[v] = 0; if (v in acc) acc[v] += o.d; if (o.tupE && v in acc) { const t = acc[v]; delete acc[v]; const r = t / (Q / 32); if (!(r >= 1 && Number.isInteger(r) && (r & (r - 1)) === 0)) return true; } } return Object.keys(acc).length > 0; })();
         if (brokenTup) { S.lastNote.clear(); for (const [k, v] of keepLN) S.lastNote.set(k, v); o2 = staffObjs(S, b, L, beat, K, si * 4, bi, bounds, regular, grpAt, bt === 4 && (bs === 4 || bs === 2) ? Q * 2 : 0, true); }
         if (two) o2.forEach(o => { if (!o.backup) o.staff = si + 1; });
+        if (SCREEN) o2.forEach(o => { if (o.sid) o.xid = 'n' + li + '_' + si + '_' + bi + '_' + o.sid; });
         // 같은 마디 되풀이(%) 마디: 뮤즈스코어는 첫 성부만 %로 바꾸므로 둘째 성부는 숨긴다(소리는 남김)
         if (S.lb && S.lb[bi] && /^repeat/.test(S.lb[bi].kind || '')) o2.forEach(o => { if (!o.backup && o.voice % 4 !== 1) o.hidden = true; });
         // 늘임표: 이 줄의 그 마디에 늘임표가 있으면 첫 성부의 마지막 음(없으면 쉼표)에
@@ -6116,7 +6127,7 @@ function buildMusicXml() {
       const noteXml = o => {
         if (o.dirXml) return o.dirXml;
         if (o.backup) return `<backup><duration>${o.backup}</duration></backup>\n`;
-        let x = o.hidden ? '<note print-object="no">' : '<note>';
+        let x = (o.hidden ? '<note print-object="no"' : '<note') + (o.xid ? ` id="${o.xid}"` : '') + '>';
         if (o.grace) x += '<grace slash="yes"/>';
         if (o.chord) x += '<chord/>';
         if (o.rest) x += o.whole ? '<rest measure="yes"/>' : '<rest/>';

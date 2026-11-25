@@ -1556,3 +1556,12 @@
   - 손가락으로 벌려 확대하는 것은 막지 않음(viewport에 maximum-scale·user-scalable 없음 — 시험에서 확인)
 - 롤백 기준: Studio 접목 전 마지막 판(210번, 93b6c88)을 브랜치 `rollback/sw-before-studio`로 올려 둠(이 작업 공간에서는 태그 올리기가 막혀 브랜치로). 되돌리는 법은 HANDOFF.md
 - 확인: pwzoom(7가지 화면 + 돌리기) 모두 통과, pwboot·pwsvfull phone·pwwarnsheet 통과
+
+## 2026-11-25 (212) · Studio 접목 0단계: Studio 코드 가져오기, Verovio 지연 받기, 화면용 MusicXML(음 id)
+- 화면은 바뀌지 않음(단원은 모름). 기획서 0단계
+- **Studio 코드**: Studio 저장소의 TypeScript(swc/·view/yul·gueum·edit/ops·io/musicxml-in·musicxml-out)를 그대로 `src/studio/`에 두고, `tools/build-studio.mjs`(esbuild)가 `src/studio-bundle.js`(전역 이름 **SWS** 하나, ES2020, 약 52KB)로 묶음 → build.py가 `/*__STUDIO__*/` 자리에 끼워 넣음. 묶은 파일을 저장소에 넣어 build.py는 지금처럼 파이썬만으로 돎. 기획서에 적은 'TS를 JS로 한 번 바꾸기' 대신 이 방식을 택함 — Studio 코드를 고치지 않고 가져오고, 앱의 기존 이름(ZERO·F 등)과 부딪치지 않음. Studio 코드를 고치면 `NODE_PATH=/opt/npm-tools/node_modules node tools/build-studio.mjs` 뒤 빌드. 타입 검사 `tsc --noEmit --strict … src/studio/index.ts` 통과
+- **Verovio**(오선 그리기, verovio@6.4.1): `src/studio/view/engrave.ts` — pdf.js처럼 jsDelivr에서 받되 `SWS.verovioReady()`·`SWS.engrave()`를 처음 부를 때만(시작할 때는 받지 않음 — 시험으로 확인). 받지 못하면 다음에 다시 시도. 원본 줄 바꿈으로 그리는 선택(breaks: 'encoded')을 더함
+- **화면용 MusicXML**: `buildMusicXml({ ids: true })`(시험·화면용 `window.__swScreenXml()`)은 음마다 `id="n<줄 묶음>_<오선>_<마디>_<성부><순번>_<조각>_<화음>"`을 붙임. 순번은 음 수정 기록과 같은 규칙(noteList·tieList, 이 줄의 음만 — 붙임줄로 이어 온 음은 'RT0', 적힌 붙임줄 조각은 'c1' …) → 인식 악보에서 누른 음이 곧 수정 기록 키가 됨. Verovio는 이 id를 SVG data-id로 그대로 남김. **파일로 내보낼 때는 id를 붙이지 않고, 다섯 곡(소나기·월광·프론티어·미락흘·달빛항해) MusicXML이 211번과 바이트까지 같음**
+- 확인: 새 test/pwstudio0.cjs(시작 때 Verovio 안 받음·SWS 실림·id 꼴·겹침 없음·SVG에 같은 id·.swc 읽기·파일용엔 id 없음) — 프론티어(켠 줄), 월광 모든 줄(ALL=1: 19,246음·id 14,524개 겹침 0, 그리기 2.5초), pwboot, 다섯 곡 MusicXML 바이트 비교
+- 롤백 기준: 211번 판을 브랜치 `rollback/before-212`로
+

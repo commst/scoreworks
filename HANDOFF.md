@@ -7,9 +7,11 @@
 
 - 기획서: https://claude.ai/artifact/FPMxjgJ9zvfyQKNb2rjgXB (프로젝트 문서 claude/studio/HANDOFF.md 4장에 요점). 이름은 **ScoreWorks Studio**(211번), 모드 이름은 [연습 | 편집], 동작은 '수정'
 - 정할 것 답(사용자 11-25): 1 이 기획으로, 2 [편집]은 모두에게 보이되 GitHub 공유 저장은 토큰 있는 사람만, 3 Studio 웹 주소는 기능을 다 옮기면 내림(배포한 적 없음), 4 마디 나누기·합치기는 5단계까지 써 본 뒤, 5 25현 가야금은 율명 아래 **줄 번호**(기본 조율은 아직 모름), 6 .mxl 열기 더함
+- 진행: 211 이름·휴대폰 화면, **212 0단계 끝**(src/studio + studio-bundle.js(SWS), Verovio jsDelivr 지연, buildMusicXml({ids:true}) 음 id = 수정 기록 키, 시험 test/pwstudio0.cjs)
 - 단계: 0 준비 → 1 마디맵 지우기 → 2 대조(인식 악보 + 나란히) → 3 수정·바로 듣기 → 4 구조 편집 → 5 율명·구음·정간보 → 6 태블릿·휴대폰 → 7 마디 나누기·합치기
 - **롤백(사용자 요구)**: 단계마다 배포 전 판을 브랜치로 남김 — `rollback/sw-before-studio`(210번, 접목 전), 이후 `rollback/before-<번호>`. 이 작업 공간은 **태그 올리기가 403으로 막힘** → 브랜치 사용
   - 되돌리기(앱이 올린 settings/ 커밋을 지우지 않게 reset 대신 파일만 되돌림): `git fetch origin main rollback/<이름> && git checkout origin/main -B main && git checkout origin/rollback/<이름> -- src index.html version.json build.py && python3 build.py && git commit -am "롤백: <이름> 판으로" && git push origin main`
+  - 남긴 브랜치: `rollback/sw-before-studio`(210), `rollback/before-212`(211)
   - 저장 형식은 더하기만(hapju-edits 등에 새 칸을 더하되 옛 판이 읽는 칸은 그대로) → 옛 판으로 돌아가도 단원 설정·수정 기록이 깨지지 않음. 새 기록은 옛 판에서는 무시됨
 
 ## 210번(11-24) 타악 마디별 소리 — 끝남

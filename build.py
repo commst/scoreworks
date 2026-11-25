@@ -14,7 +14,8 @@ import datetime
 # 판 번호(한국 시각). 화면 아래에 보이고, 웹 주소에서는 version.json과 견줘 새 판 알림을 띄운다
 VER = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y-%m-%d %H:%M')
 h = (src('index.template.html').replace('/*__VERSION__*/', VER).replace('/*__BANK_RANGES__*/{}', json.dumps(ranges)).replace('/*__SAMPLES__*/', src('samples.json'))
-     .replace('/*__PARSER__*/', parser).replace('/*__ENGINE__*/', strip(src('audio-engine.js'))).replace('/*__MELODY__*/', strip(src('melody-engine.js'))))
+     .replace('/*__PARSER__*/', parser).replace('/*__ENGINE__*/', strip(src('audio-engine.js'))).replace('/*__MELODY__*/', strip(src('melody-engine.js')))
+     .replace('/*__STUDIO__*/', src('studio-bundle.js')))   # Studio 기능 묶음(전역 SWS) — src/studio/*.ts를 고치면 먼저 node tools/build-studio.mjs
 mm = re.match(r'(<title>.*?</title>\s*<meta[^>]*>\s*(?:<link[^>]*>\s*)*<style>.*?</style>)(.*)', h, re.S)
 doc = ('<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n'
        '<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}body{margin:0}</style>\n'
