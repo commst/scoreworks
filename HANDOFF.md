@@ -1,6 +1,6 @@
 # ScoreWorks(옛 이름 합주연습기) 인수인계 메모
 
-새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-25, CHANGELOG 217번까지)
+새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-25, CHANGELOG 218번까지)
 
 
 ## ★ Studio 기능 접목 (11-25~) — 기획·롤백
@@ -17,13 +17,14 @@
   - engrave.ts: 쪽 폭 하한 300(휴대폰 크기 +), Verovio 로그는 오류만
   - 시험 `NODE_PATH=/opt/npm-tools/node_modules node test/pwrec.cjs [접두어] [phone]`(ALL=1). Verovio는 /home/claude/work/vrv(`npm i verovio@6.4.1`)
 - **217 1단계 끝 — 마디맵 지움**: viewMode 늘 'score', svSyncView, 마디 미리보기는 svTipHover(마우스 0.6초)·svLongDown(길게 0.45초) → barTipContent([타임라인|상세]·[✎ 수정]), warnGo → svGoBar/recGoBar, 첫 화면(body.welcome)에서는 인식 악보 안 그림. 시험 test/pwnomap.cjs
-- **다음 할 일**: ① 사용설명서(manual.pdf) 그림·글을 213~217번 화면으로(마디맵 장면 빼기) ② 3단계 수정·바로 듣기(인식 악보에서 음을 눌러 고치고 바로 재생, 수정마다 '악보대로/악보와 다르게')
+- **218 사용설명서 갱신 끝**(그림 tools/manual/mancap11.cjs, 훅 window.__svBarRect)
+- **다음 할 일**: ② 3단계 수정·바로 듣기(인식 악보에서 음을 눌러 고치고 바로 재생, 수정마다 '악보대로/악보와 다르게')
 - 214(긴급): MuseScore 3 PDF('MScore' 글꼴이 SMuFL 번호)를 못 읽던 것 고침 — 글꼴마다 두 번호표 맞는 수로 고름. 샘플 신아리랑 73929564 — 비공개 샘플 저장소에는 사용자가 직접 올리기로 함(11-25). 216: 음표를 거의 못 읽은 악보 경고(glyphStats·readHealth, test/pwreadwarn.cjs), 옛 저장 설정 바로잡기(줄 설정 pitched, test/pwcfgfix.cjs)
 - 213에서 남은 것: 조각 경계를 넘는 붙임줄·이음줄·꺾쇠는 끊겨 보임, 인식 악보에서 [MusicXML 겹쳐 보기]·[⚠ 경고]·[✎ 악보대로]는 원본 PDF 쪽 기능(인식 악보만 볼 때는 효과 없음)
 - 단계: 0 준비 → 1 마디맵 지우기 → 2 대조(인식 악보 + 나란히) → 3 수정·바로 듣기 → 4 구조 편집 → 5 율명·구음·정간보 → 6 태블릿·휴대폰 → 7 마디 나누기·합치기
 - **롤백(사용자 요구)**: 단계마다 배포 전 판을 브랜치로 남김 — `rollback/sw-before-studio`(210번, 접목 전), 이후 `rollback/before-<번호>`. 이 작업 공간은 **태그 올리기가 403으로 막힘** → 브랜치 사용
   - 되돌리기(앱이 올린 settings/ 커밋을 지우지 않게 reset 대신 파일만 되돌림): `git fetch origin main rollback/<이름> && git checkout origin/main -B main && git checkout origin/rollback/<이름> -- src index.html version.json build.py && python3 build.py && git commit -am "롤백: <이름> 판으로" && git push origin main`
-  - 남긴 브랜치: `rollback/sw-before-studio`(210), `rollback/before-212`(211), `rollback/before-213`(212)
+  - 남긴 브랜치: `rollback/sw-before-studio`(210), `rollback/before-212`(211), `rollback/before-213`(212), `rollback/before-218`(217)
   - 저장 형식은 더하기만(hapju-edits 등에 새 칸을 더하되 옛 판이 읽는 칸은 그대로) → 옛 판으로 돌아가도 단원 설정·수정 기록이 깨지지 않음. 새 기록은 옛 판에서는 무시됨
 
 ## 210번(11-24) 타악 마디별 소리 — 끝남
