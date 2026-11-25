@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}body{margin:0}</style>
-<title>ScoreWorks</title>
+<title>ScoreWorks Studio</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233d5a99'/%3E%3Cstop offset='.55' stop-color='%236b5bd2'/%3E%3Cstop offset='1' stop-color='%23d4688f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='48' height='48' rx='13' fill='url(%23g)'/%3E%3Cpath d='M6 30c4-7 8-7 12 0s8 7 12 0 8-7 12 0' fill='none' stroke='%23fff' stroke-opacity='.45' stroke-width='2.6' stroke-linecap='round'/%3E%3Cellipse cx='19' cy='31' rx='5.2' ry='3.9' transform='rotate(-22 19 31)' fill='%23fff'/%3E%3Cpath d='M23.6 30V11c5 1.4 8.4 4.4 8 10' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233d5a99'/%3E%3Cstop offset='.55' stop-color='%236b5bd2'/%3E%3Cstop offset='1' stop-color='%23d4688f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='48' height='48' rx='13' fill='url(%23g)'/%3E%3Cpath d='M6 30c4-7 8-7 12 0s8 7 12 0 8-7 12 0' fill='none' stroke='%23fff' stroke-opacity='.45' stroke-width='2.6' stroke-linecap='round'/%3E%3Cellipse cx='19' cy='31' rx='5.2' ry='3.9' transform='rotate(-22 19 31)' fill='%23fff'/%3E%3Cpath d='M23.6 30V11c5 1.4 8.4 4.4 8 10' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
@@ -417,6 +417,8 @@ body.sv-lock #mini { display: none; }
 .warnlist .msg .wlen { flex: 1 1 100%; color: #c5221f; font-weight: 700; }
 .summary .wnum.bad { color: #c5221f; border-color: #e8a19c; }
 .sv-tools .sv-warn { display: none; }
+.sv-tools .sv-more { display: none; }
+@media (max-width: 900px) { .score-view:not(.sv-full) .sv-tools .sv-more { display: inline-flex; } .score-view:not(.sv-full) .sv-tools:not(.open) > .chk, .score-view:not(.sv-full) .sv-tools:not(.open) > #svFull { display: none; } }
 .sv-tools .sv-warn-bad { color: #c5221f; font-weight: 700; }
 .warn-dlg .warnlist { max-height: 60vh; overflow: auto; }
 @media (max-width: 900px) { .sv-tools .sv-warn:not([hidden]) { display: inline-flex; align-items: center; gap: 4px; } }
@@ -997,9 +999,9 @@ body.files-open .lv-inner, body.help-open .hv-inner { max-width: 900px; margin: 
   .dtab { flex: 1; height: 36px; border: 0; border-radius: 8px; background: var(--dock-2); color: #ffffff; font-size: 14px; }
   .dtab.on { background: var(--hi); color: var(--hi-ink); font-weight: 700; }
   .dock-stop { order: 0; }
-  .dock .transport { order: 1; flex: 1 1 calc(100% - 52px); }
+  .dock .transport { order: 1; flex: 1 1 150px; }
   .dock-range { order: 2; }
-  .dock-speed { order: 5; margin-left: auto; }
+  .dock-speed { order: 1; margin-left: auto; }   /* 211번: 속도는 재생 줄 오른쪽(폭이 모자라면 아래로) — 연주 막대 한 줄 줄임 */
   #dockLoop { order: 3; } .dock-jump { order: 4; }   /* 휴대폰: 구간·반복 한 줄, 마디 이동·속도 한 줄 */
   .dock-save { display: none; }
   .tb-btn#histBtn, .tb-btn#manualBtn, .tb-btn#reportBtn { display: none; }
@@ -1221,6 +1223,11 @@ body, button, input, select, textarea { font-family: var(--font-body); }
   .tb-right { gap: 6px; }
 }
 @media (max-width: 370px) { .topbar .tb-logo .wm { display: none; } }
+/* Studio 표시(ScoreWorks Studio의 제목 디자인 — 11-25) */
+.wm-studio { margin-left: 2px; padding: 4px 9px 5px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font: 600 13px/1 var(--font-logo); letter-spacing: .02em; -webkit-text-fill-color: currentColor; }
+.load-view .hero h1.wm .wm-studio { display: inline-block; vertical-align: middle; margin-left: 10px; padding: 6px 14px 7px; font-size: clamp(15px, 1.9vw, 20px); letter-spacing: .02em; position: relative; top: -0.12em; }
+@media (max-width: 560px) { .topbar .tb-logo .wm-studio { font-size: 11.5px; padding: 3px 7px 4px; } .load-view .hero h1.wm .wm-studio { display: block; width: fit-content; margin: 10px auto 0; top: 0; font-size: 15px; } }
+@media (max-width: 370px) { .topbar .tb-logo .wm-studio { display: none; } }
 
 /* 첫 화면: 아이콘·이름·설명을 가운데로 */
 .load-view .hero { text-align: center; padding: 46px 44px 34px; }
@@ -1271,7 +1278,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       <button class="tb-song" id="tbSong" type="button" title="악보 파일 보기 · 곡 제목 바꾸기"><b id="tbSongName">예시 장단</b><span id="tbSongInfo"></span></button>
       <span class="tb-state" id="tbState" aria-live="polite"></span>
     </div>
-    <h1 class="tb-logo"><svg class="sw-mark" aria-hidden="true"><use href="#swMark"/></svg><span class="wm"><span class="wm-a">Score</span><span class="wm-b">Works</span></span></h1>
+    <h1 class="tb-logo"><svg class="sw-mark" aria-hidden="true"><use href="#swMark"/></svg><span class="wm"><span class="wm-a">Score</span><span class="wm-b">Works</span></span><span class="wm-studio">Studio</span></h1>
     <div class="tb-right">
       <button class="btn tb-btn" id="filesBtn" type="button"><span class="ll">악보 파일</span><span class="ls">악보</span></button>
       <button class="btn tb-btn" id="histBtn" type="button" title="업데이트 이력"><span class="ll">업데이트 이력</span><span class="ls">이력</span></button>
@@ -1288,7 +1295,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       <section class="hero" aria-label="소개">
     <svg class="hero-waves" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 70 C150 30 300 30 450 70 S750 110 900 70 S1100 40 1200 60"/><path d="M0 92 C160 62 320 62 480 92 S800 122 960 92 S1120 70 1200 84"/></svg>
     <div class="hero-brand"><svg class="sw-mark" aria-hidden="true"><use href="#swMark"/></svg></div>
-    <h1 class="wm"><span class="wm-a">Score</span><span class="wm-b">Works</span></h1>
+    <h1 class="wm"><span class="wm-a">Score</span><span class="wm-b">Works</span><span class="wm-studio">Studio</span></h1>
     <p class="hero-tag">국악관현악 악보 분석 및 재생 도구</p>
     <p class="lede">국악 악보 PDF를 올리면 가야금·대금·해금 같은 선율과 장구·꽹과리 장단을 직접 녹음한 국악기 소리로 함께 들려줍니다. 내 가락을 장단에 맞춰 들어 보거나, 내 줄만 빼고 반주로 틀어 놓고 연습하세요. 악보 파일은 이 브라우저 안에서만 처리됩니다.</p>
     <p class="caution">악보를 자동으로 읽기 때문에 템포·악기 이름·음표가 실제와 다르게 인식될 수 있습니다. 재생하기 전에 줄 이름과 빠르기 표를 악보와 한 번 맞춰 보세요.</p>
@@ -1875,6 +1882,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
           <label class="chk" id="svOverLbl" title="내보낼 MusicXML의 음을 악보 위에 동그라미로 겹쳐 그립니다. PDF 음표 머리와 맞으면 파랑, 맞지 않으면 빨강, 자리는 맞지만 적힌 모양(음표 종류·점·기둥·아티큘레이션·붙임줄·이음줄)이 다르면 주황, 쪽 그림의 실제 머리 높이와 다르면 보라, 맞는 음이 없는 PDF 머리는 빨간 네모. 보라·높이만 다른 빨강은 눌러서 [악보대로 고치기]. 짧은 선은 해석기가 읽은 기둥(윗성부 파랑·아랫성부 초록). 내보낸 셈여림·꺾쇠는 오선 아래 글자(PDF와 다르면 주황). 표시를 누르면 이유"><input type="checkbox" id="svOver">MusicXML 겹쳐 보기</label>
           <button type="button" class="btn" id="svEdit" aria-pressed="false" title="켜면 마디를 눌렀을 때 재생 대신 그 마디의 음정·음 길이를 고치는 창이 열립니다">✎ 음 고치기</button>
           <span class="zoom">크기 <button type="button" id="svZoomOut" aria-label="작게">−</button><span id="svZoomVal">100%</span><button type="button" id="svZoomIn" aria-label="크게">+</button></span>
+          <button type="button" class="btn sv-more" id="svMore" aria-expanded="false" aria-controls="scoreView" title="따라가기·숨은 쉼표·겹쳐 보기·전체화면 같은 보기 설정을 펼치고 접습니다">보기 설정 ▾</button>
         </div>
         <p class="sv-edit-hint" id="svEditHint" hidden>✎ 음 고치기 중: 고칠 마디를 누르면 음정·음 길이를 고치는 창이 열립니다. 다 고쳤으면 [✎ 음 고치기]를 다시 눌러 끄세요(끄면 마디를 눌러 그 마디부터 재생).</p>
         <div class="sv-wrap" id="svWrap" tabindex="0" role="region" aria-label="악보 쪽"></div>
@@ -1932,6 +1940,12 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 
 <template id="histTpl">
+  <section class="hday"><h3>11월 25일</h3>
+    <h4>기능 업데이트 <small>2</small></h4><ul class="hlist">
+      <li><details><summary>새 이름 ScoreWorks Studio</summary><p>악보를 대조하고 고쳐 쓰는 기능(오선보로 보기·편집·율명·정간보)을 차례로 더해 가면서 이름을 <b>ScoreWorks Studio</b>로 바꿨습니다. 주소와 저장한 설정·음 수정은 그대로입니다.</p></details></li>
+      <li><details><summary>휴대폰 화면 정리</summary><p>휴대폰 악보로 보기에서 따라가기·숨은 쉼표·겹쳐 보기 같은 설정과 [전체화면 보기]를 <b>[보기 설정 ▾]</b> 안에 접어, 악보가 더 넓게 보입니다. 연주 막대의 속도 조절을 재생 단추 줄로 올려 막대가 한 줄 낮아졌습니다. 글자를 크게 하거나 가로로 돌려도 화면이 넘치지 않는지 점검했습니다.</p></details></li>
+    </ul>
+  </section>
   <section class="hday"><h3>11월 24일</h3>
     <h4>기능 업데이트 <small>4</small></h4><ul class="hlist">
       <li><details><summary>타악 줄 마디별로 다른 악기 소리</summary><p>한 줄에 여러 타악기가 적힌 악보는 악보에 적힌 악기 이름(cym.·대북·windbell.·(징) 등)이 나오는 마디부터 그 악기 소리로 바꿔 칩니다. [악기] 탭에서 타악 줄을 펼치면 '구간별 소리' 표에서 마디마다 소리를 직접 정할 수 있고, ✎ 음 수정 창에서도 타악 음마다 '이 음만'·'여기부터' 소리를 고를 수 있습니다. MIDI·MusicXML에도 바꾼 악기로 들어갑니다.</p></details></li>
@@ -7666,6 +7680,8 @@ function setFull(on) {
   svKey = null; buildScoreView(); if (k >= 0) { svCurrent = -1; svShow(k, true); }
 }
 $('svFull').addEventListener('click', () => setFull(!$('scoreView').classList.contains('sv-full')));
+// 휴대폰: 보기 설정(체크 상자·전체화면)을 접어 악보 칸을 넓게(211번)
+$('svMore').addEventListener('click', () => { const t = document.querySelector('.sv-tools'), on = !t.classList.contains('open'); t.classList.toggle('open', on); $('svMore').setAttribute('aria-expanded', String(on)); $('svMore').textContent = on ? '보기 설정 ▴' : '보기 설정 ▾'; });
 $('svEdit').addEventListener('click', () => setSvEdit(!svEditing));
 // 내 파트만 크게 보기: 켠 줄 중 하나를 고르면 그 줄 오선만 잘라 이어 보여 준다
 function renderPartSel() {
@@ -12081,7 +12097,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-24 09:13';
+const APP_VERSION = '2026-11-25 10:46';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();

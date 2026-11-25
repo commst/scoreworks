@@ -1547,3 +1547,12 @@
 - 정하는 순서(percSndMap): 성부마다 표시를 자리순으로(같은 자리면 글자 < 표 < 음 수정 '여기부터'), 다음 표시까지 이어짐, '이 음만'은 그 음만. 소리가 없으면 줄 설정. 합친 마디(state.bars)의 e.snd는 refreshPercSnd가 재생·MIDI·MusicXML 직전과 applySelection 뒤에 다시 정함(원래 음은 WeakMap EV_SRC) — 표를 바꿔도 줄을 다시 합치지 않음
 - 엔진(renderPlan): e.snd가 있으면 그 소리('off'면 소리 없음). 높이로 북 나누기(bukRef)는 줄 설정 소리인 음만. MIDI는 GM 드럼 번호, MusicXML은 바꾼 소리도 파트 악기(score-instrument·midi-unpitched)로 넣고 음마다 <instrument>
 - 확인: 새 test/percsnd.mjs(e.snd·off·줄 설정), 새 test/pwpercsnd.cjs(컴퓨터·휴대폰: 92마디 대북 → 북, 96 windbell. → 윈드차임, 100 cym → 심벌, 표 2마디부터 징 → 8마디 cym.에서 심벌, 25마디 첫 음만 바라, 26마디부터 트라이앵글 → 34마디 cym.까지, MusicXML 악기 징·바라·트라이앵글 + XSD VALID, 글자 자동 끄기, 다시 열어도 그대로, 페이지 오류 0), pwboot 60가지·tieplan·dynlevel·pizzmark 통과, tdzcheck 새 후보 없음(PERC_NAME 선언을 앞으로). 해석기는 바꾸지 않음
+
+## 2026-11-25 (211) · 이름 ScoreWorks Studio, 휴대폰 확대·축소·회전 레이아웃
+- 사용자 요청: Studio 기능을 ScoreWorks에 접목하는 개발(기획서 https://claude.ai/artifact/FPMxjgJ9zvfyQKNb2rjgXB)을 시작하며 이름을 **ScoreWorks Studio**로. 위 막대·첫 화면 제목에 Studio의 둥근 'Studio' 표시(.wm-studio, Studio 저장소 style.css와 같은 모양), 브라우저 탭 제목도 'ScoreWorks Studio'. 휴대폰 첫 화면은 표시를 이름 아래 가운데로(옆에 두면 오른쪽이 잘림), 370px 이하 위 막대에서는 이름과 함께 숨김
+- 사용자 요청: 휴대폰에서 확대·축소해도 레이아웃이 깨지지 않게. 새 시험 test/pwzoom.cjs — 폭 260·300·320·360·390(글자 크기를 키운 휴대폰과 같은 효과)·가로 667·844, 세로→가로→세로 돌리기에서 첫 화면·악보 연 화면·아래 서랍 다섯·악보로 보기·악보 크기 키움마다 가로 넘침(문서·보이는 요소)과 페이지 오류를 봄. 넘침은 처음부터 0이었고, 화면 사진에서 찾은 두 가지를 고침
+  - ① 휴대폰 악보로 보기에서 체크 상자 줄(따라가기·음표 따라가기·빨간 선·숨은 쉼표·겹쳐 보기)과 [전체화면 보기]가 두세 줄을 차지해 좁은 폭(260px)에서는 악보가 거의 안 보임 → 900px 이하에서는 [보기 설정 ▾](#svMore)로 접음(보기 고르기·⚠ 경고·✎ 음 고치기·크기는 그대로 보임, 전체화면 안에서는 모두 보임)
+  - ② 휴대폰 세로 연주 막대에서 속도(− 100% +)가 혼자 한 줄 → 재생 줄 오른쪽으로(폭이 모자라면 아래로). 390px에서 연주 막대가 한 줄 낮아짐
+  - 손가락으로 벌려 확대하는 것은 막지 않음(viewport에 maximum-scale·user-scalable 없음 — 시험에서 확인)
+- 롤백 기준: Studio 접목 전 마지막 판(210번, 93b6c88)을 브랜치 `rollback/sw-before-studio`로 올려 둠(이 작업 공간에서는 태그 올리기가 막혀 브랜치로). 되돌리는 법은 HANDOFF.md
+- 확인: pwzoom(7가지 화면 + 돌리기) 모두 통과, pwboot·pwsvfull phone·pwwarnsheet 통과
