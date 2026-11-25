@@ -28,20 +28,42 @@ var SWS = (() => {
     VRV_VER: () => VRV_VER,
     annotateLabels: () => annotateLabels,
     engrave: () => engrave,
+    engraveCacheClear: () => engraveCacheClear,
     isJanggu: () => isJanggu,
     manualGu: () => manualGu,
     noteNameOf: () => noteNameOf,
     ops: () => ops_exports,
     parseMusicXml: () => parseMusicXml,
     renderJeonggan: () => renderJeonggan,
-    verovioReady: () => verovioReady
+    verovioBusy: () => verovioBusy,
+    verovioReady: () => verovioReady,
+    verovioWorker: () => verovioWorker
   });
 
   // src/studio/view/engrave.ts
   var VRV_VER = "6.4.1";
   var VRV_BASE = `https://cdn.jsdelivr.net/npm/verovio@${VRV_VER}/dist/`;
+  var WORKER_SRC = `
+let tk = null, ready = null;
+async function init(base) {
+  const r = await Promise.all([import(base + 'verovio-module.mjs'), import(base + 'verovio.mjs')]);
+  const M = await r[0].default();
+  try { r[1].enableLog(r[1].LOG_ERROR, M); } catch (e) {}
+  tk = new r[1].VerovioToolkit(M);
+}
+onmessage = async (ev) => {
+  const d = ev.data;
+  if (d.init) { try { if (!ready) ready = init(d.base); await ready; postMessage({ ready: 1 }); } catch (e) { postMessage({ fail: String(e && e.message || e) }); } return; }
+  try {
+    await ready; const t0 = performance.now(); tk.setOptions(d.opts);
+    if (!tk.loadData(d.xml)) throw new Error('악보를 그리지 못했습니다(Verovio): ' + tk.getLog());
+    const n = tk.getPageCount(), svgs = [];
+    for (let p = 1; p <= n; p++) svgs.push(tk.renderToSVG(p));
+    postMessage({ id: d.id, svgs: svgs, ms: performance.now() - t0 });
+  } catch (e) { postMessage({ id: d.id, err: String(e && e.message || e) }); }
+};`;
   var tkPromise = null;
-  function verovioReady() {
+  function mainReady() {
     if (!tkPromise) tkPromise = (async () => {
       const modUrl = VRV_BASE + "verovio-module.mjs", esmUrl = VRV_BASE + "verovio.mjs";
       const [{ default: createVerovioModule }, { VerovioToolkit, enableLog, LOG_ERROR }] = await Promise.all([import(
@@ -63,10 +85,118 @@ var SWS = (() => {
     });
     return tkPromise;
   }
-  async function engrave(xml, o) {
-    const tk = await verovioReady();
+  var wBusy = 0;
+  function verovioBusy() {
+    return wBusy;
+  }
+  var W = null;
+  var wPromise = null;
+  var wSeq = 0;
+  var useWorker = true;
+  var pend = /* @__PURE__ */ new Map();
+  function workerReady() {
+    if (wPromise) return wPromise;
+    wPromise = new Promise((res, rej) => {
+      let w;
+      try {
+        w = new Worker(URL.createObjectURL(new Blob([WORKER_SRC], { type: "text/javascript" })), { type: "module" });
+      } catch (e) {
+        rej(e);
+        return;
+      }
+      const to = setTimeout(() => {
+        rej(new Error("일꾼 시간 초과"));
+        try {
+          w.terminate();
+        } catch (e) {
+        }
+      }, 9e4);
+      w.onmessage = (ev) => {
+        const d = ev.data;
+        if (d.ready) {
+          clearTimeout(to);
+          W = w;
+          res(w);
+          return;
+        }
+        if (d.fail) {
+          clearTimeout(to);
+          rej(new Error(d.fail));
+          try {
+            w.terminate();
+          } catch (e) {
+          }
+          return;
+        }
+        const p = pend.get(d.id);
+        if (!p) return;
+        pend.delete(d.id);
+        if (d.err) p.rej(new Error(d.err));
+        else {
+          wBusy += d.ms || 0;
+          p.res(d.svgs);
+        }
+      };
+      w.onerror = (ev) => {
+        clearTimeout(to);
+        try {
+          ev.preventDefault();
+        } catch (e) {
+        }
+        rej(new Error("일꾼 오류"));
+        for (const p of pend.values()) p.rej(new Error("일꾼 오류"));
+        pend.clear();
+        if (W === w) {
+          W = null;
+          wPromise = null;
+        }
+      };
+      w.postMessage({ init: 1, base: VRV_BASE });
+    });
+    return wPromise;
+  }
+  function verovioReady() {
+    const g = typeof window === "object" ? window : {};
+    if (useWorker && typeof Worker === "function" && !g.__vrvMain) {
+      return workerReady().catch((e) => {
+        console.warn("Verovio 일꾼을 쓰지 못해 화면에서 그립니다", e);
+        useWorker = false;
+        wPromise = null;
+        return mainReady();
+      });
+    }
+    return mainReady();
+  }
+  function verovioWorker() {
+    return !!W;
+  }
+  var CACHE = /* @__PURE__ */ new Map();
+  var cacheLen = 0;
+  function cacheMax() {
+    try {
+      return matchMedia("(pointer: coarse)").matches ? 8e6 : 3e7;
+    } catch (e) {
+      return 8e6;
+    }
+  }
+  function cachePut(k, svgs) {
+    const n = svgs.reduce((a, s) => a + s.length, 0) + k.length;
+    if (n > cacheMax() / 3) return;
+    CACHE.set(k, svgs);
+    cacheLen += n;
+    while (cacheLen > cacheMax() && CACHE.size > 1) {
+      const [k0, v0] = CACHE.entries().next().value;
+      CACHE.delete(k0);
+      cacheLen -= v0.reduce((a, s) => a + s.length, 0) + k0.length;
+    }
+  }
+  function engraveCacheClear() {
+    CACHE.clear();
+    cacheLen = 0;
+  }
+  function optsOf(o) {
     const scale = Math.round(40 * o.zoom / 100);
-    tk.setOptions({
+    return {
       scale,
       pageWidth: Math.max(300, Math.round(o.width * 100 / scale)),
       // 휴대폰에서 크기 +가 먹히게(예전 800이면 좁은 화면에서 늘 같은 배치, 213번)
@@ -88,10 +218,35 @@ var SWS = (() => {
       svgHtml5: true,
       svgRemoveXlink: true,
       justificationMaxVertical: 0
-    });
+    };
+  }
+  var noTimemap = () => {
+    throw new Error("일꾼으로 그린 악보에는 timemap이 없습니다");
+  };
+  async function engrave(xml, o) {
+    const opts = optsOf(o), key = JSON.stringify(opts) + "\n" + xml;
+    const hit = CACHE.get(key);
+    if (hit) {
+      CACHE.delete(key);
+      CACHE.set(key, hit);
+      return { pages: hit.length, svg: (p) => hit[p - 1], timemap: noTimemap, tk: null };
+    }
+    const tk = await verovioReady();
+    if (W && useWorker) {
+      const id = ++wSeq, w = W;
+      const svgs2 = await new Promise((res, rej) => {
+        pend.set(id, { res, rej });
+        w.postMessage({ id, xml, opts });
+      });
+      cachePut(key, svgs2);
+      return { pages: svgs2.length, svg: (p) => svgs2[p - 1], timemap: noTimemap, tk: null };
+    }
+    tk.setOptions(opts);
     if (!tk.loadData(xml)) throw new Error("악보를 그리지 못했습니다(Verovio): " + tk.getLog());
-    const pages = tk.getPageCount();
-    return { pages, svg: (p) => tk.renderToSVG(p), timemap: () => tk.renderToTimemap({ includeMeasures: true }), tk };
+    const pages = tk.getPageCount(), svgs = [];
+    for (let p = 1; p <= pages; p++) svgs.push(tk.renderToSVG(p));
+    cachePut(key, svgs);
+    return { pages, svg: (p) => svgs[p - 1], timemap: () => tk.renderToTimemap({ includeMeasures: true }), tk };
   }
 
   // src/studio/swc/frac.ts
