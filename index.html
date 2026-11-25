@@ -1976,6 +1976,9 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       <li><details><summary>새 이름 ScoreWorks Studio</summary><p>악보를 대조하고 고쳐 쓰는 기능(오선보로 보기·편집·율명·정간보)을 차례로 더해 가면서 이름을 <b>ScoreWorks Studio</b>로 바꿨습니다. 주소와 저장한 설정·음 수정은 그대로입니다.</p></details></li>
       <li><details><summary>휴대폰 화면 정리</summary><p>휴대폰 악보로 보기에서 따라가기·숨은 쉼표·겹쳐 보기 같은 설정과 [전체화면 보기]를 <b>[보기 설정 ▾]</b> 안에 접어, 악보가 더 넓게 보입니다. 연주 막대의 속도 조절을 재생 단추 줄로 올려 막대가 한 줄 낮아졌습니다. 글자를 크게 하거나 가로로 돌려도 화면이 넘치지 않는지 점검했습니다.</p></details></li>
     </ul>
+    <h4>버그 수정 <small>1</small></h4><ul class="hlist">
+      <li><details class="hbug"><summary>MuseScore 3로 만든 악보의 음표를 못 읽어 소리가 안 나던 문제</summary><p>MuseScore 3(·4)에서 PDF로 저장한 악보는 줄과 마디는 찾았지만 음표·쉼표 기호를 하나도 알아보지 못해 재생하면 박 소리만 났습니다(예: 신아리랑). 같은 이름의 악보 글꼴이 MuseScore 2와 다른 기호 번호를 쓰는 것을 구분해 읽도록 고쳤습니다. MuseScore 2로 만든 악보는 그대로입니다.</p></details></li>
+    </ul>
   </section>
   <section class="hday"><h3>11월 24일</h3>
     <h4>기능 업데이트 <small>4</small></h4><ul class="hlist">
@@ -2857,8 +2860,15 @@ async function extractPages(doc, OPS, onPage) {
         }
     }
     // MuseScore 2.1+(MScore 글꼴)·SMuFL 글꼴(Bravura, Leland, Emmentaler 등: MuseScore 3·4, Dorico)로 찍은 기호를 Maestro 코드로
+    // MuseScore 3·4의 'MScore' 글꼴은 이름은 같아도 SMuFL 번호(검은 머리 E0A4 등)를 쓴다 → 글꼴마다 어느 표에 더 많이 맞는지 세어 고름(214번, 신아리랑 MuseScore 3.2.3)
+    const msSmufl = new Set();
+    {
+      const hit = {};
+      for (const g of glyphs) if (/MScore(?!Text)/i.test(g.font) && g.raw >= 0xE000 && g.raw <= 0xF8FF) { const h = hit[g.font] || (hit[g.font] = { m: 0, s: 0 }); if (MSCORE_PUA.has(g.raw)) h.m++; if (SMUFL_PUA.has(g.raw)) h.s++; }
+      for (const [f, h] of Object.entries(hit)) if (h.s >= 10 && h.s > h.m * 2) msSmufl.add(f);
+    }
     for (const g of glyphs) {
-      const tab = /MScore(?!Text)/i.test(g.font) ? MSCORE_PUA : /Bravura|Leland|Petaluma|Gootville|Emmentaler|Edwin|Leipzig|Sebastian|Finale ?(Maestro|Broadway|Ash|Jazz|Legacy)/i.test(g.font) && !/Text/i.test(g.font) ? SMUFL_PUA : null;
+      const tab = /MScore(?!Text)/i.test(g.font) && !msSmufl.has(g.font) ? MSCORE_PUA : (msSmufl.has(g.font) || /Bravura|Leland|Petaluma|Gootville|Emmentaler|Edwin|Leipzig|Sebastian|Finale ?(Maestro|Broadway|Ash|Jazz|Legacy)/i.test(g.font)) && !/Text/i.test(g.font) ? SMUFL_PUA : null;
       if (!tab) continue;
       const c = tab.get(g.raw);
       if (c != null) g.code = c; else if (g.raw >= 0xE000 && g.raw <= 0xF8FF) g.code = 0;
@@ -13630,7 +13640,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-25 11:29';
+const APP_VERSION = '2026-11-25 12:11';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();

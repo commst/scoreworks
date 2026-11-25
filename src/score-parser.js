@@ -326,8 +326,15 @@ export async function extractPages(doc, OPS, onPage) {
         }
     }
     // MuseScore 2.1+(MScore 글꼴)·SMuFL 글꼴(Bravura, Leland, Emmentaler 등: MuseScore 3·4, Dorico)로 찍은 기호를 Maestro 코드로
+    // MuseScore 3·4의 'MScore' 글꼴은 이름은 같아도 SMuFL 번호(검은 머리 E0A4 등)를 쓴다 → 글꼴마다 어느 표에 더 많이 맞는지 세어 고름(214번, 신아리랑 MuseScore 3.2.3)
+    const msSmufl = new Set();
+    {
+      const hit = {};
+      for (const g of glyphs) if (/MScore(?!Text)/i.test(g.font) && g.raw >= 0xE000 && g.raw <= 0xF8FF) { const h = hit[g.font] || (hit[g.font] = { m: 0, s: 0 }); if (MSCORE_PUA.has(g.raw)) h.m++; if (SMUFL_PUA.has(g.raw)) h.s++; }
+      for (const [f, h] of Object.entries(hit)) if (h.s >= 10 && h.s > h.m * 2) msSmufl.add(f);
+    }
     for (const g of glyphs) {
-      const tab = /MScore(?!Text)/i.test(g.font) ? MSCORE_PUA : /Bravura|Leland|Petaluma|Gootville|Emmentaler|Edwin|Leipzig|Sebastian|Finale ?(Maestro|Broadway|Ash|Jazz|Legacy)/i.test(g.font) && !/Text/i.test(g.font) ? SMUFL_PUA : null;
+      const tab = /MScore(?!Text)/i.test(g.font) && !msSmufl.has(g.font) ? MSCORE_PUA : (msSmufl.has(g.font) || /Bravura|Leland|Petaluma|Gootville|Emmentaler|Edwin|Leipzig|Sebastian|Finale ?(Maestro|Broadway|Ash|Jazz|Legacy)/i.test(g.font)) && !/Text/i.test(g.font) ? SMUFL_PUA : null;
       if (!tab) continue;
       const c = tab.get(g.raw);
       if (c != null) g.code = c; else if (g.raw >= 0xE000 && g.raw <= 0xF8FF) g.code = 0;

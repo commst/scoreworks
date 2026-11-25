@@ -21,7 +21,7 @@
 | Sibelius | 됨 (Opus 글꼴) |
 | MuseScore 2.0 · 2.1 | 됨. 2.0은 기호와 글자를 그림(외곽선)으로 저장해 모양으로 알아보며, 악기 이름·제목은 읽지 못함 |
 | Encore | 됨 (Anastasia 글꼴. 'Microsoft PDF로 인쇄'처럼 글꼴 이름이 감춰진 PDF도 기호 모양으로 알아봄) |
-| MuseScore 3 · 4, Dorico | SMuFL 글꼴(Leland·Bravura)을 읽도록 만들었지만 시험한 악보가 아직 없음 |
+| MuseScore 3 · 4, Dorico | MuseScore 3.2.3 확인(신아리랑, 214번). 4·Dorico(SMuFL 글꼴 Leland·Bravura)는 시험한 악보가 아직 없음 |
 | 그 밖의 프로그램 (Noteflight, Flat, LilyPond, Guitar Pro, 한글·워드 문서에 그린 악보 등) | 확인 안 됨 |
 | 종이 악보를 스캔하거나 사진으로 찍어 만든 PDF, 그림 파일(jpg·png) | **안 됨** — 악보가 그림이라 음표를 읽을 수 없음 |
 
