@@ -8,6 +8,14 @@
 - 기획서: https://claude.ai/artifact/FPMxjgJ9zvfyQKNb2rjgXB (프로젝트 문서 claude/studio/HANDOFF.md 4장에 요점). 이름은 **ScoreWorks Studio**(211번), 모드 이름은 [연습 | 편집], 동작은 '수정'
 - 정할 것 답(사용자 11-25): 1 이 기획으로, 2 [편집]은 모두에게 보이되 GitHub 공유 저장은 토큰 있는 사람만, 3 Studio 웹 주소는 기능을 다 옮기면 내림(배포한 적 없음), 4 마디 나누기·합치기는 5단계까지 써 본 뒤, 5 25현 가야금은 율명 아래 **줄 번호**(기본 조율은 아직 모름), 6 .mxl 열기 더함
 - 진행: 211 이름·휴대폰 화면, **212 0단계 끝**(src/studio + studio-bundle.js(SWS), Verovio jsDelivr 지연, buildMusicXml({ids:true}) 음 id = 수정 기록 키, 시험 test/pwstudio0.cjs)
+- **순서 바꿈(11-25)**: 마디맵을 먼저 지우면 쪽 그림이 없는 악보(MusicXML로 올린 악보·예시 장단·마디 위치를 못 읽은 PDF — 앱 3009행 근처 sv-empty 안내)는 볼 화면이 없어짐 → **2단계(인식 악보 보기)를 먼저**, 그 뒤 1단계(마디맵 지우기). 인식 악보는 MusicXML에서 그리므로 이런 악보도 보임
+- **다음 할 일 = 2단계 인식 악보 보기(보기 전용)** — 만들 것:
+  1. 가운데 보기 단추: [원본 PDF] [인식 악보] [나란히] (지금 view-switch #viewScore·#viewMap 자리, 마디맵 단추는 1단계 때 뺌). 쪽 그림이 없으면 [인식 악보]가 기본
+  2. 인식 악보 칸: `window.__swScreenXml()` → `SWS.engrave(xml, {width, zoom, breaks})`. Studio main.ts의 조각 그리기(chunk: renderChunk·chunkEnd·draw·redrawMeasures, 마디 몇 개씩 따로 그려 보이는 것부터)를 가져올 것 — 화면용 MusicXML을 마디 범위로 자르는 방법이 필요(buildMusicXml에 xo.from·xo.to를 더하거나, 그린 MusicXML을 .swc로 읽어 Studio musicxml-out으로 조각 내기). Verovio를 받는 동안·실패 시 안내 글
+  3. 따라가기: 재생 계획 plan.marks(음마다 시각·마디·줄) + SVG data-id(n<li>_<si>_<bi>_<성부순번>_…)로 지금 음 칠하기, 지금 마디로 스크롤. 누르면 그 마디부터 재생(연습 모드)
+  4. 'OO만' 보기(#svPartSel)와 크기 −/+를 같이 씀. 휴대폰은 기본 줄 하나
+  5. 나란히: PC는 좌우, 세로로 좁으면 위아래, 같은 마디를 1/3 높이에 맞춰 함께 움직임
+  6. 시험: test/pwstudio0.cjs처럼 Verovio를 로컬로 바꿔 끼움. 다섯 곡에서 열림, 월광 첫 조각 3초 안, pwboot, pwzoom
 - 단계: 0 준비 → 1 마디맵 지우기 → 2 대조(인식 악보 + 나란히) → 3 수정·바로 듣기 → 4 구조 편집 → 5 율명·구음·정간보 → 6 태블릿·휴대폰 → 7 마디 나누기·합치기
 - **롤백(사용자 요구)**: 단계마다 배포 전 판을 브랜치로 남김 — `rollback/sw-before-studio`(210번, 접목 전), 이후 `rollback/before-<번호>`. 이 작업 공간은 **태그 올리기가 403으로 막힘** → 브랜치 사용
   - 되돌리기(앱이 올린 settings/ 커밋을 지우지 않게 reset 대신 파일만 되돌림): `git fetch origin main rollback/<이름> && git checkout origin/main -B main && git checkout origin/rollback/<이름> -- src index.html version.json build.py && python3 build.py && git commit -am "롤백: <이름> 판으로" && git push origin main`
