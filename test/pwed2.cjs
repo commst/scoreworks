@@ -33,7 +33,7 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
   ok('파란 동그라미', !!ring);
   await p.keyboard.press('ArrowRight'); await p.waitForTimeout(400);   // 같은 마디 뒤 음으로(검사기가 열린 채라 화면 배치가 그대로)
   ok('  다른 음으로 옮김', (await p.evaluate(() => window.__ed.sel().id)) !== found.id);
-  if (ring) { console.log('  dbg', await p.evaluate(r => { const e = document.elementFromPoint(r.x, r.y); return (e && e.className) + ' ' + JSON.stringify(window.__ed.pdfAt(r.x, r.y)); }, ring)); await p.mouse.click(ring.x, ring.y); await p.waitForTimeout(700); }
+  if (ring) { console.log('  dbg', await p.evaluate(r => { const e = document.elementFromPoint(r.x, r.y); return (e && (e.tagName + '.' + e.className + ' pal:' + !!e.closest('#edPal') + ' info:' + !!e.closest('#svInfo') + ' tools:' + !!e.closest('.sv-tools'))) + ' ' + JSON.stringify(r) + ' ' + JSON.stringify(document.getElementById('edPal').getBoundingClientRect()) + ' ' + JSON.stringify(window.__ed.pdfAt(r.x, r.y)); }, ring)); await p.mouse.click(ring.x, ring.y); await p.waitForTimeout(700); }
   const s2 = await p.evaluate(() => window.__ed.sel());
   ok('② 원본 PDF 음표 머리를 누르면 그 음을 고름', s2 && s2.id === found.id, JSON.stringify(s2 && s2.id));
   ok('  음 목록 창은 뜨지 않음', !(await p.evaluate(() => !!document.querySelector('.edit-dlg'))));

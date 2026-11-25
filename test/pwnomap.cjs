@@ -28,8 +28,19 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
   const playing = () => p.evaluate(() => !/정지|카운트인/.test(document.getElementById('nowText').textContent) || false);
   const at = async (sel, pick) => p.evaluate(([sel, pick]) => { const els = [...document.querySelectorAll(sel)]; const e = pick === 'pdf' ? els[0] : els.filter(m => m.querySelector('g.note'))[3]; e.scrollIntoView({ block: 'center' }); const r = e.getBoundingClientRect(); return pick === 'pdf' ? { x: r.left + r.width * 0.5, y: r.top + r.height * 0.3 } : { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, [sel, pick]);
   if (!phone) {
-    // 원본 PDF: 쪽에서 마디가 있을 만한 곳을 훑어 미리보기가 뜨는 자리를 찾음
+    // 223번: 처음 설정은 '정보 줄' — 마우스를 두면 큰 창 대신 위 정보 줄이 바뀌고, [상세]를 누를 때만 창
     await p.waitForTimeout(1500);
+    ok('223: 마디 정보 처음 설정 = 정보 줄', (await p.evaluate(() => document.getElementById('svTipMode').value)) === 'strip');
+    let strip = null;
+    for (const fy of [0.2, 0.3, 0.4, 0.5]) { const r = await p.evaluate(fy => { const d = document.querySelector('#svWrap .sv-page'); d.scrollIntoView({ block: 'start' }); const b = d.getBoundingClientRect(); return { x: b.left + b.width * 0.5, y: b.top + Math.min(b.height, 700) * fy }; }, fy); await p.mouse.move(r.x, r.y); await p.mouse.move(r.x + 3, r.y + 2); await p.waitForTimeout(1000); strip = await p.evaluate(() => { const e = document.getElementById('svInfo'); return e && !e.hidden ? e.querySelector('.si-num').textContent : null; }); if (strip && strip !== '1마디' && !(await tip())) break; }
+    ok('223: 마우스를 두면 정보 줄만 바뀌고 큰 창은 안 뜸', !!strip && !(await tip()), strip);
+    await p.click('#svInfo .si-more'); await p.waitForTimeout(600);
+    const viaMore = await tip();
+    ok('223: [상세 ▸]를 누르면 미리보기 창', !!viaMore && viaMore.n + '마디' === strip, JSON.stringify(viaMore));
+    await p.mouse.move(5, 5); await p.waitForTimeout(800);
+    await p.evaluate(() => { const s = document.getElementById('svTipMode'); s.value = 'hover'; s.dispatchEvent(new Event('change')); });
+    ok('223: 설정 기억', (await p.evaluate(() => JSON.parse(localStorage.getItem('hapju-view')).tip)) === 'hover');
+    // (예전 동작 — '떠오르는 창'으로 바꾼 뒤) 원본 PDF: 쪽에서 마디가 있을 만한 곳을 훑어 미리보기가 뜨는 자리를 찾음
     let got = null;
     for (const fy of [0.2, 0.3, 0.4, 0.5]) { const r = await p.evaluate(fy => { const d = document.querySelector('#svWrap .sv-page'); d.scrollIntoView({ block: 'start' }); const b = d.getBoundingClientRect(); return { x: b.left + b.width * 0.5, y: b.top + Math.min(b.height, 700) * fy }; }, fy); await p.mouse.move(r.x, r.y); await p.mouse.move(r.x + 3, r.y + 2); await p.waitForTimeout(1000); got = await tip(); if (got) break; }
     ok('원본 PDF: 마우스를 두면 미리보기', !!got, JSON.stringify(got));
@@ -49,8 +60,11 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
     const cdp = await ctx.newCDPSession(p);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: r.x, y: r.y }] });
     await p.waitForTimeout(700);
+    if (process.env.DBG) console.log('  dbg during', JSON.stringify(await tip()), await p.evaluate(([x, y]) => { const e = document.elementFromPoint(x, y); return e && e.tagName + ' ' + (e.closest('.rec-chunk') ? 'chunk' : '') + ' ' + (e.closest('#svInfo') ? 'info' : ''); }, [r.x, r.y]));
+    if (process.env.DBG) await p.evaluate(() => { window.__lg = []; const w = document.getElementById('recWrap'); w.addEventListener('scroll', () => window.__lg.push('scroll ' + w.scrollTop), true); for (const t of ['mouseleave', 'mousemove', 'click', 'pointerup']) document.addEventListener(t, ev => window.__lg.push(t + ' ' + (ev.target.tagName || '')), true); });
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await p.waitForTimeout(600);
+    if (process.env.DBG) console.log('  dbg after', JSON.stringify(await p.evaluate(() => window.__lg)), JSON.stringify(await tip()));
     const got = await tip(); ok('휴대폰: 길게 누르면 미리보기', !!got, JSON.stringify(got));
     ok('휴대폰: 길게 눌러도 재생하지 않음', !(await playing()), await p.evaluate(() => document.getElementById('nowText').textContent));
   }
