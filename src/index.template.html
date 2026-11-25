@@ -1968,7 +1968,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       <li><details><summary>새 이름 ScoreWorks Studio</summary><p>악보를 대조하고 고쳐 쓰는 기능(오선보로 보기·편집·율명·정간보)을 차례로 더해 가면서 이름을 <b>ScoreWorks Studio</b>로 바꿨습니다. 주소와 저장한 설정·음 수정은 그대로입니다.</p></details></li>
       <li><details><summary>휴대폰 화면 정리</summary><p>휴대폰 악보로 보기에서 따라가기·숨은 쉼표·겹쳐 보기 같은 설정과 [전체화면 보기]를 <b>[보기 설정 ▾]</b> 안에 접어, 악보가 더 넓게 보입니다. 연주 막대의 속도 조절을 재생 단추 줄로 올려 막대가 한 줄 낮아졌습니다. 글자를 크게 하거나 가로로 돌려도 화면이 넘치지 않는지 점검했습니다.</p></details></li>
     </ul>
-    <h4>버그 수정 <small>1</small></h4><ul class="hlist">
+    <h4>버그 수정 <small>2</small></h4><ul class="hlist">
+      <li><details class="hbug"><summary>보기 단추를 누르면 단추 줄이 위로 말려 올라가던 문제</summary><p>[원본 PDF]에서 [인식 악보]·[나란히] 등을 누르면 화면이 악보 칸으로 옮겨 가며 보기 단추 줄이 위로 사라져 다시 끌어내려야 했습니다. 악보 보기 안에서 바꿀 때는 화면을 옮기지 않고, 마디맵에서 처음 들어올 때는 보기 단추 줄이 위 막대 바로 아래에 오게 했습니다.</p></details></li>
       <li><details class="hbug"><summary>MuseScore 3로 만든 악보의 음표를 못 읽어 소리가 안 나던 문제</summary><p>MuseScore 3(·4)에서 PDF로 저장한 악보는 줄과 마디는 찾았지만 음표·쉼표 기호를 하나도 알아보지 못해 재생하면 박 소리만 났습니다(예: 신아리랑). 같은 이름의 악보 글꼴이 MuseScore 2와 다른 기호 번호를 쓰는 것을 구분해 읽도록 고쳤습니다. MuseScore 2로 만든 악보는 그대로입니다.</p></details></li>
     </ul>
   </section>
@@ -2941,15 +2942,21 @@ function setView(mode, src) {
   saveViewPref();
 }
 $('viewMap').addEventListener('click', () => setView('map'));
+// 보기 단추를 누른 뒤 화면 옮기기(214번 뒤 제보): 악보 보기 안에서 원본 PDF·인식 악보·나란히를 바꿀 때는 옮기지 않고(단추 줄이 위로 말려 올라가 다시 끌어내려야 했음),
+// 마디맵에서 처음 들어올 때만 보기 단추 줄이 위 막대 바로 아래에 오게
+function svSwitchScroll(was) {
+  if (was) return;
+  try { const vs = $('viewScore').closest('.view-switch'), top = vs.getBoundingClientRect().top - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tbh')) || 56) - 8; window.scrollBy({ top }); } catch (e) {}
+}
 for (const [id, v] of [['viewRec', 'rec'], ['viewSide', 'side']]) $(id).addEventListener('click', () => {
   if (v === 'side' && !svHasPdf()) { showMsg('이 악보는 쪽 그림(PDF 마디 위치)이 없어 인식 악보만 볼 수 있습니다.'); return; }
-  const k = svCurrent; svKey = null; setView('score', v); if (k >= 0) { svCurrent = -1; svShow(k, true); } try { $('scoreView').scrollIntoView({ block: 'start' }); } catch (e) {}
+  const was = viewMode === 'score', k = svCurrent; svKey = null; setView('score', v); if (k >= 0) { svCurrent = -1; svShow(k, true); } svSwitchScroll(was);
 });
 // 연주 칸의 같은 단추: 보기를 바꾸고 그 칸으로 옮겨 간다
 for (const [id, mode] of [['viewScore2', 'score'], ['viewMap2', 'map']]) $(id).addEventListener('click', () => { setView(mode); $('tBars').closest('section').scrollIntoView({ block: 'start', behavior: 'smooth' }); });
 $('viewScore').addEventListener('click', () => {
   if (!svHasPdf() && state.bars.length) { showMsg(state.score ? '이 악보는 쪽 그림(PDF 마디 위치)이 없어 원본 PDF로 볼 수 없습니다. 인식 악보로 보여 드립니다.' : '예시 장단에는 악보 그림이 없습니다. 인식 악보로 보여 드립니다.'); }
-  const k = svCurrent; if (svSrc !== 'pdf') svKey = null; setView('score', svHasPdf() ? 'pdf' : undefined); if (k >= 0) { svCurrent = -1; svShow(k, true); } try { $('scoreView').scrollIntoView({ block: 'start' }); } catch (e) {} });
+  const was = viewMode === 'score', k = svCurrent; if (svSrc !== 'pdf') svKey = null; setView('score', svHasPdf() ? 'pdf' : undefined); if (k >= 0) { svCurrent = -1; svShow(k, true); } svSwitchScroll(was); });
 $('svFollow').addEventListener('change', saveViewPref);
 $('svCurNotes').addEventListener('change', saveViewPref);
 $('svNotes').addEventListener('change', () => { saveViewPref(); if (!$('svNotes').checked) svNotesClear(); });

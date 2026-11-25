@@ -466,6 +466,7 @@ python3 tools/gen_outline_templates.py <fonts 폴더> src/outline-templates.js
 | `node test/pwsvscroll.cjs [html] [phone]` | 악보로 보기 스크롤 시험(187번): 소나기 총보를 일시정지한 채 끝까지·처음까지 스크롤해 보이는 쪽에 그림이 있는지(쪽 그림 지우기는 보이는 쪽을 빼고) |
 | `node test/pizzmark.mjs [악보.pdf…]`, `node test/pwpizz.cjs <html> [desktop\|mobile]` | 아쟁 주법(208번): 악보 pizz.·arco 구간, 음 수정의 '주법', 재생 계획의 뜯는 소리, MusicXML pizz.·arco(`/tmp/pwpizz-*.musicxml` → xsdcheck.py). 기본 샘플은 월광 소아쟁(5139dcdd)·바르도 소아쟁(01391308) |
 | `node test/glissplan.mjs`, `node test/metrodiv.mjs` | 글리산도 재생 계획(프론티어 가야금 20·52마디), 메트로놈 치는 단위(209번) |
+| `node test/pwswitch.cjs [html]` | 보기 단추(원본 PDF·인식 악보·나란히·마디맵)를 차례로 눌러도 단추 줄이 화면에 남는지(215번, PC·휴대폰·태블릿) |
 | `node test/pwrec.cjs [접두어] [phone]` (`ALL=1`이면 모든 줄) | 인식 악보·나란히 보기(213번): 예시 장단 그림, 다시 그리기 첫 조각 3초 안, 모든 마디 그림, 마디 눌러 재생 → 노란 칸·음표 칠하기, 크기 +, 'OO만', 나란히(좌우/위아래·함께 넘김), 파일용 MusicXML id 없음. 그림 /tmp/pwrec-*.png. Verovio는 /home/claude/work/vrv(npm i verovio@6.4.1) |
 | `node test/pwstudio0.cjs [접두어]` (`ALL=1`이면 모든 줄) | Studio 접목 0단계(212번): 시작 때 Verovio 안 받음, SWS 실림, 화면용 MusicXML 음 id(꼴·겹침), Verovio SVG에 같은 id, .swc 읽기, 파일용엔 id 없음. Verovio는 `/home/claude/work/vrv`에 `npm i verovio@6.4.1` 해 둔 것으로 바꿔 끼움 |
 | `node test/pwzoom.cjs [접두어]` | 휴대폰 확대·축소·회전(211번): 좁은 폭·가로·돌리기에서 가로 넘침·오류 (`SHOT=<폴더>`면 화면 사진) |
