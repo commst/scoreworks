@@ -33,6 +33,7 @@
 - **속도 다음 후보**(사용자에게 제안): 인식 악보를 보이는 곳 둘레만 그리기(지금은 9초 동안 조각마다 0.4초씩 끊김), Verovio·MusicXML 만들기를 Web Worker로(화면 안 멈춤), 재생 소리 만들기 줄마다 캐시(악기 하나 바꿀 때 그 줄만), 휴대폰은 CPU가 4배쯤 느려 위가 더 중요
 - **229~231 속도**: 229 편집 한 음 10초 → 0.7초(그리던 폭 유지·바뀐 조각만), 230 나란히 왼쪽 PDF 켠 줄 띠, 231 Verovio Web Worker(engrave.ts의 WORKER_SRC, file://에서는 화면 그리기로 물러남 — 시험은 대부분 file://이라 일꾼 길은 http 사본으로 따로 시험: test/의 시험을 sed로 주소만 http://localhost:8766/index.html + api.github.com·raw.githubusercontent 막기, `python3 -m http.server 8766 --directory <저장소>`), 그림 캐시, 나란히 조각 = PDF 단 경계·미리 그리기, 소리 미리 만들기(preSoon·runPre·PRE, 시험에서 끄기 `window.__noPre`). 남은 후보: 인식 악보 전체 8.7초는 일꾼 시간이 거의 전부 — 줄이려면 보이는 곳 둘레만 그리기(조각 경계가 앞 조각 결과에 달려 있어 큰 변경), 재생 소리 만들기 3초(앞부분만 먼저는 크기 맞추기 때문에 보류)
 - **232**: 보기 단추 이름(원본 악보·인식 악보·나란히 보기·정간보 보기 — id·값은 그대로), 단추 줄 #vsBar sticky(--vsh), 나란히 함께 넘기기 되울림 막기(REC.lastSync). 사용설명서 그림은 예전 단추 이름 그대로(다시 찍을 때 바꿀 것)
+- **233**: 나란히 조각 첫 마디에도 `<print new-system>`(없으면 Verovio가 encoded를 버림), 함께 넘기기는 마디 안 높이 비율로, 악보 칸 높이 svFit(--svwh). 아이패드 재현 /tmp/ipad.cjs 방식(devices['iPad Pro 11 landscape'], 소나기 61c75dd1 모두 켜기 → 나란히 → 끝까지 내림)
 - **25현 가야금 줄 번호는 보류**: 사용자에게 늘봄 기본 조율(1~25현 음) 또는 곡마다 조현표인지 물어봄(11-25) — 답을 받으면 율명 아래 줄 번호(lyricObjs에 줄 하나 더)
 - **다음 할 일**: 6단계 태블릿·휴대폰(손가락 끌어 넣기·옮기기 — 길게 눌러 끌기, 음표판 손가락 끌어 넣기, 줄 사이 11px 기준 크기). 5단계에서 남은 것: 정간보에 장구 말고 다른 타악은 아직 비어 있음, 산조가야금 줄 구음(12현)은 25현 쓰는 늘봄에는 안 넣음, 한자 율명 고르기
 - 남은 시험 문제: pwovfix2 'Ctrl+Z 뒤 단추 1개' 한 줄 실패(218번 판도 같음 — 원인 미확인). 예전 시험(pwedit·pwshare)은 219번에서 마디맵 없는 화면으로 옮김. 다른 시험에도 `#bars .b`(마디 칸)를 쓰는 것이 남아 있으면 같은 방식(__openEditor·__barClick)으로 옮길 것
@@ -131,7 +132,7 @@
 - 고칠 때마다 함께 갱신:
   1. CHANGELOG.md — 날짜 + 일련번호 `## 2026-MM-DD (번호) · 제목`, 원인·고친 방법·확인 결과
   2. README.md — 사용법·구성·도구·빌드가 바뀌면
-  3. **앱 안 '업데이트 이력'** — src/index.template.html의 `<template id="histTpl">`. 날짜별 `<section class="hday">`, `<h4>기능 업데이트 <small>n</small>`의 `<details><summary>제목</summary><p>설명</p></details>`, 버그는 `<details class="hbug">` 안에. 개수(small)도 맞출 것
+  3. **앱 안 '업데이트 이력'** — src/index.template.html의 `<template id="histTpl">`. 날짜별 `<section class="hday">`, `<h4>기능 업데이트 <small>n</small>`의 `<details><summary>제목</summary><p>설명</p></details>`, 버그는 **접힌 묶음** `<details class="hbug"><summary>버그 수정 <small>n건</small></summary><ul class="hlist bug"><li><details>…</details></li></ul></details>` 안에(사용자 11-26 — 하나씩 늘어놓지 말 것). 개수(small)도 맞출 것
   4. **프로젝트 문서 동기화** — Projects 도구 project_write로 `claude/CHANGELOG.md`, `claude/README.md`에 local_path로 올림
 - **토큰 절약(사용자 11-12)**: 꼭 필요한 시험만 한다 — 고친 부분에 직접 닿는 시험 + pwboot 정도. 전체 화면 시험·전체 회귀는 해석기를 고칠 때만, 그림 대조는 바뀐 유형마다 대표 마디만
 - 목표는 **무결점 프로그램**: 고칠 때 기존 기능을 깨지 않는다

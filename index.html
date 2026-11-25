@@ -1209,6 +1209,9 @@ body.sv-mode .score-view:not(.sv-full) .sv-panes.side.rows > .sv-wrap { height: 
   body.sv-mode .score-view:not(.sv-full) .sv-wrap { height: calc(100dvh - var(--tbh) - var(--dockh) - 96px); }
   body.sv-mode .score-view:not(.sv-full) .sv-panes.side.rows > .sv-wrap { height: calc((100dvh - var(--tbh) - var(--dockh) - 102px) / 2); min-height: 140px; }
 }
+/* 233번: 악보 칸 높이는 위에 붙은 줄들(위 막대·보기 단추 줄·보기 설정 줄)과 마디 정보 줄의 실제 높이로 셈(--svwh, svFit) — 끝까지 내려도 칸 윗부분이 가리지 않게 */
+body.sv-mode.svfit .score-view:not(.sv-full) .sv-wrap { height: var(--svwh); }
+body.sv-mode.svfit .score-view:not(.sv-full) .sv-panes.side.rows > .sv-wrap { height: calc((var(--svwh) - 10px) / 2); }
 /* 휴대폰 가로처럼 낮은 화면: 연주 막대를 두 줄로 줄이고 설정 서랍은 왼쪽에서 */
 @media (max-width: 900px) and (max-height: 540px) {
   .topbar { min-height: 46px; padding-top: 4px; padding-bottom: 4px; }
@@ -2062,6 +2065,12 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 
 <template id="histTpl">
+  <section class="hday"><h3>11월 26일</h3>
+      <details class="hbug"><summary>버그 수정 <small>2건</small></summary><ul class="hlist bug">
+      <li><details><summary>나란히 보기에서 양쪽 악보 위치가 어긋나던 문제</summary><p>원본 악보 한 단이 인식 악보에서 두 단으로 갈라져 그려질 때가 있었고(어제 빠르게 바꾸면서 생김), 소나기처럼 악기가 많은 단은 한쪽은 단 위쪽, 다른 쪽은 단 아래쪽이 보였습니다. 이제 원본 한 단 = 인식 악보 한 단으로 그리고, 함께 넘길 때 같은 악기 줄 높이끼리 맞춥니다.</p></details></li>
+      <li><details><summary>악보 칸 윗부분이 가려 내려지지 않던 문제</summary><p>아이패드처럼 보기 설정 줄이 여러 줄인 화면에서 끝까지 내리면 악보 칸 윗부분이 위에 붙은 줄 밑에 가려 있었습니다. 이제 칸 높이를 위에 붙은 줄들의 실제 높이에 맞춰, 끝까지 내리면 칸 전체가 보입니다.</p></details></li>
+      </ul></details>
+  </section>
   <section class="hday"><h3>11월 25일</h3>
     <h4>기능 업데이트 <small>23</small></h4><ul class="hlist">
       <li><details><summary>보기 단추 이름 바꿈 · 단추 줄이 위에 붙어 있게</summary><p>보기 단추 이름을 <b>원본 악보 · 인식 악보 · 나란히 보기 · 정간보 보기</b>로 바꿨습니다. 화면을 아래로 내려도 이 단추 줄과 그 아래 보기 설정 줄(따라가기·연습/편집·크기 등)이 화면 위에 붙어 있어, 언제든 보기를 바꿀 수 있습니다.</p></details></li>
@@ -2088,18 +2097,18 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       <li><details><summary>새 이름 ScoreWorks Studio</summary><p>악보를 대조하고 고쳐 쓰는 기능(오선보로 보기·편집·율명·정간보)을 차례로 더해 가면서 이름을 <b>ScoreWorks Studio</b>로 바꿨습니다. 주소와 저장한 설정·음 수정은 그대로입니다.</p></details></li>
       <li><details><summary>휴대폰 화면 정리</summary><p>휴대폰 악보로 보기에서 따라가기·숨은 쉼표·겹쳐 보기 같은 설정과 [전체화면 보기]를 <b>[보기 설정 ▾]</b> 안에 접어, 악보가 더 넓게 보입니다. 연주 막대의 속도 조절을 재생 단추 줄로 올려 막대가 한 줄 낮아졌습니다. 글자를 크게 하거나 가로로 돌려도 화면이 넘치지 않는지 점검했습니다.</p></details></li>
     </ul>
-    <h4>버그 수정 <small>10</small></h4><ul class="hlist">
-      <li><details class="hbug"><summary>나란히 보기에서 오른쪽 악보가 도로 끌려 올라가던 문제</summary><p>왼쪽 원본 악보가 끝까지 내려가 더 내려가지 못할 때 오른쪽 인식 악보를 내리면, 왼쪽에 맞추느라 오른쪽이 다시 위로 끌려 올라갈 때가 있었습니다. 이제 오른쪽은 내린 자리에 그대로 있습니다.</p></details></li>
-      <li><details class="hbug"><summary>편집 중 음을 누르면 엉뚱한 마디의 음 목록 창이 뜨던 문제</summary><p>음을 누르면 그 음을 고르고 화면을 굴려 보여 주는데, 굴린 뒤 손을 떼는 동작이 다른 마디를 누른 것으로 읽혀 음 목록 창이 뜰 때가 있었습니다. 이제 음을 누르면 고르기만 합니다.</p></details></li>
-      <li><details class="hbug"><summary>편집할 때 음 하나 고치면 오래 멈추던 문제</summary><p>악기가 많은 곡(예: 19줄 170마디)에서 편집 중 음 하나를 고치면 인식 악보 전체를 다시 그리느라 10초 가까이 멈췄습니다. 검사기가 열리며 악보 칸이 조금 좁아진 것을 '화면 크기가 바뀜'으로 잘못 본 탓이었습니다. 이제 고친 마디가 든 부분만 다시 그리고, 그 밖의 계산(악보 다시 읽기·대조)도 고친 곳만 해서 1초 안에 끝납니다.</p></details></li>
-      <li><details class="hbug"><summary>작게 그린 인식 악보에서 엉뚱한 마디를 누르던 문제</summary><p>나란히 보기처럼 인식 악보가 작게 그려지면 단 사이가 좁아, 마디를 누를 때 바로 위 단의 마디가 먼저 잡혀 다른 마디부터 재생될 수 있었습니다. 이제 누른 곳에서 가장 가까운 마디를 고릅니다.</p></details></li>
-      <li><details class="hbug"><summary>악보를 불러오면 늘 원본 PDF 보기로</summary><p>전에 [인식 악보]나 [나란히]를 보다가 새 악보를 불러오면 그 보기가 그대로 남았습니다. 이제 악보를 불러오면 늘 <b>원본 PDF</b>로 시작합니다(쪽 그림이 없는 MusicXML 악보 등은 인식 악보로).</p></details></li>
-      <li><details class="hbug"><summary>편집 중 목록 창이 Esc로 닫히지 않던 문제</summary><p>편집 모드에서 음을 고른 채로 경고·목록 창을 열면 Esc가 창 대신 음 고르기를 풀었습니다. 이제 창이 떠 있으면 Esc로 창이 닫힙니다.</p></details></li>
-      <li><details class="hbug"><summary>음표를 거의 못 읽은 악보를 알려 줌</summary><p>오선과 마디는 찾았지만 음표·쉼표 기호를 거의 알아보지 못한 악보는 이제 경고 없이 조용히 넘어가지 않고, 위쪽 안내에 원인(알 수 없는 악보 글꼴·만든 프로그램)을 보여 줍니다. 켠 줄 가운데 음을 하나도 못 읽은 줄이 있어도 알려 줍니다.</p></details></li>
-      <li><details class="hbug"><summary>예전에 저절로 장구가 된 줄 바로잡기</summary><p>음높이를 못 읽던 때 저장된 설정 때문에 모든 악기가 장구 소리로 나오던 악보(신아리랑 등)는, 다시 열면 음높이가 읽히는 줄을 선율 악기로 바꾸고 알려 줍니다. 직접 타악으로 바꿔 둔 줄은 그대로 둡니다.</p></details></li>
-      <li><details class="hbug"><summary>보기 단추를 누르면 단추 줄이 위로 말려 올라가던 문제</summary><p>[원본 PDF]에서 [인식 악보]·[나란히] 등을 누르면 화면이 악보 칸으로 옮겨 가며 보기 단추 줄이 위로 사라져 다시 끌어내려야 했습니다. 악보 보기 안에서 바꿀 때는 화면을 옮기지 않고, 마디맵에서 처음 들어올 때는 보기 단추 줄이 위 막대 바로 아래에 오게 했습니다.</p></details></li>
-      <li><details class="hbug"><summary>MuseScore 3로 만든 악보의 음표를 못 읽어 소리가 안 나던 문제</summary><p>MuseScore 3(·4)에서 PDF로 저장한 악보는 줄과 마디는 찾았지만 음표·쉼표 기호를 하나도 알아보지 못해 재생하면 박 소리만 났습니다(예: 신아리랑). 같은 이름의 악보 글꼴이 MuseScore 2와 다른 기호 번호를 쓰는 것을 구분해 읽도록 고쳤습니다. MuseScore 2로 만든 악보는 그대로입니다.</p></details></li>
-    </ul>
+      <details class="hbug"><summary>버그 수정 <small>10건</small></summary><ul class="hlist bug">
+      <li><details><summary>나란히 보기에서 오른쪽 악보가 도로 끌려 올라가던 문제</summary><p>왼쪽 원본 악보가 끝까지 내려가 더 내려가지 못할 때 오른쪽 인식 악보를 내리면, 왼쪽에 맞추느라 오른쪽이 다시 위로 끌려 올라갈 때가 있었습니다. 이제 오른쪽은 내린 자리에 그대로 있습니다.</p></details></li>
+      <li><details><summary>편집 중 음을 누르면 엉뚱한 마디의 음 목록 창이 뜨던 문제</summary><p>음을 누르면 그 음을 고르고 화면을 굴려 보여 주는데, 굴린 뒤 손을 떼는 동작이 다른 마디를 누른 것으로 읽혀 음 목록 창이 뜰 때가 있었습니다. 이제 음을 누르면 고르기만 합니다.</p></details></li>
+      <li><details><summary>편집할 때 음 하나 고치면 오래 멈추던 문제</summary><p>악기가 많은 곡(예: 19줄 170마디)에서 편집 중 음 하나를 고치면 인식 악보 전체를 다시 그리느라 10초 가까이 멈췄습니다. 검사기가 열리며 악보 칸이 조금 좁아진 것을 '화면 크기가 바뀜'으로 잘못 본 탓이었습니다. 이제 고친 마디가 든 부분만 다시 그리고, 그 밖의 계산(악보 다시 읽기·대조)도 고친 곳만 해서 1초 안에 끝납니다.</p></details></li>
+      <li><details><summary>작게 그린 인식 악보에서 엉뚱한 마디를 누르던 문제</summary><p>나란히 보기처럼 인식 악보가 작게 그려지면 단 사이가 좁아, 마디를 누를 때 바로 위 단의 마디가 먼저 잡혀 다른 마디부터 재생될 수 있었습니다. 이제 누른 곳에서 가장 가까운 마디를 고릅니다.</p></details></li>
+      <li><details><summary>악보를 불러오면 늘 원본 PDF 보기로</summary><p>전에 [인식 악보]나 [나란히]를 보다가 새 악보를 불러오면 그 보기가 그대로 남았습니다. 이제 악보를 불러오면 늘 <b>원본 PDF</b>로 시작합니다(쪽 그림이 없는 MusicXML 악보 등은 인식 악보로).</p></details></li>
+      <li><details><summary>편집 중 목록 창이 Esc로 닫히지 않던 문제</summary><p>편집 모드에서 음을 고른 채로 경고·목록 창을 열면 Esc가 창 대신 음 고르기를 풀었습니다. 이제 창이 떠 있으면 Esc로 창이 닫힙니다.</p></details></li>
+      <li><details><summary>음표를 거의 못 읽은 악보를 알려 줌</summary><p>오선과 마디는 찾았지만 음표·쉼표 기호를 거의 알아보지 못한 악보는 이제 경고 없이 조용히 넘어가지 않고, 위쪽 안내에 원인(알 수 없는 악보 글꼴·만든 프로그램)을 보여 줍니다. 켠 줄 가운데 음을 하나도 못 읽은 줄이 있어도 알려 줍니다.</p></details></li>
+      <li><details><summary>예전에 저절로 장구가 된 줄 바로잡기</summary><p>음높이를 못 읽던 때 저장된 설정 때문에 모든 악기가 장구 소리로 나오던 악보(신아리랑 등)는, 다시 열면 음높이가 읽히는 줄을 선율 악기로 바꾸고 알려 줍니다. 직접 타악으로 바꿔 둔 줄은 그대로 둡니다.</p></details></li>
+      <li><details><summary>보기 단추를 누르면 단추 줄이 위로 말려 올라가던 문제</summary><p>[원본 PDF]에서 [인식 악보]·[나란히] 등을 누르면 화면이 악보 칸으로 옮겨 가며 보기 단추 줄이 위로 사라져 다시 끌어내려야 했습니다. 악보 보기 안에서 바꿀 때는 화면을 옮기지 않고, 마디맵에서 처음 들어올 때는 보기 단추 줄이 위 막대 바로 아래에 오게 했습니다.</p></details></li>
+      <li><details><summary>MuseScore 3로 만든 악보의 음표를 못 읽어 소리가 안 나던 문제</summary><p>MuseScore 3(·4)에서 PDF로 저장한 악보는 줄과 마디는 찾았지만 음표·쉼표 기호를 하나도 알아보지 못해 재생하면 박 소리만 났습니다(예: 신아리랑). 같은 이름의 악보 글꼴이 MuseScore 2와 다른 기호 번호를 쓰는 것을 구분해 읽도록 고쳤습니다. MuseScore 2로 만든 악보는 그대로입니다.</p></details></li>
+      </ul></details>
   </section>
   <section class="hday"><h3>11월 24일</h3>
     <h4>기능 업데이트 <small>4</small></h4><ul class="hlist">
@@ -2108,10 +2117,10 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       <li><details><summary>빨간 선이 고른 빠르기로</summary><p>악보로 보기의 빨간 선이 마디 안에서 시간에 맞춰 고르게 움직여 메트로놈 박과 맞습니다. 예전처럼 음표 자리를 따라가게 하려면 도구줄의 '빨간 선 음표 따라'를 켜세요.</p></details></li>
       <li><details><summary>메트로놈 치는 단위 고르기</summary><p>[연주] 칸의 '메트로놈 치는 단위'에서 박마다·박 + 반박·4분음표마다·8분음표마다·16분음표마다를 고릅니다. 마디 첫 박은 강하게, 분박은 작게 칩니다.</p></details></li>
     </ul>
-    <h4>버그 수정 <small>2</small></h4><ul class="hlist">
-      <li><details class="hbug"><summary>가야금처럼 두 오선인 악기의 아랫줄이 꺼져 있던 것</summary><p>가야금 파트보를 총보 칸에 올리면 윗줄만 켜져 아랫줄이 들리지 않았습니다. 처음 켜는 악기가 두 오선이면 아랫줄도 함께 켭니다.</p></details></li>
-      <li><details class="hbug"><summary>마디 이동 ◀◀ ▶▶을 잇달아 누르면 덜 옮겨지던 것</summary><p>소리가 나기 전에 다시 누르면 한 마디 덜 옮겨졌습니다. 이제 누를 때마다 적은 마디 수만큼 옮깁니다.</p></details></li>
-    </ul>
+      <details class="hbug"><summary>버그 수정 <small>2건</small></summary><ul class="hlist bug">
+      <li><details><summary>가야금처럼 두 오선인 악기의 아랫줄이 꺼져 있던 것</summary><p>가야금 파트보를 총보 칸에 올리면 윗줄만 켜져 아랫줄이 들리지 않았습니다. 처음 켜는 악기가 두 오선이면 아랫줄도 함께 켭니다.</p></details></li>
+      <li><details><summary>마디 이동 ◀◀ ▶▶을 잇달아 누르면 덜 옮겨지던 것</summary><p>소리가 나기 전에 다시 누르면 한 마디 덜 옮겨졌습니다. 이제 누를 때마다 적은 마디 수만큼 옮깁니다.</p></details></li>
+      </ul></details>
   </section>
   <section class="hday"><h3>11월 23일</h3>
     <h4>기능 업데이트 <small>1</small></h4><ul class="hlist">
@@ -9251,7 +9260,26 @@ function svSyncView() {
 // 보기 단추를 누른 뒤 화면 옮기기(214번 뒤 제보): 악보 보기 안에서 원본 PDF·인식 악보·나란히를 바꿀 때는 옮기지 않고(단추 줄이 위로 말려 올라가 다시 끌어내려야 했음),
 // (마디맵을 없앤 217번부터는 늘 악보 보기 안이라 옮기지 않음 — 연주 칸의 숨은 단추 viewScore2만 옮김)
 // 232번: 위에 붙은 보기 단추 줄 높이 → --vsh(보기 설정 줄이 그 아래에 붙고 악보 칸 높이에서 뺌)
-{ const vb = $('vsBar'), setVsh = () => document.documentElement.style.setProperty('--vsh', (vb && vb.offsetParent && getComputedStyle(vb).position === 'sticky' ? vb.offsetHeight : 0) + 'px'); setVsh(); if (vb && 'ResizeObserver' in window) new ResizeObserver(setVsh).observe(vb); window.addEventListener('resize', setVsh); new MutationObserver(setVsh).observe(document.body, { attributes: true, attributeFilter: ['class'] }); }
+{ const vb = $('vsBar'); let fitRaf = 0, lastH = '';
+  const px = v => parseFloat(v) || 0, mg = el => { const c = getComputedStyle(el); return px(c.marginTop) + px(c.marginBottom); };
+  // 233번: 페이지를 끝까지 내렸을 때 악보 칸 윗부분이 위에 붙은 줄들(위 막대·단추 줄·보기 설정 줄) 밑에 들어가지 않게 칸 높이를 셈
+  const svFit = () => { fitRaf = 0;
+    const sv = $('scoreView'), tools = sv && sv.querySelector('.sv-tools'), panes = $('svPanes');
+    const B = document.body.classList;   // 클래스는 바뀔 때만 — classList.add는 같은 값이어도 속성을 다시 써서 body 관찰자들이 끝없이 돌았음
+    if (!tools || !panes || !panes.offsetParent || B.contains('welcome')) { if (B.contains('svfit')) B.remove('svfit'); return; }
+    const sticky = getComputedStyle(tools).position === 'sticky';
+    const top = ($('topbar').offsetHeight || 57) + (vb && vb.offsetParent && getComputedStyle(vb).position === 'sticky' ? vb.offsetHeight : 0) + (sticky ? tools.offsetHeight + mg(tools) : 0);
+    const inf = $('svInfo'), infH = inf && !inf.hidden ? inf.offsetHeight + mg(inf) : 0;
+    const after = document.documentElement.scrollHeight - (panes.getBoundingClientRect().bottom + scrollY);
+    const minH = innerWidth <= 900 ? 280 : 320, H = Math.max(minH, Math.floor(innerHeight - after - top - infH - 6));
+    const v = H + 'px'; if (v !== lastH) { lastH = v; document.documentElement.style.setProperty('--svwh', v); }
+    if (!B.contains('svfit')) B.add('svfit');
+  };
+  const fitSoon = () => { if (!fitRaf) fitRaf = requestAnimationFrame(svFit); };
+  const setVsh = () => { document.documentElement.style.setProperty('--vsh', (vb && vb.offsetParent && getComputedStyle(vb).position === 'sticky' ? vb.offsetHeight : 0) + 'px'); fitSoon(); };
+  setVsh(); window.__svFit = svFit;
+  if ('ResizeObserver' in window) { const ro = new ResizeObserver(setVsh); if (vb) ro.observe(vb); for (const el of [document.querySelector('#scoreView .sv-tools'), $('svInfo'), $('topbar'), $('dock'), document.body]) if (el) ro.observe(el); }
+  window.addEventListener('resize', setVsh); new MutationObserver(setVsh).observe(document.body, { attributes: true, attributeFilter: ['class'] }); }
 function svSwitchScroll(was) {
   if (was) return;
   try { const vs = $('viewScore').closest('.view-switch'), top = vs.getBoundingClientRect().top - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tbh')) || 56) - 8; window.scrollBy({ top }); } catch (e) {}
@@ -9699,11 +9727,12 @@ function recSlice(from, to, keep) {
           a.textContent = ''; for (const c of all) a.appendChild(c);
         }
       }
-      if (REC.enc && i > from) {   // 나란히(221번): 원본 PDF와 같은 자리에서 단을 바꿈 — PDF 한 단 = 인식 악보 한 단
+      if (REC.enc) {   // 나란히(221번): 원본 PDF와 같은 자리에서 단을 바꿈 — PDF 한 단 = 인식 악보 한 단
         const G = svGeo(), g = G && G.geo[i], g0 = G && G.geo[i - 1];
         if (m === P.ms[i]) m = m.cloneNode(true);
         for (const pr of [...m.getElementsByTagName('print')]) pr.remove();
-        if (g && g0 && (g.page !== g0.page || g.staff !== g0.staff)) { const pr = doc.createElement('print'); pr.setAttribute('new-system', 'yes'); m.insertBefore(pr, m.firstChild); }
+        // 233번: 조각 첫 마디에도 단 바꿈 — 조각이 PDF 한 단뿐이면(231번부터 조각 = PDF 단) 글 안에 단 바꿈이 없어 Verovio가 '원래 줄 바꿈'을 버리고 저절로 나눴음(소나기 한 단 → 두 단)
+        if (i === from || (g && g0 && (g.page !== g0.page || g.staff !== g0.staff))) { const pr = doc.createElement('print'); pr.setAttribute('new-system', 'yes'); m.insertBefore(pr, m.firstChild); }
       }
       out += ser.serializeToString(m) + '\n';
     }
@@ -9968,6 +9997,9 @@ function svBarAtPdf(y) {
   return best;
 }
 function recBarTop(k) { const r = recRect(k); return r ? r.c.el.offsetTop + r.y : null; }
+// 233번: 마디의 위·아래(칸 안 좌표) — 나란히 함께 넘기기에서 단 안의 같은 높이(같은 악기 줄 근처)를 맞추려고
+function recBarSpan(k) { const r = recRect(k); return r ? [r.c.el.offsetTop + r.y, r.c.el.offsetTop + r.y + r.h] : null; }
+function svBarSpanPdf(k) { const r = svRect(k), P = svPanelOf(r); if (!P || !P.w) return null; const f = v => P.el.offsetTop + (v - P.oy) / P.h * P.el.offsetHeight; return [f(r.y0), f(r.y1)]; }
 function recBarAt(y) {
   let best = -1, bd = Infinity;
   for (const c of REC.chunks) { if (!c.ms) continue; const cb = c.el.getBoundingClientRect(); c.ms.forEach((m, i) => { const r = recRect(c.from + i); if (!r) return; const a = c.el.offsetTop + r.y, b = a + r.h, d = y < a ? a - y : y > b ? y - b : 0; if (d < bd) { bd = d; best = c.from + i; } }); }
@@ -9982,9 +10014,13 @@ function svSideSync(from) {
   // 232번: 되울림 막기 — 방금 반대쪽에서 맞춰 준 마디가 이쪽 칸에 보이면 반대쪽을 다시 끌지 않음(한쪽이 끝까지 내려가 더 못 내려갈 때 다른 쪽이 끌려 올라가던 것)
   const L = REC.lastSync; REC.lastSync = null;
   if (L && L.from !== from && now - L.t < 1500) { const ya = from === 'pdf' ? svBarTopPdf(L.k) : recBarTop(L.k); if (ya != null && ya >= A.scrollTop - 4 && ya <= A.scrollTop + A.clientHeight - 20) return; }
-  const y = from === 'pdf' ? recBarTop(k) : svBarTopPdf(k); if (y == null) return;
-  REC.sync = now + 250; B.scrollTop = Math.max(0, y - B.clientHeight / 3); REC.lastSync = { from, k, t: now };
+  const sa = from === 'pdf' ? svBarSpanPdf(k) : recBarSpan(k), sb = from === 'pdf' ? recBarSpan(k) : svBarSpanPdf(k); if (!sb) return;
+  const ya = A.scrollTop + A.clientHeight / 3, fr = sa && sa[1] > sa[0] ? Math.max(0, Math.min(1, (ya - sa[0]) / (sa[1] - sa[0]))) : 0;   // 그 마디 안 몇 % 높이에 1/3 선이 있는지
+  REC.sync = now + 250; B.scrollTop = Math.max(0, sb[0] + fr * (sb[1] - sb[0]) - B.clientHeight / 3); REC.lastSync = { from, k, t: now };
 }
+// 시험용: 나란히 두 칸의 1/3 높이에 있는 마디(232번 뒤 — 두 칸 위치 맞는지)
+window.__sideSpan = k => ({ pdf: svBarSpanPdf(k), rec: recBarSpan(k), g: (svGeo() && svGeo().geo[k]) ? [svGeo().geo[k].page, svGeo().geo[k].staff] : null, num: state.bars[k] && state.bars[k].number });
+window.__sideBars = () => { const A = $('svWrap'), B = $('recWrap'); return { pdf: svBarAtPdf(A.scrollTop + A.clientHeight / 3), rec: recBarAt(B.scrollTop + B.clientHeight / 3) }; };
 let svSyncRaf = 0;
 for (const [id, from] of [['svWrap', 'pdf'], ['recWrap', 'rec']]) $(id).addEventListener('scroll', () => { if (svSyncRaf || performance.now() < REC.sync) return; svSyncRaf = requestAnimationFrame(() => { svSyncRaf = 0; svSideSync(from); }); }, { passive: true });
 // 시험용
@@ -10672,7 +10708,7 @@ document.addEventListener('keydown', ev => {
 window.__ed = { select: id => edSelect(id), sel: () => ED.sel && { ...ED.sel }, ctx: () => { const c = edCtx(); return c && { key: c.key, bi: c.bi, number: c.nb.number, now: c.ce.midis, dur: String(c.ce.dur), orig: c.re.midis, rec: c.rec }; }, verdict: () => ED.verdict && ED.verdict.v, judge: () => edJudge(), ids: () => [...REC.idx.keys()], barOk: () => { const c = edCtx(); return !!c && barOk(c.key, c.bi); }, diff: () => diffIdx.map(f => [f.key, f.number, f.n, f.memo]), evs: (key, k) => { const b = state.lineRes[key] && state.lineRes[key].bars[k]; return b ? b.events.map(e => [String(e.t), String(e.dur), e.voice, e.midis || null, e.pos == null ? null : e.pos, !!e.edited, !!e.tie]) : null; }, xml: () => { const x = buildMusicXml(); return x.length; }, xmlFile: () => buildMusicXml(), pos: (x, y) => { const e = document.elementFromPoint(x, y), ch = e && e.closest('.rec-chunk'); if (!ch) return 'no chunk'; const P = recPosAt({ currentTarget: ch, clientX: x, clientY: y }, palDur()); return P && { k: P.k, key: P.key, t: String(P.t), pitch: P.pitch }; }, pal: () => ({ ...PAL, el: !!PAL.el && !PAL.el.hidden, ghost: null }), pdfAt: (x, y) => { const el = document.elementFromPoint(x, y), d = el && el.closest('.sv-page'); if (!d) return 'no page'; const pi = +(d.dataset.panel != null ? d.dataset.panel : d.dataset.page); return edPdfNoteAt(pi, d, { clientX: x, clientY: y }); } };   // 시험용
 window.__recSys = () => { const G = svGeo(); return REC.chunks.flatMap(c => [...c.el.querySelectorAll('g.system')].map(sy => [...sy.querySelectorAll('g.measure')].map(m => { const k = c.from + c.ms.indexOf(m), g = G && G.geo[k]; return g ? g.page + '.' + g.staff : '?'; }))); };   // 시험용(221번): 인식 악보 단마다 마디의 PDF 쪽.단
 window.__recSrcs = () => REC.chunks.map(c => c.src);   // 속도 재기용(229번)
-window.__recState = () => ({ nRender: REC.nRender || 0, tok: REC.tok, nbars: state.bars.length, hl: REC.hl && !REC.hl.hidden ? REC.hl.textContent : '', status: REC.status, chunks: REC.chunks.map(c => [c.from, c.to, c.ms ? c.ms.length : -1]), idx: REC.idx.size, on: REC.on.length, part: svPart, src: svSrcEff() });
+window.__recState = () => ({ nRender: REC.nRender || 0, tok: REC.tok, nbars: state.bars.length, hl: REC.hl && !REC.hl.hidden ? REC.hl.textContent : '', status: REC.status, chunks: REC.chunks.map(c => [c.from, c.to, c.ms ? c.ms.length : -1]), idx: REC.idx.size, on: REC.on.length, part: svPart, src: svSrcEff(), enc: !!REC.enc, encF: REC.chunks.map(c => c.encF ? +c.encF.toFixed(2) : 0), encK: REC.encK || 1 });
 // ---------- 악보 보기의 마디 미리보기(217번 — 마디맵에서 옮김) ----------
 // PC: 마디 위에 마우스를 잠깐(0.6초) 두면 / 손가락 기기: 마디를 길게(0.45초) 누르면. 음 고치기 중에는 띄우지 않음
 const svTipAnchors = new Map(); let svTipK = -1, svTipTimer = 0, svLongAt = 0, svLong = null;
@@ -14984,7 +15020,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-25 22:29';
+const APP_VERSION = '2026-11-26 07:39';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();
