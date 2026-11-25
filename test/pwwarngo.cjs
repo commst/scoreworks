@@ -10,21 +10,22 @@ const mode = process.argv[2]; let fail = 0; const ok = (c, m) => { console.log((
   await p.setInputFiles('#pdfInput', t); await p.waitForFunction(() => /읽었습니다/.test(document.getElementById('fileInfo').textContent), null, { timeout: 300000 });
   await p.evaluate(() => { const m = document.getElementById('msg'); if (m && !m.hidden) m.click(); });
   await p.evaluate(() => { const b = document.getElementById('allOn'); if (b) b.click(); }); await p.waitForTimeout(3000);
-  await p.evaluate(() => document.getElementById('viewMap').click()); await p.waitForTimeout(800);
-  const rows = await p.$$eval('#warnList .msg', r => r.map(x => x.querySelector('span').textContent.slice(0, 40)));
+  // 217번: 마디맵이 없어져 [마디로]는 악보 보기(원본 PDF)의 그 마디로 가서 깜빡(.sv-flash)
+  const rows = await p.$$eval('#warnList .msg', r => r.map(x => x.dataset.n + '마디 ' + x.textContent.slice(0, 40)));   // 마디 번호는 줄의 data-n(196번부터 붉은 길이 경고가 앞에 옴)
   ok(rows.length > 0 && rows.length <= 6, '경고 줄 ' + rows.length + ' ' + rows[0]);
   const nb = await p.$$eval('#warnList .msg', r => r.map(x => x.querySelectorAll('.wgo button').length)); ok(nb.every(n => n === 3), '줄마다 단추 3개 ' + nb.join(','));
   const target = +(/^(\d+)/.exec(rows[rows.length - 1])[1]);
   await p.evaluate(() => scrollTo(0, 0));
-  await p.evaluate(() => [...document.querySelectorAll('#warnList .msg')].pop().querySelector('.wgo button').click()); await p.waitForTimeout(900);
-  const st = await p.evaluate(n => { const el = document.querySelector(`.b[data-n="${n}"]`); const r = el.getBoundingClientRect(); return { flash: el.classList.contains('flash'), inView: r.top >= 0 && r.bottom <= innerHeight }; }, target);
+  await p.evaluate(() => [...document.querySelectorAll('#warnList .msg')].pop().querySelector('.wgo button').click()); await p.waitForTimeout(2500);   // 악보 칸이 부드럽게 굴러가는 시간
+  const flashSt = () => p.evaluate(() => { const el = document.querySelector('#svWrap .sv-flash.on, #recWrap .sv-flash.on'); if (!el) return { flash: false }; const r = el.getBoundingClientRect(), w = el.closest('.sv-wrap').getBoundingClientRect(); return { flash: true, inView: r.top >= w.top - 2 && r.top <= w.bottom }; });
+  const st = await flashSt();
   ok(st.flash && st.inView, target + '마디로: 화면 안·깜빡 ' + JSON.stringify(st));
   const more = await p.$('#warnList .wmore'); const sumN = await p.$$eval('#summary .wnum', r => r.length);
   ok(sumN > 6, '요약 번호 단추 ' + sumN);
   if (more) { await p.evaluate(() => document.querySelector('#warnList .wmore').click()); const n2 = await p.$$eval('#warnList .msg', r => r.length); ok(n2 === sumN, '더 보기 → ' + n2 + '줄'); }
   const lastNum = await p.$$eval('#summary .wnum', r => +r[r.length - 1].textContent);
   await p.evaluate(() => scrollTo(0, 0)); await p.evaluate(() => [...document.querySelectorAll('#summary .wnum')].pop().click()); await p.waitForTimeout(2500);
-  ok(await p.evaluate(n => { const r = document.querySelector(`.b[data-n="${n}"]`).getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }, lastNum), '요약 번호 ' + lastNum + ' → 그 마디 화면 안');
+  { const f = await flashSt(); ok(f.flash && f.inView, '요약 번호 ' + lastNum + ' → 그 마디 화면 안 ' + JSON.stringify(f)); }
   await p.evaluate(() => [...document.querySelector('#warnList .msg').querySelectorAll('.wgo button')].find(x => /✎/.test(x.textContent)).click()); await p.waitForTimeout(600);
   ok(await p.evaluate(() => [...document.querySelectorAll('button')].some(x => x.textContent === '♯' && x.offsetParent)), '✎ 고치기 → 고치기 창');
   await p.keyboard.press('Escape'); await p.waitForTimeout(300);

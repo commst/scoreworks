@@ -21,7 +21,8 @@ const HTML = 'file://' + require('path').resolve(process.env.HTML || __dirname +
   const st = () => p.evaluate(() => window.__recState());
   const drawnAll = () => p.waitForFunction(() => { const s = window.__recState(); return s.chunks.length && s.chunks[s.chunks.length - 1][1] >= s.nbars && s.chunks.every(c => c[2] === c[1] - c[0]); }, null, { timeout: 120000 });
   const click = async sel => { await p.evaluate(s => document.querySelector(s).click(), sel); };
-  // ① 예시 장단
+  // ① 예시 장단(첫 올리기 화면에서는 그리지 않음 — 217번: 예시로 들어가야 그림)
+  await click('#demoBtn'); await p.waitForTimeout(300);
   await click('#viewRec'); await drawnAll();
   let s = await st(); ok('예시 장단: 인식 악보 그림', s.chunks.length >= 1 && s.src === 'rec', JSON.stringify(s.chunks));
   ok('예시 장단: [원본 PDF]·[나란히]는 쓸 수 없음', await p.evaluate(() => document.getElementById('viewSide').getAttribute('aria-disabled') === 'true'));

@@ -11,7 +11,7 @@ await p.setInputFiles('#pdfInput', '/tmp/pick-9203ad49.pdf');
 await p.waitForFunction(() => /읽었습니다/.test(document.getElementById('fileInfo').textContent), null, { timeout: 120000 });
 const vis = () => p.evaluate(() => { const r = document.getElementById('viewRec').getBoundingClientRect(), el = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return { top: Math.round(r.top), hit: !!el && (el.id === 'viewRec' || document.getElementById('viewRec').contains(el)) }; });
 const out=[];
-for (const id of ['viewMap','viewScore','viewRec','viewSide','viewScore','viewRec','viewMap','viewSide']) {
+for (const id of ['viewScore','viewRec','viewSide','viewScore','viewRec','viewSide','viewRec','viewScore']) {
   await p.evaluate(i=>{ const b=document.getElementById(i), r=b.getBoundingClientRect(); b.dispatchEvent(new MouseEvent('click',{bubbles:true,clientX:r.left+5,clientY:r.top+5})); }, id);   // 사용자가 단추를 누르는 것처럼(보이는 단추)
   await p.waitForTimeout(700); const v=await vis(); out.push(id.slice(4)+':'+(v.hit?'보임':'안보임('+v.top+')')); if(!v.hit) fail++;
 }

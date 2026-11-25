@@ -45,7 +45,7 @@
   - **연주**: 재생 설정(도돌이표·카운트인·메트로놈·쉬는 마디 박·셈여림·구간 반복·반복할 때마다 빠르게), 소리 다듬기, 연주 순서.
   - **저장**: 음원 저장(MP3·WAV), MIDI·MusicXML 내보내기, 이 악보의 설정, 음 고친 내용.
   - **음색**: 모든 곡에 함께 쓰는 악기별 기본 음량·음색(아래 '음색 · 기본 음량').
-- **가운데**: [원본 PDF · 인식 악보 · 나란히 · 마디맵] (213번 — 1-8-1).
+- **가운데**: 악보 보기 [원본 PDF · 인식 악보 · 나란히] (213번 — 1-8-1). 마디맵은 217번에서 없앰 — 마디 미리보기는 마디 위에 마우스를 두거나(휴대폰은 길게 눌러) 엶
 - **아래 연주 막대**(늘 보임): 연습 번호, 정지(처음으로)·재생/일시정지, 지금 마디와 진행 막대, **마디 이동 ◀◀ [n] ▶▶**(지금 자리에서 연주 순서대로 n마디 앞·뒤로 옮겨 재생, 소리를 만들기 전이면 연주 범위 첫 마디 기준, n은 `hapju-jumpN`에 기억, 지금 마디는 옮긴 자리의 0.05초 앞당김(JUMP_PRE)을 더해 세어 잇달아 눌러도 n마디씩 — 209번 — 시험 `node test/pwjump.cjs [phone]`), 마디 ○~○ 구간·[전곡], [구간 반복], 속도 −/+, [음원 저장](저장 칸을 엶).
 - **휴대폰·태블릿 세로**(폭 900px 이하): 왼쪽 탭 대신 연주 막대 맨 아래의 [악기]·[빠르기]·[연주]·[저장]·[음색] 단추로 **아래 서랍**을 엽니다. 같은 단추를 다시 누르거나 ✕·바깥을 누르면 닫힙니다.
 - 빠르기를 못 읽어 재생이 막히면 [빠르기] 칸이 열리고 노란 칸으로 데려갑니다.
@@ -467,6 +467,7 @@ python3 tools/gen_outline_templates.py <fonts 폴더> src/outline-templates.js
 | `node test/pizzmark.mjs [악보.pdf…]`, `node test/pwpizz.cjs <html> [desktop\|mobile]` | 아쟁 주법(208번): 악보 pizz.·arco 구간, 음 수정의 '주법', 재생 계획의 뜯는 소리, MusicXML pizz.·arco(`/tmp/pwpizz-*.musicxml` → xsdcheck.py). 기본 샘플은 월광 소아쟁(5139dcdd)·바르도 소아쟁(01391308) |
 | `node test/glissplan.mjs`, `node test/metrodiv.mjs` | 글리산도 재생 계획(프론티어 가야금 20·52마디), 메트로놈 치는 단위(209번) |
 | `node test/pwreadwarn.cjs [html]`, `node test/pwcfgfix.cjs <214번 전 html> [html]` | 음표를 거의 못 읽은 악보 경고·원인, 옛 저장 설정(저절로 타악이 된 줄) 바로잡기(216번). 신아리랑(73929564) 필요 |
+| `node test/pwnomap.cjs [접두어] [phone]` | 1단계 마디맵 지우기(217번): 마디맵 없음·옛 저장값, 첫 화면에서 Verovio 안 받음, 원본 PDF·인식 악보 마디 미리보기(마우스/길게 누르기), [상세]·[✎ 수정], 경고 [마디로] |
 | `node test/pwswitch.cjs [html]` | 보기 단추(원본 PDF·인식 악보·나란히·마디맵)를 차례로 눌러도 단추 줄이 화면에 남는지(215번, PC·휴대폰·태블릿) |
 | `node test/pwrec.cjs [접두어] [phone]` (`ALL=1`이면 모든 줄) | 인식 악보·나란히 보기(213번): 예시 장단 그림, 다시 그리기 첫 조각 3초 안, 모든 마디 그림, 마디 눌러 재생 → 노란 칸·음표 칠하기, 크기 +, 'OO만', 나란히(좌우/위아래·함께 넘김), 파일용 MusicXML id 없음. 그림 /tmp/pwrec-*.png. Verovio는 /home/claude/work/vrv(npm i verovio@6.4.1) |
 | `node test/pwstudio0.cjs [접두어]` (`ALL=1`이면 모든 줄) | Studio 접목 0단계(212번): 시작 때 Verovio 안 받음, SWS 실림, 화면용 MusicXML 음 id(꼴·겹침), Verovio SVG에 같은 id, .swc 읽기, 파일용엔 id 없음. Verovio는 `/home/claude/work/vrv`에 `npm i verovio@6.4.1` 해 둔 것으로 바꿔 끼움 |
