@@ -1,4 +1,5 @@
-// 음 고치기(✎) 기능 시험: node test/pwedit.cjs <html> [desktop|mobile] — 고치기·되돌리기·내보내기·가져오기·다시 열기·재생
+// 음 고치기(✎) 기능 시험: node test/pwedit.cjs <html 절대경로> [desktop|mobile] — 고치기·되돌리기·내보내기·가져오기·다시 열기·재생
+// 219번: 마디맵(217번에 지움)의 마디 칸 ✎ 대신 마디 미리보기와 같은 __openEditor(마디 번호)로 창을 열고, '✎ 마디'는 state.bars의 edited로 봄
 const { chromium, devices } = require('/opt/npm-tools/node_modules/playwright');
 const fs = require('fs');
 const FILE = process.argv[2], MODE = process.argv[3] || 'desktop';
@@ -22,10 +23,9 @@ const pdf = '/home/claude/samples/' + fs.readdirSync('/home/claude/samples').fin
   let page = await ctx.newPage(); await setup(page);
   log('tools visible', await page.isVisible('#editTools'), '|', await page.textContent('#editStatus'));
   // 9번째 마디(9마디) 수정 버튼
-  const bar = page.locator('#bars .b').nth(8);
-  if (MODE !== 'mobile') await bar.hover();
-  log('edit btn visible', await bar.locator('.b-edit').isVisible());
-  await bar.locator('.b-edit').click();
+  const openBar = async (pg, i) => pg.evaluate(i => window.__openEditor(window.__st.bars[i].number), i);
+  const barEdited = async (pg, i) => pg.evaluate(i => window.__st.bars[i].events.some(e => e.edited), i);
+  await openBar(page, 8);
   await page.waitForSelector('.edit-dlg');
   log('dlg', (await page.textContent('.edit-dlg')).slice(0, 300), '| rows', await page.locator('.ed-row').count()); log('ERR', errs.join(' / '));
   const first = page.locator('.ed-row').first();
@@ -40,7 +40,7 @@ const pdf = '/home/claude/samples/' + fs.readdirSync('/home/claude/samples').fin
   await page.locator('.ed-row').nth(1).locator('select').selectOption('1/4'); await page.waitForTimeout(300);
   log('row2 dur', await page.locator('.ed-row').nth(1).locator('select').inputValue(), '| row3 pos', await page.locator('.ed-row').nth(2).locator('.ed-pos').textContent(), '| warn', await page.locator('.ed-warn').count());
   await page.click('.ed-foot .btn.primary'); // 닫기
-  log('bar marked edited', await page.locator('#bars .b').nth(8).evaluate(e => e.classList.contains('edited')), '|', await page.textContent('#editStatus'));
+  log('bar marked edited', await barEdited(page, 8), '|', await page.textContent('#editStatus'));
   // 내보내기
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#editExport')]);
   const ex = JSON.parse(fs.readFileSync(await dl.path(), 'utf8')); fs.writeFileSync(__dirname + '/u1/edits_export.json', JSON.stringify(ex));
@@ -54,7 +54,7 @@ const pdf = '/home/claude/samples/' + fs.readdirSync('/home/claude/samples').fin
   log('after import', await page.textContent('#editStatus'), '| msg', await page.textContent('#msg'));
   // 새로 열어도 자동 적용 (같은 브라우저 저장소)
   await page.close(); page = await ctx.newPage(); await setup(page);
-  log('reload status', await page.textContent('#editStatus'), '| bar9 edited', await page.locator('#bars .b').nth(8).evaluate(e => e.classList.contains('edited')));
+  log('reload status', await page.textContent('#editStatus'), '| bar9 edited', await barEdited(page, 8));
   // 재생해 보기
   await page.click('#playBtn'); await page.waitForFunction(() => /마디|카운트인/.test(document.getElementById('nowText').textContent), null, { timeout: 120000 });
   log('play ok', await page.textContent('#nowText'));
@@ -63,8 +63,7 @@ const pdf = '/home/claude/samples/' + fs.readdirSync('/home/claude/samples').fin
   await page.click('#editClearAll'); await page.waitForTimeout(300);
   log('after clear', await page.textContent('#editStatus'));
   log('scroll', await page.evaluate(() => [document.documentElement.scrollWidth, innerWidth].join('/')));
-  if (MODE === 'mobile') { await page.locator('#bars .b').nth(3).locator('.b-edit').click(); await page.waitForSelector('.edit-dlg'); await page.screenshot({ path: __dirname + '/u1/edit_mobile.png' }); }
-  else { await page.locator('#bars .b').nth(3).hover(); await page.locator('#bars .b').nth(3).locator('.b-edit').click(); await page.waitForSelector('.edit-dlg'); await page.screenshot({ path: __dirname + '/u1/edit_desktop.png' }); }
+  await openBar(page, 3); await page.waitForSelector('.edit-dlg'); await page.screenshot({ path: __dirname + '/u1/edit_' + (MODE === 'mobile' ? 'mobile' : 'desktop') + '.png' });
   log(errs.length ? 'ERRORS ' + errs.join(' | ') : 'no errors');
   await browser.close();
 })();

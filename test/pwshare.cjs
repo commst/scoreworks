@@ -25,7 +25,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); 
   await p.click('#tempoPick'); await p.waitForTimeout(300);
   ok(await p.evaluate(() => document.body.classList.contains('picking')), name + ' 고르는 중 표시');
   if (name === 'phone') ok(!(await p.evaluate(() => document.body.classList.contains('sheet-open'))), name + ' 서랍이 내려감');
-  await p.$eval('#bars .b[data-n="37"]', e => e.click()); await p.waitForTimeout(500);
+  await p.evaluate(() => window.__barClick(37)); await p.waitForTimeout(500);
   const rows = await p.$$eval('#tempoBody tr', trs => trs.map(tr => [tr.querySelector('input').value, tr.querySelectorAll('input')[1].value]));
   ok(rows.length === n0 + 1 && rows.some(r => r[0] === '37'), name + ' 37마디 빠르기 구간이 생김: ' + JSON.stringify(rows));
   ok(rows.map(r => +r[0]).every((v, i, a) => i === 0 || a[i - 1] < v), name + ' 표가 마디 순서');
@@ -34,14 +34,14 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); 
   ok(await p.evaluate(() => document.activeElement && /^tb-/.test(document.activeElement.id)), name + ' BPM 칸에 초점');
   // 같은 마디에 또 넣으면 늘지 않음
   if (name === 'phone') await p.keyboard.press('Escape').catch(() => {});
-  await tab('tempo'); await p.click('#tempoPick'); await p.waitForTimeout(200); await p.$eval('#bars .b[data-n="37"]', e => e.click()); await p.waitForTimeout(400);
+  await tab('tempo'); await p.click('#tempoPick'); await p.waitForTimeout(200); await p.evaluate(() => window.__barClick(37)); await p.waitForTimeout(400);
   ok((await p.$$eval('#tempoBody tr', x => x.length)) === n0 + 1, name + ' 같은 마디는 한 번만');
   // Esc 취소
   await tab('tempo'); await p.click('#ritPick'); await p.keyboard.press('Escape'); await p.waitForTimeout(200);
   ok(!(await p.evaluate(() => document.body.classList.contains('picking'))), name + ' Esc로 취소');
   // --- rit.: 마디 골라 넣기
   const r0 = await p.$$eval('#tchgBody tr:not(.sum)', x => x.length);
-  await tab('tempo'); await p.click('#ritPick'); await p.waitForTimeout(200); await p.$eval('#bars .b[data-n="50"]', e => e.click()); await p.waitForTimeout(500);
+  await tab('tempo'); await p.click('#ritPick'); await p.waitForTimeout(200); await p.evaluate(() => window.__barClick(50)); await p.waitForTimeout(500);
   const rr = await p.$$eval('#tchgBody tr:not(.sum)', trs => trs.map(tr => tr.querySelector('input').value + tr.querySelector('select').value));
   ok(rr.length === r0 + 1 && rr.includes('50rit'), name + ' 50마디 rit.가 생김: ' + rr.join(','));
   // --- 시작 마디를 바꾸면 뒤 구간·rit.도 함께 옮김 (37 → 41: 117 → 121, 121 → 125, rit 50 → 54)
@@ -85,7 +85,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); 
   ok(/맞지 않/.test(await p.textContent('#ghState')), name + ' 틀린 토큰 안내: ' + await p.textContent('#ghState'));
   // 음 수정 하나 (5마디 첫 음을 반음 올림) — 공유 저장소에 함께 올라가야 함
   for (const n of [5, 9, 13, 17, 21, 25, 29, 33]) {   // 음이 있는 마디를 찾아 첫 음을 반음 올림
-    await p.$eval(`#bars .b[data-n="${n}"] .b-edit`, e => e.click()); await p.waitForTimeout(400);
+    await p.evaluate(n => window.__openEditor(n), n); await p.waitForTimeout(400);
     const did = await p.$$eval('.edit-dlg .ed-pitch button', bs => { const b = bs.find(x => x.title === '반음 올림'); if (b) b.click(); return !!b; }); await p.waitForTimeout(400);
     await p.keyboard.press('Escape'); await p.waitForTimeout(300); if (did) break; }
   const edKeys = () => p.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('hapju-edits:')).map(k => Object.keys(JSON.parse(localStorage.getItem(k)).lines).length).reduce((a, c) => a + c, 0));
@@ -112,7 +112,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); 
   await p.click('#ghOfferOk'); await p.waitForTimeout(1500);
   const rows2 = await p.$$eval('#tempoBody tr', trs => trs.map(tr => tr.querySelector('input').value));
   ok(rows2.includes('37') && await p.evaluate(() => document.getElementById('ghOffer').hidden), name + ' [확인]: 공유 설정 적용 ' + rows2.join(','));
-  ok((await edKeys()) > 0 && (await p.$$eval('#bars .b.edited', x => x.length)) > 0, name + ' 새 기기: 음 수정도 받아 적용(✎ 마디)');
+  ok((await edKeys()) > 0 && (await p.evaluate(() => window.__st.bars.filter(b => b.events.some(e => e.edited)).length)) > 0, name + ' 새 기기: 음 수정도 받아 적용(✎ 마디)');
   ok(/불러왔습니다/.test(await p.textContent('#ghState')) && !(await p.$eval('#ghLoad', e => e.disabled)), name + ' 새 기기 상태: ' + await p.textContent('#ghState'));
   ok(calls.some(c => c.startsWith('RAW ')), name + ' 토큰 없이 raw 주소로 받음');
   // 이 기기에서 설정을 바꾼 뒤(로컬 있음) 저장소가 새로 바뀌면: 알리기만
@@ -138,7 +138,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); 
     await p.click('#ghOfferNo'); await p.waitForTimeout(300);
     await tab('save'); await p.click('#ghLoad'); await p.waitForTimeout(1500);
     ok(/불러왔습니다/.test(await p.textContent('#ghState')), name + ' 다른 파일의 설정 불러오기: ' + (await p.textContent('#ghState')).slice(0, 60));
-    ok(/원래 음이 같은 곳만/.test(await p.textContent('#ghState')) && (await edKeys()) > 0 && (await p.$$eval('#bars .b.edited', x => x.length)) > 0, name + ' 다른 파일의 음 수정도 원래 음이 같은 곳에 적용'); }
+    ok(/원래 음이 같은 곳만/.test(await p.textContent('#ghState')) && (await edKeys()) > 0 && (await p.evaluate(() => window.__st.bars.filter(b => b.events.some(e => e.edited)).length)) > 0, name + ' 다른 파일의 음 수정도 원래 음이 같은 곳에 적용'); }
   // --- 토큰 지우기: 물어보고 지움
   await p.evaluate(() => { localStorage.setItem('hapju-gh-token', 'X'); document.getElementById('ghTokenBox').open = true; }); dlg.length = 0;
   await p.$eval('#ghTokenClear', e => e.click()); await p.waitForTimeout(300);

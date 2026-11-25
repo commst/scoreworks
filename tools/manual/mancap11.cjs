@@ -1,6 +1,6 @@
 // 사용설명서 그림(218번 — 213~217번 화면): 01_welcome·03_main(이름 ScoreWorks Studio, 보기 단추 셋), 12_score_play, 31_rec(인식 악보),
 // 32_side(나란히), 16d_bar_tip·16c_map_detail(악보 위 마디 미리보기 — 타임라인·상세), 15_edit(미리보기 [✎ 수정] → 고치기 창),
-// 16a_map_top(요약·확인 필요 목록), 22_phone_main·24_phone_score·33_phone_rec(휴대폰)
+// 16a_map_top(요약·확인 필요 목록), 34_edit(편집 모드 검사기 — 219번), 22_phone_main·24_phone_score·33_phone_rec(휴대폰)
 // NODE_PATH=/opt/npm-tools/node_modules node tools/manual/mancap11.cjs
 //   글꼴: /home/claude/work/fonts에서 npm i pretendard@1.3.9 @fontsource-variable/outfit
 //   Verovio: /home/claude/work/vrv에서 npm i verovio@6.4.1
@@ -79,6 +79,15 @@ const barRect = (p, k, where) => p.evaluate(([k, w]) => { const r = window.__svB
   await p.click('#viewSide'); await recReady(p); await p.waitForTimeout(3000); await toView(p); await p.waitForTimeout(1500); await shot(p, '32_side');
   await p.click('#playBtn'); await p.waitForTimeout(300);
   await p.click('#viewScore'); await p.waitForTimeout(500);
+  // 편집 모드: 인식 악보에서 음을 눌러 검사기(219번) — 한 옥타브 올려 '악보와 다르게'를 보이고 되돌림
+  if (want('34_edit')) {
+    await p.click('#svEdit'); await recReady(p); await p.waitForTimeout(1500);
+    const n = await p.evaluate(() => { for (const id of window.__ed.ids().filter(i => /_R\d+$/.test(i) && +i.split('_')[2] >= 20)) { window.__ed.select(id); const c = window.__ed.ctx(); window.__ed.select(null); if (!c || !c.now || !c.now.length) continue; const el = document.querySelector(`#recWrap g.note[data-id^="${id}_"]`); if (!el) continue; el.scrollIntoView({ block: 'center' }); const h = el.querySelector('.notehead') || el, r = h.getBoundingClientRect(); if (r.width) return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; } return null; });
+    await p.mouse.click(n.x, n.y); await p.waitForTimeout(800); await p.keyboard.press('Control+ArrowUp'); await p.waitForTimeout(3000);
+    await p.evaluate(() => { const i = document.querySelector('#edInsp .ei-memo'); if (i) { i.value = 'PDF 오타(지휘자 확인)'; i.dispatchEvent(new Event('change')); } }); await p.waitForTimeout(800);
+    await toView(p); await p.waitForTimeout(800); await shot(p, '34_edit');
+    await p.keyboard.press('Control+z'); await p.keyboard.press('Control+z'); await p.waitForTimeout(500); await p.click('#svPractice'); await p.waitForTimeout(500);
+  }
   await p.context().close();
   // 휴대폰
   if (want('22_phone_main') || want('24_phone_score') || want('33_phone_rec')) {
