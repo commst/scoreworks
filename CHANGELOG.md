@@ -1762,3 +1762,10 @@
 - 원인: Verovio는 '마지막 단'이 폭의 80%(minLastJustification) 넘게 차야만 폭에 맞춰 늘림. 231·233번부터 나란히 조각이 PDF 한 단씩이라 모든 단이 마지막 단 → 넘친 조각에서 배운 넓은 폭 배율(REC.encK)로 그리면 80%를 못 채워 늘리지 않음
 - 고침: breaks 'encoded'(나란히)일 때 `minLastJustification: 0`(src/studio/view/engrave.ts) — 늘 끝까지. 소나기 아이패드 가로: 단 끝 = 칸 폭의 98~99%(전에는 50~60%)
 - 시험: pwside(PC·휴대폰)·pwrec·pwstudio0·pwed·pwpal·pwboot
+
+## 2026-11-26 (236) · 긴급: Safari에서 '프로그램이 시작되지 않았습니다'가 되풀이해 뜨던 것
+- 사용자(11-26, 아이패드 Safari): 브라우저에서 여는데도 경고가 반복됨 — 스크린샷에서 페이지를 아직 받는 중(주소창 불러오기 막대)
+- 원인: 시작 검사(맨 앞 일반 script)가 **스크립트를 읽은 때부터** 6초 안에 `__appReady`가 안 되면 경고를 띄움. 앱 파일은 약 16MB(녹음 포함)이고 앱 코드(module)는 문서를 다 받은 뒤에야 실행되므로, 느린 망·새 판을 새로 받을 때(오늘 여러 번 배포) 다 받기 전에 6초가 지나 경고가 뜸. 오류가 아니라 잘못된 경고
+- 고침: 6초를 **문서를 다 받은 뒤(DOMContentLoaded)부터** 셈. 진짜 오류(error·unhandledrejection)는 예전처럼 바로 '시작하지 못했습니다: …'
+- 함께 고침(시작 순서 위험): 231번 소리 미리 만들기(`preSoon`)가 더 뒤에 선언된 `SV_PHONE`을 읽음 — state.dirty setter가 그보다 앞에 있어, 시작 중 설정이 바뀌면 선언 전 접근으로 멈출 수 있었음(113번 규칙) → matchMedia를 그 자리에서 읽음
+- 시험: pwboot·pwsession
