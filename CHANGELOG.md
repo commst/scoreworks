@@ -1738,3 +1738,11 @@
 - 해 보고 안 한 것: 음 소리 캐시를 다음 만들기까지 두기(선율 1.7초 → 1.5초뿐 — 시간은 대부분 더하기), 앞부분만 먼저 만들어 재생(크기 맞추기가 곡 전체 기준이라 바꿔 끼울 때 소리 크기가 달라짐)
 - 시험: 일꾼 길(http)로 pwrec·pwside·pwed·pwpal·pwdnd·pwyul·pwed2·pwnomap, 휴대폰 pwside·pwed(시험 사본은 주소만 http://localhost로 바꾸고 api.github.com을 막음), 로컬 파일 길로 기존 회귀 전부. 재는 도구 /tmp/perfrec.cjs(그리기 단계별 시간 `window.__recPT`)·/tmp/perf4.cjs(재생·다시 재생)
 - 로컬 파일 길 회귀: pwpal·pwdnd·pwed2·pwed(PC·휴대폰)·pwyul·pwrec·pwside·pwnomap·pwname·pwfixlist·pwovfix2·pwnotes·pwstudio0·pwshare·pwjump·pwboot·pwedit 통과. pwseek·pwspeed는 'no errors' 한 줄(작업 공간 네트워크 ERR_TUNNEL — 예전부터), pwpause는 없앤 마디맵(`.b`)을 써서 231번 전 판에서도 같은 실패(옛 시험 — 옮길 것)
+
+## 2026-11-25 (232) · 보기 단추 이름 바꿈, 단추 줄을 위에 붙임 · 나란히 함께 넘기기 되울림 고침
+- 사용자(11-25): 원본 PDF → **원본 악보**, 나란히 → **나란히 보기**, 정간보 → **정간보 보기**, 악보를 내려도 단추가 위에 붙어 있게
+- 단추 글자만 바꿈(id·설정 값 'pdf'·'side'·'jg' 그대로 — 시험·저장 설정 그대로). 사용법 창·편집 안내·사용설명서의 단추 이름도 바꿈(PDF 자체를 말하는 곳은 그대로)
+- 단추 줄을 `.vs-bar`(#vsBar)로 감싸 `position: sticky; top: var(--tbh)`(첫 화면에서는 붙이지 않음). 높이를 `--vsh`로 재(ResizeObserver) 보기 설정 줄(.sv-tools, 예전부터 붙어 있음)은 그 아래(`top: tbh + vsh`)에, 악보 칸 높이에서도 뺌(내려 끝까지 가도 연주 막대에 가리지 않게)
+- 버그(시험에서 찾음 — 예전부터): 나란히에서 한쪽을 굴리면 다른 쪽을 그 마디로 맞추는데(svSideSync), 원본 악보 쪽이 끝까지 내려가 그 마디를 1/3 높이에 못 놓으면 그 쪽의 스크롤 이벤트가 되울려 인식 악보를 도로 끌어올림(pwed '음을 누르면 고름' — 악보 칸이 44px 낮아져 드러남). 방금 반대쪽에서 맞춰 준 마디가 이쪽 칸에 보이면 1.5초 안의 되울림은 무시(`REC.lastSync`)
+- 휴대폰(900px 이하)에서 편집 중에는 단추 줄을 붙이지 않음(`body.ed-mode` — 위 막대·단추 줄·보기 설정 세 줄·검사기·음표판으로 악보 칸이 거의 남지 않아 pwpal 휴대폰 화음 시험이 가려진 자리를 누름), `--vsh`는 붙어 있을 때만
+- 시험: pwed(PC 두 번·휴대폰)·pwside(PC·휴대폰)·pwpal(PC·휴대폰)·pwdnd·pwed2·pwrec·pwswitch·pwzoom·pwnomap·pwyul·pwsvfull·pwnotes·pwboot. 화면 확인: PC·휴대폰에서 아래로 내려도 단추 줄과 보기 설정 줄이 위에 붙음(/tmp/shot.cjs)
