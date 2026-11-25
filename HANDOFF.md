@@ -1,6 +1,6 @@
 # ScoreWorks(옛 이름 합주연습기) 인수인계 메모
 
-새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-25, CHANGELOG 223번까지)
+새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-25, CHANGELOG 224번까지)
 
 
 ## ★ Studio 기능 접목 (11-25~) — 기획·롤백
@@ -23,6 +23,7 @@
 - **221 — 나란히: 인식 악보 단 = PDF 단**(사용자 제보 11-25): REC.enc이면 recSlice가 기준 geo의 쪽·오선이 바뀌는 마디에 `<print new-system>`, Verovio breaks 'encoded', 그릴 폭 recEncFactor(PDF 단 마디 수 ÷ 3, 휴대폰 ÷ 2) → 넘치면 recOverflow만큼 한 번 더(최대 6배), c.encF. 시험 test/pwside.cjs(훅 __recSys). 남은 것: 단이 아주 빽빽하면(16분음표 많은 7~8마디) 글자가 작음 — 사용자가 [크기 +]로 키우거나, 필요하면 나란히 기본 크기를 올릴 것
 - **222 — 4단계 구조 편집·음표판·전체화면 편집**(자세한 것은 CHANGELOG 222): PAL·palRender·palPlace·palClick·palHover, recPosAt(오선 줄·음표 data-id로 박·높이), opInsert/opDelete/opVoice → rewriteBar → 수정 기록 마디 칸 `bar {o: barSig, ev}` → applyEdits가 applyRewrite(지문 같을 때만), baseBar(그 위 음 수정 기준). 겹쳐 보기 rb.rew 마디의 짝 없는 머리 = 주황. 전체화면: body.sv-lock이면 검사기·음표판 z 1600, palPlace가 .sv-fdock 위로. recHit·recPosAt은 세로로 가장 가까운 마디. 시험 test/pwpal.cjs(PC·휴대폰)
 - **223 — 마디 정보 줄**(사용자가 고른 1+4안): svTipPref('strip' 처음·'hover'·'off', hapju-view.tip), svInfoShow(#svInfo, [상세 ▸] → showBarTip). 시험 pwnomap
+- **224 — 인식 악보 긴 악기 이름 여러 줄**(사용자 11-25: 이름이 길면 두세 줄로 접더라도 마디 폭을 넓게): buildMusicXml 화면용(SCREEN)만 `wrapPartName`(폭 12, '/'·','·'·'·빈칸 뒤, `&#10;` → Verovio 여러 줄). 시험 test/pwname.cjs
 - **다음 할 일**: 5단계 율명·구음·정간보(인식 악보 아래 글자: 없음/율명/구음, 25현 가야금은 율명 아래 줄 번호, 정간보 보기 — Studio yul.ts·gueum.ts, 구음 적기는 MusicXML 가사 칸과 함께 정함). 4단계 남은 것: 손가락 끌어 넣기·옮기기(6단계), 마디 넣기·지우기(7단계와 함께), 셋잇단 넣은 마디의 MusicXML 잇단 괄호 확인
 - 남은 시험 문제: pwovfix2 'Ctrl+Z 뒤 단추 1개' 한 줄 실패(218번 판도 같음 — 원인 미확인). 예전 시험(pwedit·pwshare)은 219번에서 마디맵 없는 화면으로 옮김. 다른 시험에도 `#bars .b`(마디 칸)를 쓰는 것이 남아 있으면 같은 방식(__openEditor·__barClick)으로 옮길 것
 - 214(긴급): MuseScore 3 PDF('MScore' 글꼴이 SMuFL 번호)를 못 읽던 것 고침 — 글꼴마다 두 번호표 맞는 수로 고름. 샘플 신아리랑 73929564 — 비공개 샘플 저장소에는 사용자가 직접 올리기로 함(11-25). 216: 음표를 거의 못 읽은 악보 경고(glyphStats·readHealth, test/pwreadwarn.cjs), 옛 저장 설정 바로잡기(줄 설정 pitched, test/pwcfgfix.cjs)

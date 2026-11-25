@@ -2024,7 +2024,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 25일</h3>
-    <h4>기능 업데이트 <small>13</small></h4><ul class="hlist">
+    <h4>기능 업데이트 <small>14</small></h4><ul class="hlist">
+      <li><details><summary>인식 악보: 긴 악기 이름은 두세 줄로</summary><p>'Brasschime / Cymbal, 징 / 젬베'처럼 악기 이름이 길면 인식 악보 왼쪽 이름 칸이 넓어져 마디 자리가 좁아졌습니다. 이제 인식 악보에서는 긴 이름을 '/'·쉼표·빈칸 자리에서 두세 줄로 접어 마디를 넓게 그립니다. 내보내는 MusicXML의 악기 이름은 그대로입니다.</p></details></li>
       <li><details><summary>편집: 음표판으로 음 넣기·지우기</summary><p>편집을 켜면 악보 아래쪽에 <b>음표판</b>이 나옵니다. <b>[✚ 음표 넣기]</b>를 누르고 길이(온~32분·점·셋잇단)와 성부를 고른 뒤 인식 악보의 오선 위를 누르면 그 박·그 높이에 음이 들어갑니다(넣을 자리와 음 이름이 미리 보임, 같은 성부의 겹치는 음은 덮어씀). <b>[화음]</b>을 켜면 같은 박의 음에 더해지고, <b>[⌫ 지우기]</b>는 누르는 음을 지웁니다(쉼표가 됨). 고른 음은 ♭·♮·♯·붙임줄·성부 바꾸기·🗑 지우기. 자판: N 넣기, R 지우기, H 화음, Delete, Esc, 1~6 길이, . 점. 넣고 지운 마디는 그대로 저장·공유되고 Ctrl+Z로 되돌립니다.</p></details></li>
       <li><details><summary>전체화면에서도 편집</summary><p>[전체화면 보기]에서도 음표판과 검사기가 보입니다. 음표판은 아래 연주 막대 위에 놓이고, 휴대폰 전체화면에서는 보기 설정과 편집 안내 글을 접어 악보 자리를 넓혔습니다.</p></details></li>
       <li><details><summary>마디 정보 줄: 큰 미리보기 창이 악보를 가리지 않게</summary><p>마디 위에 마우스를 두면 뜨던 큰 미리보기 창 대신, 처음 설정은 악보 위 얇은 <b>정보 줄</b>에 마디 번호·박자·빠르기·표시·경고만 보여 줍니다(연주 중에는 지금 마디). 악기별 음이 필요하면 줄 끝의 <b>[상세 ▸]</b>. 보기 설정의 <b>'마디 정보'</b>에서 정보 줄 / 떠오르는 창(예전) / 끔을 고릅니다. 휴대폰은 예전처럼 길게 누르면 창이 뜹니다(끔이면 안 뜸).</p></details></li>
@@ -6617,6 +6618,17 @@ function buildMidi() {
 // 시험·인식 악보 보기용: 화면용 MusicXML(음 id 붙음) — 212번
 window.__swScreenXml = () => buildMusicXml({ ids: true });
 window.__swFileXml = () => buildMusicXml();
+// 긴 악기 이름 접기(224번, 화면용 인식 악보만): '/'·','·'·'·빈칸 뒤에서 끊어 한 줄 폭(한글 2·그 밖 1) 12 안으로. 끊을 곳이 없는 긴 낱말은 그대로
+function wrapPartName(name) {
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const w = t => [...t].reduce((n, ch) => n + (/[\u1100-\u11ff\u3130-\u318f\uac00-\ud7af\u4e00-\u9fff]/.test(ch) ? 2 : 1), 0);
+  const s = String(name || '').trim(); if (w(s) <= 12) return esc(s);
+  const toks = s.match(/[^\s/,·]+[\s/,·]*/g) || [s], lines = [];
+  let cur = '';
+  for (const t of toks) { if (cur && w((cur + t).trim()) > 12) { lines.push(cur.trim()); cur = ''; } cur += t; }
+  if (cur.trim()) lines.push(cur.trim());
+  return lines.map(esc).join('&#10;');
+}
 function buildMusicXml(xo) {
   // xo.ids: 화면용(인식 악보 보기) — 음마다 id(줄·오선·마디·성부·순번)를 붙임. 파일로 내보낼 때는 붙이지 않음(내보낸 파일이 전과 같게, 212번)
   const SCREEN = !!(xo && xo.ids);
@@ -6735,7 +6747,7 @@ function buildMusicXml(xo) {
     const sec = sectOf(g), prevS = i > 0 ? sectOf(groups[i - 1]) : null, nextS = i < groups.length - 1 ? sectOf(groups[i + 1]) : null;
     if (sec && sec !== prevS && sec === nextS) { gi++; g.grp = gi; out += `<part-group type="start" number="${gi}"><group-symbol>bracket</group-symbol><group-barline>yes</group-barline></part-group>\n`; }
     else if (sec && sec === prevS) g.grp = groups[i - 1].grp;
-    const c = g.lines[0].c, nm = esc(g.name);
+    const c = g.lines[0].c, nm = SCREEN ? wrapPartName(g.name) : esc(g.name);   // 화면용: 긴 이름은 두세 줄로 접어 마디 자리를 넓게(224번)
     let x = `<score-part id="P${i + 1}"><part-name>${nm}</part-name><part-abbreviation>${nm}</part-abbreviation>`;
     if (c.role === 'perc') {
       x += g.inst.map(o => `<score-instrument id="${o.id}"><instrument-name>${esc(o.name)}</instrument-name></score-instrument>`).join('');
