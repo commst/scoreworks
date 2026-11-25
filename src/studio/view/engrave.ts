@@ -102,6 +102,8 @@ function optsOf(o: EngraveOpts) {
     mnumInterval: 1,   // 마디 번호를 모든 마디에
     svgViewBox: true, svgHtml5: true, svgRemoveXlink: true,
     justificationMaxVertical: 0,
+    // 233번 뒤: 나란히(원래 줄 바꿈)는 조각마다 단 하나라 모든 단이 '마지막 단'이 되어, 80% 못 차면 늘리지 않아 칸 폭 절반쯤에서 끝났음 → 늘 끝까지
+    ...(o.breaks === 'encoded' ? { minLastJustification: 0 } : {}),
   };
 }
 const noTimemap = () => { throw new Error('일꾼으로 그린 악보에는 timemap이 없습니다'); };

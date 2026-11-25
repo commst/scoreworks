@@ -2066,7 +2066,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 26일</h3>
-      <details class="hbug"><summary>버그 수정 <small>2건</small></summary><ul class="hlist bug">
+      <details class="hbug"><summary>버그 수정 <small>3건</small></summary><ul class="hlist bug">
+      <li><details><summary>나란히 보기 오른쪽 악보가 칸 폭 절반에서 끝나던 문제</summary><p>나란히 보기에서 오른쪽 인식 악보의 단이 칸 폭의 절반쯤에서 끝나 작게 보였습니다. 이제 단마다 칸 폭 끝까지 씁니다.</p></details></li>
       <li><details><summary>나란히 보기에서 양쪽 악보 위치가 어긋나던 문제</summary><p>원본 악보 한 단이 인식 악보에서 두 단으로 갈라져 그려질 때가 있었고(어제 빠르게 바꾸면서 생김), 소나기처럼 악기가 많은 단은 한쪽은 단 위쪽, 다른 쪽은 단 아래쪽이 보였습니다. 이제 원본 한 단 = 인식 악보 한 단으로 그리고, 함께 넘길 때 같은 악기 줄 높이끼리 맞춥니다.</p></details></li>
       <li><details><summary>악보 칸 윗부분이 가려 내려지지 않던 문제</summary><p>아이패드처럼 보기 설정 줄이 여러 줄인 화면에서 끝까지 내리면 악보 칸 윗부분이 위에 붙은 줄 밑에 가려 있었습니다. 이제 칸 높이를 위에 붙은 줄들의 실제 높이에 맞춰, 끝까지 내리면 칸 전체가 보입니다.</p></details></li>
       </ul></details>
@@ -7518,7 +7519,9 @@ onmessage = async (ev) => {
       svgViewBox: true,
       svgHtml5: true,
       svgRemoveXlink: true,
-      justificationMaxVertical: 0
+      justificationMaxVertical: 0,
+      // 233번 뒤: 나란히(원래 줄 바꿈)는 조각마다 단 하나라 모든 단이 '마지막 단'이 되어, 80% 못 차면 늘리지 않아 칸 폭 절반쯤에서 끝났음 → 늘 끝까지
+      ...o.breaks === "encoded" ? { minLastJustification: 0 } : {}
     };
   }
   var noTimemap = () => {
@@ -15020,7 +15023,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-26 07:39';
+const APP_VERSION = '2026-11-26 07:59';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();

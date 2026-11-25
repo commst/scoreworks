@@ -1756,3 +1756,9 @@
 - 시험 중 찾음: 칸 높이 계산이 body에 `classList.add`를 매번 해(같은 값이어도 속성을 다시 써 관찰자에 잡힘) body 관찰자들이 끝없이 돌며 인식 악보 그리기가 시작되지 않던 것 → 바뀔 때만 더하고 뺌
 - 시험용 훅: `window.__sideBars()`(두 칸 1/3 높이의 마디), `window.__sideSpan(k)`, `window.__svFit()`, `__recState()`에 enc·encF·encK
 - 시험: pwside(PC·휴대폰)·pwrec·pwed(PC·휴대폰)·pwpal(PC·휴대폰)·pwdnd·pwswitch·pwzoom·pwnomap·pwsvfull·pwyul·pwboot, 아이패드 가로 소나기 재현(/tmp/ipad.cjs — 끝까지 내렸을 때 칸 290~685 · 보기 설정 줄 110~244, 두 칸 같은 마디·같은 단)
+
+## 2026-11-26 (234) · 나란히 보기 인식 악보 단을 칸 폭 끝까지
+- 사용자(11-26, 아이패드 가로·세로, 소나기): 악보 좌우 너비를 끝까지 쓰게 → 나란히 보기 오른쪽 인식 악보의 단이 칸 폭 절반~60%에서 끝나 있었음
+- 원인: Verovio는 '마지막 단'이 폭의 80%(minLastJustification) 넘게 차야만 폭에 맞춰 늘림. 231·233번부터 나란히 조각이 PDF 한 단씩이라 모든 단이 마지막 단 → 넘친 조각에서 배운 넓은 폭 배율(REC.encK)로 그리면 80%를 못 채워 늘리지 않음
+- 고침: breaks 'encoded'(나란히)일 때 `minLastJustification: 0`(src/studio/view/engrave.ts) — 늘 끝까지. 소나기 아이패드 가로: 단 끝 = 칸 폭의 98~99%(전에는 50~60%)
+- 시험: pwside(PC·휴대폰)·pwrec·pwstudio0·pwed·pwpal·pwboot
