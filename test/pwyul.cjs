@@ -64,6 +64,13 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
   await p.screenshot({ path: '/tmp/pwyul-' + (phone ? 'phone' : 'pc') + '.png' });
   await p.click('#viewRec'); await p.waitForTimeout(500);
   ok('정간보 → 인식 악보로 돌아옴', await p.evaluate(() => document.getElementById('jgWrap').hidden && !document.getElementById('recWrap').hidden));
+  // ④ 늘 보이는 [음표만·율명·구음] 단추(226번 뒤): 원본 PDF에서 율명을 누르면 인식 악보 + 율명
+  await p.click('#viewScore'); await p.waitForTimeout(400);
+  await p.click('#svLabLbl button[data-lab="none"]'); await p.waitForTimeout(300);
+  ok('④ [음표만·율명·구음] 단추가 보임', await p.evaluate(() => { const e = document.querySelector('#svLabLbl button[data-lab="yul"]'); const r = e.getBoundingClientRect(); return !!e.offsetParent && r.width > 0; }));
+  await p.click('#svLabLbl button[data-lab="yul"]'); await p.waitForTimeout(600);
+  ok('  원본 PDF에서 [율명] → 인식 악보 + 율명', (await p.evaluate(() => window.__recState().src)) === 'rec' && await p.evaluate(() => document.querySelector('#svLabLbl button[data-lab="yul"]').getAttribute('aria-pressed') === 'true' && document.getElementById('svLab').value === 'yul' && !document.getElementById('svBaseLbl').hidden));
+  await p.screenshot({ path: '/tmp/pwyul-labs-' + (phone ? 'phone' : 'pc') + '.png' });
   ok('페이지 오류 없음', !errs.length, errs.slice(0, 3).join(' | '));
   await b.close(); console.log(fail ? 'FAIL ' + fail : 'ALL OK'); process.exit(fail ? 1 : 0);
 })();

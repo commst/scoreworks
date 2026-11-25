@@ -273,7 +273,9 @@ body.picking .b, body.picking .sv-page, body.picking #svPages > * { cursor: cros
 .sv-strip { margin-bottom: 4px; }
 .sv-modes { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--chip); }
 .sv-modes .btn { border: 0; border-radius: 999px; padding: 5px 14px; min-height: 34px; background: transparent; box-shadow: none; }
-.sv-modes .btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink, #fff); }
+.sv-modes .btn[aria-pressed="true"], .sv-modes .btn[aria-pressed="true"]:hover { background: var(--accent); color: var(--accent-ink, #fff); }   /* 누른 채 마우스·손가락이 위에 있어도 흐려지지 않게 */
+.sv-labs .btn { padding: 5px 11px; }
+.sv-base { display: inline-flex; align-items: center; gap: 4px; font-size: 13.5px; } .sv-base[hidden] { display: none; }
 /* 편집 모드 검사기(219번) */
 .rec-wrap g.note.ed-mod, .rec-wrap g.note.ed-mod * { fill: #7a4fd0; stroke: #7a4fd0; }
 .rec-wrap g.note.ed-sel, .rec-wrap g.note.ed-sel * { fill: #1f6feb; stroke: #1f6feb; }
@@ -1989,8 +1991,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
           <label class="chk" title="해석기가 쉼표 자리를 추정한 마디에서, 성부마다 음도 쉼표도 적혀 있지 않은 빈 자리를 흐린 빗금 칸으로 보여 줍니다(윗성부는 오선 위쪽, 아랫성부는 아래쪽)"><input type="checkbox" id="svHidden" checked>숨은 쉼표</label>
           <button type="button" class="btn" id="svFull">전체화면 보기</button>
           <button type="button" class="btn sv-warn" id="svWarn" hidden title="확인 필요 마디 목록(마디로 · 여기부터 · 고치기)">⚠ 경고 <b id="svWarnN"></b><span class="sv-warn-bad" id="svWarnBad"></span></button> <button type="button" class="btn" id="svFix" hidden title="악보대로 고칠 수 있는 곳 모아 보기">✎ 악보대로</button> <button type="button" class="btn sv-diff" id="svDiff" hidden title="일부러 PDF와 다르게 고친 곳 목록(겹쳐 보기의 주황 점선 ✎)">✎ 악보와 다르게</button>
-          <label class="chk" id="svLabLbl" title="인식 악보·정간보 음 아래에 적을 글자: 율명(황·태·중…, 황종 높이는 옆에서), 구음(장구는 덩·쿵·덕·기덕 자동, 다른 악기는 검사기에서 적은 구음)">아래 글자 <select id="svLab" aria-label="음 아래 글자"><option value="none">없음</option><option value="yul">율명</option><option value="gu">구음</option></select></label>
-          <label class="chk" id="svBaseLbl" hidden title="율명의 황종(黃)을 어느 음으로 볼지 — 정악은 보통 E♭4">황종 <select id="svBase" aria-label="황종 높이"><option value="57">A3</option><option value="58">B♭3</option><option value="59">B3</option><option value="60">C4</option><option value="61">C♯4</option><option value="62">D4</option><option value="63">E♭4 (정악)</option><option value="64">E4</option><option value="65">F4</option><option value="66">F♯4</option><option value="67">G4</option><option value="68">A♭4</option></select></label>
+          <span class="sv-modes sv-labs" id="svLabLbl" role="group" aria-label="음 아래 글자" title="음 아래에 적을 글자 — 율명(황·태·중…), 구음(장구는 덩·쿵·덕 자동, 다른 악기는 검사기에서 적은 구음). 인식 악보·나란히·정간보에 보이고, 원본 PDF에서 누르면 인식 악보로 바뀝니다"><button type="button" class="btn" data-lab="none" aria-pressed="true">음표만</button><button type="button" class="btn" data-lab="yul" aria-pressed="false">율명</button><button type="button" class="btn" data-lab="gu" aria-pressed="false">구음</button><select id="svLab" hidden aria-hidden="true" tabindex="-1"><option value="none">없음</option><option value="yul">율명</option><option value="gu">구음</option></select></span>
+          <label class="sv-base" id="svBaseLbl" hidden title="율명의 황종(黃)을 어느 음으로 볼지 — 정악은 보통 E♭4">황종 <select id="svBase" aria-label="황종 높이"><option value="57">A3</option><option value="58">B♭3</option><option value="59">B3</option><option value="60">C4</option><option value="61">C♯4</option><option value="62">D4</option><option value="63">E♭4 (정악)</option><option value="64">E4</option><option value="65">F4</option><option value="66">F♯4</option><option value="67">G4</option><option value="68">A♭4</option></select></label>
           <label class="chk" id="svTipLbl" title="마디 위에 마우스를 둘 때: 정보 줄 = 악보 위 얇은 줄에만 핵심을 보여 주고 [상세]를 누를 때만 큰 창, 떠오르는 창 = 예전처럼 마디 위에 큰 창, 끔 = 보여 주지 않음">마디 정보 <select id="svTipMode" aria-label="마디 정보 보기"><option value="strip">정보 줄</option><option value="hover">떠오르는 창</option><option value="off">끔</option></select></label>
           <label class="chk" id="svOverLbl" title="내보낼 MusicXML의 음을 악보 위에 동그라미로 겹쳐 그립니다. PDF 음표 머리와 맞으면 파랑, 맞지 않으면 빨강, 자리는 맞지만 적힌 모양(음표 종류·점·기둥·아티큘레이션·붙임줄·이음줄)이 다르면 주황, 쪽 그림의 실제 머리 높이와 다르면 보라, 맞는 음이 없는 PDF 머리는 빨간 네모. 보라·높이만 다른 빨강은 눌러서 [악보대로 고치기]. 짧은 선은 해석기가 읽은 기둥(윗성부 파랑·아랫성부 초록). 내보낸 셈여림·꺾쇠는 오선 아래 글자(PDF와 다르면 주황). 표시를 누르면 이유"><input type="checkbox" id="svOver">MusicXML 겹쳐 보기</label>
           <span class="sv-modes" role="group" aria-label="모드"><button type="button" class="btn" id="svPractice" aria-pressed="true" title="연습: 마디를 누르면 그 마디부터 재생합니다">연습</button><button type="button" class="btn" id="svEdit" aria-pressed="false" title="편집: 인식 악보에서 음을 눌러 고르고 검사기에서 높이·길이를 수정합니다. 원본 PDF에서 마디를 누르면 그 마디의 음 목록 창이 열립니다">✎ 편집</button></span>
@@ -9041,7 +9043,7 @@ const SV_TOUCH = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches
 let svInfoK = -1, svTipPref = 'strip', svLab = 'none', svBase = 63;   // svLab·svBase(225번): 인식 악보 아래 글자(없음·율명·구음)와 황종 높이   // 마디 정보(223번): 'strip' 정보 줄 · 'hover' 떠오르는 창(예전) · 'off'
 let svSrc = 'pdf';   // 악보 보기에서 무엇을: 'pdf' 원본 PDF · 'rec' 인식 악보 · 'side' 나란히(213번)
 try { const v = JSON.parse(localStorage.getItem(PREF_VIEW) || '{}'); if (v.src === 'rec' || v.src === 'side') svSrc = v.src; if (v.zoom >= 1 && v.zoom <= 3) svZoom = v.zoom; if (v.follow === false) $('svFollow').checked = false; if (v.notes === false) $('svNotes').checked = false; if (v.curNotes === true) $('svCurNotes').checked = true; if (v.tip === 'hover' || v.tip === 'off') svTipPref = v.tip; if (v.lab === 'yul' || v.lab === 'gu') svLab = v.lab; if (v.base >= 55 && v.base <= 70) svBase = v.base; } catch (e) {}
-$('svLab').value = svLab; $('svBase').value = String(svBase); $('svBaseLbl').hidden = svLab !== 'yul';
+$('svLab').value = svLab; $('svBase').value = String(svBase); $('svBaseLbl').hidden = svLab !== 'yul'; svLabSync();
 $('svTipMode').value = svTipPref;
 function saveViewPref() { try { localStorage.setItem(PREF_VIEW, JSON.stringify({ mode: viewMode, src: svSrc, zoom: svZoom, follow: $('svFollow').checked, notes: $('svNotes').checked, curNotes: $('svCurNotes').checked, tip: svTipPref, lab: svLab, base: svBase })); } catch (e) {} }
 // 쪽 그림(PDF 마디 위치)이 없는 악보(MusicXML로 올린 악보·예시 장단·마디 위치를 못 읽은 PDF)는 인식 악보만 볼 수 있다
@@ -10366,7 +10368,13 @@ function svInfoShow(k) {
   more.addEventListener('click', ev => { ev.stopPropagation(); const bb = state.bars[svInfoK]; if (bb) { svTipPinned = true; showBarTip(bb, el); } });
   el.append(more);
 }
-$('svLab').addEventListener('change', () => { svLab = $('svLab').value; $('svBaseLbl').hidden = svLab !== 'yul'; saveViewPref(); REC.key = ''; ED.dirty = true; buildScoreView(); });
+function svLabSync() { for (const b of document.querySelectorAll('#svLabLbl button[data-lab]')) b.setAttribute('aria-pressed', String(b.dataset.lab === svLab)); }
+$('svLab').addEventListener('change', () => { svLab = $('svLab').value; $('svBaseLbl').hidden = svLab !== 'yul'; svLabSync(); saveViewPref(); REC.key = ''; ED.dirty = true; buildScoreView(); });
+// 226번 뒤 사용자: 율명 보기 옵션이 안 보임(휴대폰은 보기 설정에 접혀 있었고 이름도 '아래 글자') → 늘 보이는 [음표만·율명·구음] 단추. 원본 PDF에서 율명·구음을 누르면 인식 악보로
+for (const b of document.querySelectorAll('#svLabLbl button[data-lab]')) b.addEventListener('click', () => {
+  const v = b.dataset.lab; if (v !== 'none' && svSrcEff() === 'pdf') $('viewRec').click();
+  if (v !== svLab) { $('svLab').value = v; $('svLab').dispatchEvent(new Event('change')); }
+});
 $('svBase').addEventListener('change', () => { svBase = +$('svBase').value; saveViewPref(); REC.key = ''; ED.dirty = true; buildScoreView(); });
 $('svTipMode').addEventListener('change', () => { svTipPref = $('svTipMode').value; saveViewPref(); hideBarTip(0); if (svTipPref === 'strip') svInfoShow(svInfoK >= 0 ? svInfoK : Math.max(0, svCurrent)); else $('svInfo').hidden = true; });
 let svTipPinned = false;   // 223번: 길게 누르기·[상세 ▸]로 연 창은 악보 밖으로 마우스가 나가도 닫지 않음(바깥을 누르거나 굴리면 닫힘)
@@ -14567,7 +14575,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-25 18:15';
+const APP_VERSION = '2026-11-25 18:32';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();
