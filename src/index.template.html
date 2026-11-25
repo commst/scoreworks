@@ -488,6 +488,20 @@ body.sv-lock #mini { display: none; }
 .sv-tools .sv-warn { display: none; }
 .sv-tools .sv-more { display: none; }
 .score-view.sv-full .sv-edit-hint { display: none; }
+/* 정간보(225번) — 오른쪽에서 왼쪽으로 한 줄(세로) = 한 마디 */
+.jg-wrap { overflow: auto; background: #fffdf8; border: 1px solid var(--line); border-radius: 10px; padding: 10px; color: #1b1b1b; }
+.jg-wrap .jg-head { display: flex; gap: 12px; align-items: baseline; justify-content: center; margin: 0 0 10px; font-size: 14px; } .jg-wrap .jg-head b { font-size: 16px; }
+.jg-wrap .jg { display: flex; flex-direction: row-reverse; flex-wrap: wrap; justify-content: flex-start; gap: 14px 0; }
+.jg-wrap .jg-col { display: flex; flex-direction: column; width: 58px; border: 1.5px solid #3a3a3a; border-left-width: 0; cursor: pointer; background: #fff; }
+.jg-wrap .jg-col:first-child { border-left-width: 1.5px; }
+.jg-wrap .jg-col.on { background: #fff4c2; box-shadow: inset 0 0 0 2px #f0b400; }
+.jg-wrap .jg-no { text-align: center; font-size: 11px; color: #777; border-bottom: 1.5px solid #3a3a3a; padding: 1px 0; }
+.jg-wrap .jg-cell { min-height: 52px; display: flex; flex-direction: column; border-bottom: 1px solid #9a9a9a; }
+.jg-wrap .jg-cell:last-child { border-bottom: 0; } .jg-wrap .jg-cell.g3 { border-top: 2px solid #3a3a3a; }
+.jg-wrap .jg-sub { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 600 17px/1.15 'Pretendard Variable', system-ui, sans-serif; min-height: 18px; }
+.jg-wrap .jg-sub + .jg-sub { border-top: 1px dotted #c8c8c8; }
+.jg-wrap .jg-sub .ch { font-size: 13px; font-weight: 500; color: #555; }
+@media (max-width: 600px) { .jg-wrap .jg-col { width: 46px; } .jg-wrap .jg-sub { font-size: 15px; } .jg-wrap .jg-cell { min-height: 44px; } }
 /* 마디 정보 줄(223번) */
 .sv-info { display: flex; align-items: center; gap: 6px; min-height: 32px; padding: 3px 8px; margin: 0 0 6px; border-radius: 10px; background: var(--chip); font-size: 13px; overflow: hidden; white-space: nowrap; }
 .sv-info[hidden] { display: none; }
@@ -1927,6 +1941,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
         <button type="button" id="viewScore" aria-pressed="false" title="올린 악보 PDF를 그대로 봅니다">원본 PDF</button>
         <button type="button" id="viewRec" aria-pressed="false" title="읽어 낸 내용(내보낼 MusicXML)을 오선보로 그려 봅니다">인식 악보</button>
         <button type="button" id="viewSide" aria-pressed="false" title="원본 PDF와 인식 악보를 나란히 놓고 같은 마디를 함께 봅니다">나란히</button>
+        <button type="button" id="viewJg" aria-pressed="false" title="읽어 낸 내용을 정간보로(한 악기씩 — 보기에서 악기를 고름). 율명, 장구는 구음">정간보</button>
       </div>
       <div class="summary" id="summary"></div>
       <div class="warnlist" id="warnList"></div>
@@ -1964,6 +1979,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
           <label class="chk" title="해석기가 쉼표 자리를 추정한 마디에서, 성부마다 음도 쉼표도 적혀 있지 않은 빈 자리를 흐린 빗금 칸으로 보여 줍니다(윗성부는 오선 위쪽, 아랫성부는 아래쪽)"><input type="checkbox" id="svHidden" checked>숨은 쉼표</label>
           <button type="button" class="btn" id="svFull">전체화면 보기</button>
           <button type="button" class="btn sv-warn" id="svWarn" hidden title="확인 필요 마디 목록(마디로 · 여기부터 · 고치기)">⚠ 경고 <b id="svWarnN"></b><span class="sv-warn-bad" id="svWarnBad"></span></button> <button type="button" class="btn" id="svFix" hidden title="악보대로 고칠 수 있는 곳 모아 보기">✎ 악보대로</button> <button type="button" class="btn sv-diff" id="svDiff" hidden title="일부러 PDF와 다르게 고친 곳 목록(겹쳐 보기의 주황 점선 ✎)">✎ 악보와 다르게</button>
+          <label class="chk" id="svLabLbl" title="인식 악보·정간보 음 아래에 적을 글자: 율명(황·태·중…, 황종 높이는 옆에서), 구음(장구는 덩·쿵·덕·기덕 자동, 다른 악기는 검사기에서 적은 구음)">아래 글자 <select id="svLab" aria-label="음 아래 글자"><option value="none">없음</option><option value="yul">율명</option><option value="gu">구음</option></select></label>
+          <label class="chk" id="svBaseLbl" hidden title="율명의 황종(黃)을 어느 음으로 볼지 — 정악은 보통 E♭4">황종 <select id="svBase" aria-label="황종 높이"><option value="57">A3</option><option value="58">B♭3</option><option value="59">B3</option><option value="60">C4</option><option value="61">C♯4</option><option value="62">D4</option><option value="63">E♭4 (정악)</option><option value="64">E4</option><option value="65">F4</option><option value="66">F♯4</option><option value="67">G4</option><option value="68">A♭4</option></select></label>
           <label class="chk" id="svTipLbl" title="마디 위에 마우스를 둘 때: 정보 줄 = 악보 위 얇은 줄에만 핵심을 보여 주고 [상세]를 누를 때만 큰 창, 떠오르는 창 = 예전처럼 마디 위에 큰 창, 끔 = 보여 주지 않음">마디 정보 <select id="svTipMode" aria-label="마디 정보 보기"><option value="strip">정보 줄</option><option value="hover">떠오르는 창</option><option value="off">끔</option></select></label>
           <label class="chk" id="svOverLbl" title="내보낼 MusicXML의 음을 악보 위에 동그라미로 겹쳐 그립니다. PDF 음표 머리와 맞으면 파랑, 맞지 않으면 빨강, 자리는 맞지만 적힌 모양(음표 종류·점·기둥·아티큘레이션·붙임줄·이음줄)이 다르면 주황, 쪽 그림의 실제 머리 높이와 다르면 보라, 맞는 음이 없는 PDF 머리는 빨간 네모. 보라·높이만 다른 빨강은 눌러서 [악보대로 고치기]. 짧은 선은 해석기가 읽은 기둥(윗성부 파랑·아랫성부 초록). 내보낸 셈여림·꺾쇠는 오선 아래 글자(PDF와 다르면 주황). 표시를 누르면 이유"><input type="checkbox" id="svOver">MusicXML 겹쳐 보기</label>
           <span class="sv-modes" role="group" aria-label="모드"><button type="button" class="btn" id="svPractice" aria-pressed="true" title="연습: 마디를 누르면 그 마디부터 재생합니다">연습</button><button type="button" class="btn" id="svEdit" aria-pressed="false" title="편집: 인식 악보에서 음을 눌러 고르고 검사기에서 높이·길이를 수정합니다. 원본 PDF에서 마디를 누르면 그 마디의 음 목록 창이 열립니다">✎ 편집</button></span>
@@ -1975,6 +1992,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
         <div class="sv-panes" id="svPanes">
           <div class="sv-wrap" id="svWrap" tabindex="0" role="region" aria-label="악보 쪽"></div>
           <div class="sv-wrap rec-wrap" id="recWrap" tabindex="0" role="region" aria-label="인식 악보" hidden></div>
+          <div class="sv-wrap jg-wrap" id="jgWrap" tabindex="0" role="region" aria-label="정간보" hidden></div>
         </div>
         <div class="sv-fdock sv-only-full" role="region" aria-label="전체화면 연주 막대">
           <button class="dock-stop" id="svfStop" type="button" aria-label="재생 정지(처음으로)" title="정지(처음으로)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12v12H6z"/></svg></button>
@@ -2024,7 +2042,10 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 25일</h3>
-    <h4>기능 업데이트 <small>14</small></h4><ul class="hlist">
+    <h4>기능 업데이트 <small>17</small></h4><ul class="hlist">
+      <li><details><summary>율명·구음을 음 아래에</summary><p>보기 설정의 <b>'아래 글자'</b>를 <b>율명</b>으로 하면 인식 악보의 음마다 아래에 율명(황·태·중·임·남…, 배·청 옥타브)이 적힙니다. 황종 높이는 옆 <b>'황종'</b>에서 고릅니다(정악 E♭4). 장구는 덩·쿵·덕·기덕·더러러러를 저절로 적습니다. <b>구음</b>으로 하면 장구 구음과 검사기에서 적은 구음만 보입니다.</p></details></li>
+      <li><details><summary>검사기에서 구음 적기</summary><p>편집 모드 검사기에 <b>구음</b> 칸이 생겼습니다. 음마다 구음(동·당·흥 등)을 적으면 아래 글자 '구음'에서 보이고, MusicXML로 저장하면 가사 칸으로 들어가 피날레·뮤즈스코어에서도 보입니다. 장구는 비워 두면 저절로, 적으면 적은 대로입니다.</p></details></li>
+      <li><details><summary>정간보 보기</summary><p>보기 단추에 <b>[정간보]</b>가 생겼습니다. 읽어 낸 내용을 한 악기씩 정간보로 보여 줍니다(한 줄 = 한 마디, 오른쪽부터, 정간 = 박자표 분모 길이). 선율 악기는 율명(아래 글자가 '구음'이면 적은 구음), 장구는 구음입니다. 악기는 '보기'에서 고르고, 줄을 누르면 그 마디부터 재생하며 연주 중인 마디는 노랗게 칠해집니다.</p></details></li>
       <li><details><summary>인식 악보: 긴 악기 이름은 두세 줄로</summary><p>'Brasschime / Cymbal, 징 / 젬베'처럼 악기 이름이 길면 인식 악보 왼쪽 이름 칸이 넓어져 마디 자리가 좁아졌습니다. 이제 인식 악보에서는 긴 이름을 '/'·쉼표·빈칸 자리에서 두세 줄로 접어 마디를 넓게 그립니다. 내보내는 MusicXML의 악기 이름은 그대로입니다.</p></details></li>
       <li><details><summary>편집: 음표판으로 음 넣기·지우기</summary><p>편집을 켜면 악보 아래쪽에 <b>음표판</b>이 나옵니다. <b>[✚ 음표 넣기]</b>를 누르고 길이(온~32분·점·셋잇단)와 성부를 고른 뒤 인식 악보의 오선 위를 누르면 그 박·그 높이에 음이 들어갑니다(넣을 자리와 음 이름이 미리 보임, 같은 성부의 겹치는 음은 덮어씀). <b>[화음]</b>을 켜면 같은 박의 음에 더해지고, <b>[⌫ 지우기]</b>는 누르는 음을 지웁니다(쉼표가 됨). 고른 음은 ♭·♮·♯·붙임줄·성부 바꾸기·🗑 지우기. 자판: N 넣기, R 지우기, H 화음, Delete, Esc, 1~6 길이, . 점. 넣고 지운 마디는 그대로 저장·공유되고 Ctrl+Z로 되돌립니다.</p></details></li>
       <li><details><summary>전체화면에서도 편집</summary><p>[전체화면 보기]에서도 음표판과 검사기가 보입니다. 음표판은 아래 연주 막대 위에 놓이고, 휴대폰 전체화면에서는 보기 설정과 편집 안내 글을 접어 악보 자리를 넓혔습니다.</p></details></li>
@@ -3003,14 +3024,15 @@ const PAL = { mode: 'sel', dur: '1/4', dot: false, tri: false, voice: 'R', chord
 const ED = { sel: null, el: null, verdict: null, vTimer: 0, playOne: null, prevSrc: null, dirty: true, rings: [], keep: false, drag: null, dragEnd: 0 };   // 편집 모드 검사기(219번) — 시작할 때 부르는 함수들이 쓰므로 앞에 둠
 const REC = { qt: 0, again: false, full: false, key: '', xml: '', doc: null, parts: [], partKeys: [], evIds: null, idx: new Map(), chunks: [], tok: 0, width: 0, hl: null, cur: null, ehl: null, on: [], noteKey: '', status: '', sync: 0, phoneDef: '' };
 const SV_TOUCH = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);   // 손가락 기기: 마디 미리보기를 길게 눌러 염(217번)
-let svInfoK = -1, svTipPref = 'strip';   // 마디 정보(223번): 'strip' 정보 줄 · 'hover' 떠오르는 창(예전) · 'off'
+let svInfoK = -1, svTipPref = 'strip', svLab = 'none', svBase = 63;   // svLab·svBase(225번): 인식 악보 아래 글자(없음·율명·구음)와 황종 높이   // 마디 정보(223번): 'strip' 정보 줄 · 'hover' 떠오르는 창(예전) · 'off'
 let svSrc = 'pdf';   // 악보 보기에서 무엇을: 'pdf' 원본 PDF · 'rec' 인식 악보 · 'side' 나란히(213번)
-try { const v = JSON.parse(localStorage.getItem(PREF_VIEW) || '{}'); if (v.src === 'rec' || v.src === 'side') svSrc = v.src; if (v.zoom >= 1 && v.zoom <= 3) svZoom = v.zoom; if (v.follow === false) $('svFollow').checked = false; if (v.notes === false) $('svNotes').checked = false; if (v.curNotes === true) $('svCurNotes').checked = true; if (v.tip === 'hover' || v.tip === 'off') svTipPref = v.tip; } catch (e) {}
+try { const v = JSON.parse(localStorage.getItem(PREF_VIEW) || '{}'); if (v.src === 'rec' || v.src === 'side') svSrc = v.src; if (v.zoom >= 1 && v.zoom <= 3) svZoom = v.zoom; if (v.follow === false) $('svFollow').checked = false; if (v.notes === false) $('svNotes').checked = false; if (v.curNotes === true) $('svCurNotes').checked = true; if (v.tip === 'hover' || v.tip === 'off') svTipPref = v.tip; if (v.lab === 'yul' || v.lab === 'gu') svLab = v.lab; if (v.base >= 55 && v.base <= 70) svBase = v.base; } catch (e) {}
+$('svLab').value = svLab; $('svBase').value = String(svBase); $('svBaseLbl').hidden = svLab !== 'yul';
 $('svTipMode').value = svTipPref;
-function saveViewPref() { try { localStorage.setItem(PREF_VIEW, JSON.stringify({ mode: viewMode, src: svSrc, zoom: svZoom, follow: $('svFollow').checked, notes: $('svNotes').checked, curNotes: $('svCurNotes').checked, tip: svTipPref })); } catch (e) {} }
+function saveViewPref() { try { localStorage.setItem(PREF_VIEW, JSON.stringify({ mode: viewMode, src: svSrc, zoom: svZoom, follow: $('svFollow').checked, notes: $('svNotes').checked, curNotes: $('svCurNotes').checked, tip: svTipPref, lab: svLab, base: svBase })); } catch (e) {} }
 // 쪽 그림(PDF 마디 위치)이 없는 악보(MusicXML로 올린 악보·예시 장단·마디 위치를 못 읽은 PDF)는 인식 악보만 볼 수 있다
 function svHasPdf() { return !!state.scoreGeo; }
-function svSrcEff() { return svHasPdf() ? svSrc : 'rec'; }
+function svSrcEff() { return svSrc === 'jg' ? 'jg' : svHasPdf() ? svSrc : 'rec'; }   // 'jg' 정간보(225번)는 쪽 그림이 없어도 됨
 // 마디맵은 217번에서 없앰: viewMode는 늘 'score'(예전 저장값 'map'·setView('map')도 악보 보기로). 악보 안에서 무엇을 볼지만 svSrc로
 function setView(mode, src) {
   viewMode = 'score';
@@ -3023,17 +3045,17 @@ function setView(mode, src) {
 function svSyncView() {
   const eff = svSrcEff(), pdfOk = svHasPdf();
   $('viewScore2').setAttribute('aria-pressed', 'true'); $('viewMap2').setAttribute('aria-pressed', 'false');
-  for (const [id, v] of [['viewScore', 'pdf'], ['viewRec', 'rec'], ['viewSide', 'side']]) {
+  for (const [id, v] of [['viewScore', 'pdf'], ['viewRec', 'rec'], ['viewSide', 'side'], ['viewJg', 'jg']]) {
     $(id).setAttribute('aria-pressed', String(viewMode === 'score' && eff === v));
-    if (v !== 'rec') { if (pdfOk) $(id).removeAttribute('aria-disabled'); else $(id).setAttribute('aria-disabled', 'true'); }
+    if (v !== 'rec' && v !== 'jg') { if (pdfOk) $(id).removeAttribute('aria-disabled'); else $(id).setAttribute('aria-disabled', 'true'); }
   }
-  $('svWrap').hidden = viewMode === 'score' && eff === 'rec'; $('recWrap').hidden = !(viewMode === 'score' && eff !== 'pdf');
+  $('svWrap').hidden = viewMode === 'score' && (eff === 'rec' || eff === 'jg'); $('recWrap').hidden = !(viewMode === 'score' && (eff === 'rec' || eff === 'side')); $('jgWrap').hidden = !(viewMode === 'score' && eff === 'jg');
   $('svPanes').classList.toggle('side', eff === 'side'); recSideLayout();
-  $('tBars').textContent = eff === 'rec' ? '인식 악보' : eff === 'side' ? '원본 PDF · 인식 악보' : '악보';
+  $('tBars').textContent = eff === 'jg' ? '정간보' : eff === 'rec' ? '인식 악보' : eff === 'side' ? '원본 PDF · 인식 악보' : '악보';
   $('bars').hidden = true; $('scoreView').hidden = false;
   if (svTipPref === 'strip' && state.bars.length) { if (!state.bars[svInfoK]) svInfoK = 0; svInfoShow(svInfoK); } else $('svInfo').hidden = true;
   document.body.classList.add('sv-mode');
-  $('barsHint').textContent = (eff === 'rec' ? '인식 악보: 읽어 낸 내용(내보낼 MusicXML)을 오선보로 그렸습니다. ' : '') + '마디를 누르면 그 마디부터 재생합니다. ' + (SV_TOUCH ? '마디를 길게 누르면' : '마디 위에 마우스를 잠깐 두면') + ' 그 마디의 음·박자·빠르기를 보는 미리보기가 뜹니다. 연주 중인 마디는 노란 칸으로 표시됩니다.';
+  $('barsHint').textContent = (eff === 'rec' ? '인식 악보: 읽어 낸 내용(내보낼 MusicXML)을 오선보로 그렸습니다. ' : '') + (eff === 'jg' ? '정간보: 읽어 낸 내용을 한 악기씩 정간보로 — 한 줄이 한 마디이고 오른쪽부터 읽습니다(악기는 보기에서). ' : '') + '마디를 누르면 그 마디부터 재생합니다. ' + (SV_TOUCH ? '마디를 길게 누르면 그 마디의 음·박자·빠르기를 보는 미리보기가 뜹니다.' : svTipPref === 'strip' ? '마디 위에 마우스를 두면 위 정보 줄에 그 마디의 박자·빠르기·경고가 나오고, [상세 ▸]로 음까지 봅니다.' : svTipPref === 'hover' ? '마디 위에 마우스를 잠깐 두면 그 마디의 음·박자·빠르기를 보는 미리보기가 뜹니다.' : '') + ' 연주 중인 마디는 노란 칸으로 표시됩니다.';
 }
 // 보기 단추를 누른 뒤 화면 옮기기(214번 뒤 제보): 악보 보기 안에서 원본 PDF·인식 악보·나란히를 바꿀 때는 옮기지 않고(단추 줄이 위로 말려 올라가 다시 끌어내려야 했음),
 // (마디맵을 없앤 217번부터는 늘 악보 보기 안이라 옮기지 않음 — 연주 칸의 숨은 단추 viewScore2만 옮김)
@@ -3041,6 +3063,7 @@ function svSwitchScroll(was) {
   if (was) return;
   try { const vs = $('viewScore').closest('.view-switch'), top = vs.getBoundingClientRect().top - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tbh')) || 56) - 8; window.scrollBy({ top }); } catch (e) {}
 }
+$('viewJg').addEventListener('click', () => { if (svEditing) setSvEdit(false); const was = viewMode === 'score', k = svCurrent; setView('score', 'jg'); if (k >= 0) { svCurrent = -1; svShow(k, true); } svSwitchScroll(was); });   // 정간보(225번): 편집은 오선보에서
 for (const [id, v] of [['viewRec', 'rec'], ['viewSide', 'side']]) $(id).addEventListener('click', () => {
   if (v === 'side' && !svHasPdf()) { showMsg('이 악보는 쪽 그림(PDF 마디 위치)이 없어 인식 악보만 볼 수 있습니다.'); return; }
   const was = viewMode === 'score', k = svCurrent; svKey = null; setView('score', v); if (k >= 0) { svCurrent = -1; svShow(k, true); } svSwitchScroll(was);
@@ -3157,7 +3180,8 @@ function svPanelOf(r) {
 const svPct = (v, o, len) => ((v - o) / len * 100) + '%';
 function buildScoreView() {
   renderPartSel();
-  if (viewMode === 'score' && svSrcEff() !== 'pdf') { clearTimeout(REC.qt); REC.qt = setTimeout(recBuildSerial, 30); }
+  if (viewMode === 'score' && svSrcEff() === 'jg') jgBuildSoon();
+  else if (viewMode === 'score' && svSrcEff() !== 'pdf') { clearTimeout(REC.qt); REC.qt = setTimeout(recBuildSerial, 30); }
   const wrap = $('svWrap'), G = svGeo(), part = !!svPartRes();
   const key = G ? (G.sc.fp || G.sc.title) + '|' + svZoom + '|' + (part ? 'part:' + svPart + ':' + [...new Set(G.geo.filter(Boolean).map(g => g.page + '.' + g.staff))].join(',') : [...new Set(G.geo.filter(Boolean).map(g => g.page))].join(',')) : 'none';   // 음을 고쳐 마디 위치만 조금 바뀌어도 쪽을 다시 그리지 않는다
   if (key === svKey && wrap.firstChild) return;
@@ -3305,6 +3329,7 @@ function svShow(k, scroll) {
   const src = svSrcEff();
   if (k === svCurrent && (src === 'rec' ? REC.hl && !REC.hl.hidden : svHl && !svHl.hidden)) return;
   svCurrent = k;
+  if (src === 'jg') { jgShow(k, scroll); return; }
   if (ED.playOne && state.playing) { if (k === ED.playOne.k) ED.playOne.seen = true; else if (ED.playOne.seen) { ED.playOne = null; pause(); } }   // 검사기 [▶ 이 마디]: 그 마디가 끝나면 멈춤
   if (src !== 'pdf') recShow(k, scroll);
   if (src === 'rec') return;
@@ -3315,6 +3340,7 @@ function svShow(k, scroll) {
 // 선이 멈칫하거나 휙 넘어가 박과 어긋나 보였다). '빨간 선 음표 따라'를 켜면 예전처럼 피날레식으로 음표 자리를 따라 움직인다(음표 자리를 모르면 고르게)
 function svCursor(k, f) {
   if (k !== svCurrent) svShow(k, true);
+  if (svSrcEff() === 'jg') return;
   if (svSrcEff() !== 'pdf') { recCursor(k, f); if (svSrcEff() === 'rec') return; }
   const r = svRect(k), P = svPanelOf(r); if (!P || !P.w) return;
   const g = svGeo().geo[k];
@@ -3347,6 +3373,7 @@ function svLineInfo(key) {
 }
 function svNotesAt(t) {
   const plan = state.rendered && state.rendered.plan, M = plan && plan.marks;
+  if (svSrcEff() === 'jg') { if (svNoteKey) svNotesClear(); return; }
   if (svSrcEff() !== 'pdf') { recNotesAt(t, M); if (svSrcEff() === 'rec') { if (svNoteKey) svNotesClear(); return; } }
   if (!M || !M.length || viewMode !== 'score' || !$('svNotes').checked || !state.scoreGeo) { if (svNoteKey) svNotesClear(); return; }
   let lo = 0, hi = M.length;   // marks는 시작 시각 순: t 이하인 마지막 + 1
@@ -3500,13 +3527,13 @@ async function recBuild() {
   // 휴대폰: 처음에는 기준 줄 하나만(총보 전체는 너무 작음) — 보기에서 '총보 전체'를 고르면 그대로 둠
   const fp = (state.score && (state.score.fp || state.score.title)) || 'ex';
   if (SV_PHONE && REC.phoneDef !== fp) { REC.phoneDef = fp; if (!svPart) { const k = exportLines()[0].key; if (k) { svPart = k; renderPartSel(); } } }
-  let xml, xo = { ids: true, evIds: new Map() };
+  let xml, xo = recXmlOpts();
   try { xml = buildMusicXml(xo); } catch (e) { console.warn('인식 악보', e); recMsg('인식 악보를 만들지 못했습니다: ' + e.message); return; }
   REC.evIds = xo.evIds; REC.partKeys = xo.partKeys || [];
   if (xml !== REC.xml) { REC.xml = xml; REC.doc = new DOMParser().parseFromString(xml, 'application/xml'); REC.parts = [...REC.doc.documentElement.children].filter(p => p.tagName === 'part').map(p => ({ id: p.getAttribute('id'), ms: [...p.children].filter(m => m.tagName === 'measure') })); }
   const keep = recKeepParts(), width = recWidth(); REC.width = width;
   REC.enc = svSrcEff() === 'side' && svHasPdf() && !!svGeo();   // 221번: 나란히에서는 PDF 단 나눔 그대로
-  const key = (REC.enc ? 'enc|' : '') + JSON.stringify(REC.partKeys) + '|' + (REC.parts[0] ? REC.parts[0].ms.length : 0) + '|' + svZoom + '|' + Math.round(width / 24) + '|' + (keep ? [...keep].join() : '') + '|' + fp;
+  const key = (REC.enc ? 'enc|' : '') + svLab + svBase + '|' + JSON.stringify(REC.partKeys) + '|' + (REC.parts[0] ? REC.parts[0].ms.length : 0) + '|' + svZoom + '|' + Math.round(width / 24) + '|' + (keep ? [...keep].join() : '') + '|' + fp;
   if (key === REC.key && REC.chunks.length) {   // 크기·파트가 같으면 고친 마디가 든 조각만 다시
     const tok = REC.tok; let n = 0;
     for (const c of REC.chunks) { const src = recSlice(c.from, c.to, keep); if (src === c.src) continue; await recRender(c, src, width, false); n++; if (tok !== REC.tok) return; }
@@ -3818,9 +3845,42 @@ function edJudge() {
   } catch (e) { console.warn('검사기 판정', e); return 'na'; }
 }
 // 화면용 MusicXML(음 id)을 지금 내용으로 — 인식 악보를 아직 다시 그리지 않았으면(원본 PDF만 보는 중 등) 새로 만든다
+// ---------- 정간보 보기 (225번 — Studio renderJeonggan) ----------
+// 화면용 MusicXML(사람이 적은 구음은 가사 칸)을 Studio 형식으로 읽어 한 악기를 정간보로. 한 줄 = 한 마디, 정간 = 박자표 분모 음 길이.
+// 율명(황종 = 보기 설정), 장구는 구음, '구음'이면 사람이 적은 구음. 마디를 누르면 그 마디부터 재생, 연주 중에는 지금 마디를 칠함
+const JG = { cols: [], sig: '', t: 0, cur: -1 };
+function jgBuildSoon() { clearTimeout(JG.t); JG.t = setTimeout(jgBuild, 30); }
+function jgBuild() {
+  const box = $('jgWrap'); if (!box || box.hidden || svSrcEff() !== 'jg' || document.body.classList.contains('welcome')) return;
+  const lines = exportLines();
+  if (!state.bars.length || !lines.length) { JG.sig = ''; JG.cols = []; box.textContent = ''; box.append(tipNode('div', 'rec-msg', '켠 줄이 없습니다. 왼쪽 줄 목록에서 볼 악기를 켜 주세요.')); return; }
+  if (typeof SWS !== 'object') { box.textContent = '정간보 도구가 없습니다.'; return; }
+  const key = svPart && lines.some(l => l.key === svPart) ? svPart : lines[0].key;
+  let xml, xo = { ids: true, evIds: new Map(), lab: 'man' };
+  try { xml = buildMusicXml(xo); } catch (e) { console.warn('정간보', e); box.textContent = '정간보를 만들지 못했습니다: ' + e.message; return; }
+  const sig = key + '|' + svLab + '|' + svBase + '|' + xml;
+  if (sig === JG.sig && JG.cols.length) { if (svCurrent >= 0) jgShow(svCurrent); return; }
+  JG.sig = sig; JG.cur = -1;
+  try {
+    const score = SWS.parseMusicXml(xml), li = (xo.partKeys || []).findIndex(ks => ks.includes(key)); if (li < 0) throw new Error('줄을 찾지 못함');
+    const st = xo.partKeys[li].indexOf(key) + 1, cfg = state.lineCfg[key] || {};
+    JG.cols = SWS.renderJeonggan(box, score, li, { base: svBase, hanja: false, jing: 67, sanjo: false, mode: () => svLab === 'gu' ? 'gu' : 'yul', inst: () => cfg.inst || '', unit: null, staff: st });
+    const head = box.querySelector('.jg-head span'); if (head) head.textContent = `${dispNameOf(key) || key}${xo.partKeys[li].length > 1 ? (st === 1 ? ' (윗줄)' : ' (아랫줄)') : ''} · 정간보 · ${cfg.role === 'perc' ? (isJangguName(dispNameOf(key)) ? '장구 구음' : '타악(장구 말고는 아직 정간보에 적지 않음)') : svLab === 'gu' ? '구음(검사기에서 적은 것)' : `율명 (황종 = ${pitchName(svBase)})`}${lines.length > 1 && !svPart ? ' — 다른 악기는 보기에서 고르세요' : ''}`;
+    JG.cols.forEach((c, i) => { const b = state.bars[i]; if (!b) return; c.dataset.k = i; c.title = `${b.number}마디부터 재생`; c.addEventListener('click', () => { if (pickBar(b.number)) return; playFromBar(b.number); }); });
+    if (svCurrent >= 0) jgShow(svCurrent, true);
+  } catch (e) { console.warn('정간보', e); box.textContent = ''; box.append(tipNode('div', 'rec-msg', '정간보를 그리지 못했습니다: ' + e.message)); JG.cols = []; }
+}
+function jgShow(k, scroll, force) {
+  const c = JG.cols[k]; if (JG.cur >= 0 && JG.cols[JG.cur]) JG.cols[JG.cur].classList.remove('on');
+  JG.cur = c ? k : -1; if (!c) return false;
+  c.classList.add('on');
+  if (scroll && (force || $('svFollow').checked)) { const w = $('jgWrap'), cb = c.getBoundingClientRect(), wb = w.getBoundingClientRect(); if (cb.top < wb.top || cb.bottom > wb.bottom) w.scrollTop += cb.top - wb.top - 12; if (cb.left < wb.left || cb.right > wb.right) w.scrollLeft += cb.left - wb.left - (wb.width - cb.width) / 2; }
+  return true;
+}
+function recXmlOpts() { return { ids: true, evIds: new Map(), lab: svLab, base: svBase }; }   // 화면용 MusicXML 선택(인식 악보·검사기 판정이 같은 글을 쓰게 — 225번 아래 글자 포함)
 function edEnsureIds() {
   if (!ED.dirty && REC.doc && REC.evIds) return;
-  const xo = { ids: true, evIds: new Map() }, xml = buildMusicXml(xo);
+  const xo = recXmlOpts(), xml = buildMusicXml(xo);
   REC.evIds = xo.evIds; REC.partKeys = xo.partKeys || [];
   if (xml !== REC.xml) { REC.xml = xml; REC.doc = new DOMParser().parseFromString(xml, 'application/xml'); REC.parts = [...REC.doc.documentElement.children].filter(p => p.tagName === 'part').map(p => ({ id: p.getAttribute('id'), ms: [...p.children].filter(m => m.tagName === 'measure') })); }
   ED.dirty = false;
@@ -3925,7 +3985,7 @@ function applyRewrite(b, R) {
     if (r.tie) e.tie = true; else { delete e.tie; delete e.tieTimes; }
     if (r.ed || !src) e.edited = true;
     if (r.memo) e.edMemo = r.memo;
-    if (r.pz) e.pzEd = r.pz; if (r.ps) e.psEd = r.ps;
+    if (r.pz) e.pzEd = r.pz; if (r.ps) e.psEd = r.ps; if (r.gu) e.gu = r.gu;
     if (!src) e.added = true;
     return e;
   });
@@ -3946,11 +4006,11 @@ function rewriteBar(key, bi, fn) {
   const raw = state.lineRaw[key], cur = state.lineRes[key], rb = raw && raw.bars[bi], cb = cur && cur.bars[bi]; if (!rb || !cb) return false;
   const E = editsFor(sc.fp), B0 = (E.lines[srcKey] && E.lines[srcKey][bi]) || {}, R0 = B0.bar && B0.bar.o === barSig(rb) ? B0.bar : null;
   const srcOf = i => R0 ? (R0.ev[i] ? R0.ev[i].s : -1) : i;
-  let items = cb.events.map((e, i) => ({ i, t: e.t, d: e.dur, v: e.voice, m: e.midis, p: e.midis ? null : e.pos, tie: !!e.tie, ed: !!e.edited, memo: e.edMemo || '', pz: e.pzEd || '', ps: e.psEd || '' }));
+  let items = cb.events.map((e, i) => ({ i, t: e.t, d: e.dur, v: e.voice, m: e.midis, p: e.midis ? null : e.pos, tie: !!e.tie, ed: !!e.edited, memo: e.edMemo || '', pz: e.pzEd || '', ps: e.psEd || '', gu: e.gu || '' }));
   items = fn(items); if (!items) return false;
   items.sort((a, c) => a.t.v - c.t.v || (a.v === c.v ? 0 : a.v === 'R' ? -1 : 1));
   const ev = items.map(x => { const r = { s: x.i >= 0 ? srcOf(x.i) : -1, t: String(x.t), d: String(x.d), v: x.v };
-    if (x.m !== undefined) r.m = x.m ? x.m.slice() : x.m; if (x.p != null) r.p = x.p; if (x.dia) r.dia = x.dia; if (x.tie) r.tie = 1; if (x.ed || x.i < 0) r.ed = 1; if (x.memo) r.memo = x.memo; if (x.pz) r.pz = x.pz; if (x.ps) r.ps = x.ps; return r; });
+    if (x.m !== undefined) r.m = x.m ? x.m.slice() : x.m; if (x.p != null) r.p = x.p; if (x.dia) r.dia = x.dia; if (x.tie) r.tie = 1; if (x.ed || x.i < 0) r.ed = 1; if (x.memo) r.memo = x.memo; if (x.pz) r.pz = x.pz; if (x.ps) r.ps = x.ps; if (x.gu) r.gu = x.gu; return r; });
   pushUndo(sc);
   const L = E.lines[srcKey] || (E.lines[srcKey] = {});
   L[bi] = { bar: { o: barSig(rb), ev } }; if (B0.ok) L[bi].ok = 1;   // 음 수정(성부|순번)은 다시 쓴 사건에 녹여 넣었으므로 지움
@@ -4201,6 +4261,13 @@ function edRender() {
     else { const off = !!(c.rec && c.rec.tie === false); row.append(btn(off ? '다시 침' : '⌒ 이어 감', () => edPatch({ tie: off }), { pressed: !off, title: off ? '붙임줄로 다시 이어 앞 음을 길게 울립니다' : '붙임줄을 끊고 이 음을 다시 칩니다' })); }
     el.append(row);
   }
+  // 구음 적기(225번): 이 음의 구음 — 아래 글자를 '구음'으로 보면 인식 악보·정간보에, MusicXML에는 가사 칸으로
+  if (!c.s.tie) {
+    const row = tipNode('div', 'ei-row'); row.append(tipNode('span', 'lab', '구음 (아래 글자 \u2018구음\u2019일 때 보임 · MusicXML 가사)'));
+    const gi = document.createElement('input'); gi.type = 'text'; gi.className = 'ei-memo ei-gu'; gi.maxLength = 8; gi.placeholder = c.cfg.role === 'perc' && isJangguName(c.name) ? '비우면 덩·쿵·덕 자동' : '구음 (예: 동·당·흥)'; gi.value = (c.rec && c.rec.gu) || ''; gi.setAttribute('aria-label', '이 음의 구음');
+    gi.addEventListener('change', () => edPatch({ gu: gi.value.trim() })); gi.addEventListener('keydown', ev => { if (ev.key === 'Enter') { gi.blur(); } ev.stopPropagation(); });
+    row.append(gi); el.append(row);
+  }
   for (const w of c.cb.warnings.filter(w => w.startsWith('수정한'))) el.append(tipNode('div', 'ei-warn', '⚠ ' + w));
   // 이동·듣기·되돌리기
   const nav = tipNode('div', 'ei-row');
@@ -4230,7 +4297,7 @@ document.addEventListener('keydown', ev => {
   else done = false;
   if (done) { ev.preventDefault(); ev.stopImmediatePropagation(); }
 }, true);
-window.__ed = { select: id => edSelect(id), sel: () => ED.sel && { ...ED.sel }, ctx: () => { const c = edCtx(); return c && { key: c.key, bi: c.bi, number: c.nb.number, now: c.ce.midis, dur: String(c.ce.dur), orig: c.re.midis, rec: c.rec }; }, verdict: () => ED.verdict && ED.verdict.v, judge: () => edJudge(), ids: () => [...REC.idx.keys()], barOk: () => { const c = edCtx(); return !!c && barOk(c.key, c.bi); }, diff: () => diffIdx.map(f => [f.key, f.number, f.n, f.memo]), evs: (key, k) => { const b = state.lineRes[key] && state.lineRes[key].bars[k]; return b ? b.events.map(e => [String(e.t), String(e.dur), e.voice, e.midis || null, e.pos == null ? null : e.pos, !!e.edited, !!e.tie]) : null; }, xml: () => { const x = buildMusicXml(); return x.length; }, pos: (x, y) => { const e = document.elementFromPoint(x, y), ch = e && e.closest('.rec-chunk'); if (!ch) return 'no chunk'; const P = recPosAt({ currentTarget: ch, clientX: x, clientY: y }, palDur()); return P && { k: P.k, key: P.key, t: String(P.t), pitch: P.pitch }; }, pal: () => ({ ...PAL, el: !!PAL.el && !PAL.el.hidden, ghost: null }), pdfAt: (x, y) => { const el = document.elementFromPoint(x, y), d = el && el.closest('.sv-page'); if (!d) return 'no page'; const pi = +(d.dataset.panel != null ? d.dataset.panel : d.dataset.page); return edPdfNoteAt(pi, d, { clientX: x, clientY: y }); } };   // 시험용
+window.__ed = { select: id => edSelect(id), sel: () => ED.sel && { ...ED.sel }, ctx: () => { const c = edCtx(); return c && { key: c.key, bi: c.bi, number: c.nb.number, now: c.ce.midis, dur: String(c.ce.dur), orig: c.re.midis, rec: c.rec }; }, verdict: () => ED.verdict && ED.verdict.v, judge: () => edJudge(), ids: () => [...REC.idx.keys()], barOk: () => { const c = edCtx(); return !!c && barOk(c.key, c.bi); }, diff: () => diffIdx.map(f => [f.key, f.number, f.n, f.memo]), evs: (key, k) => { const b = state.lineRes[key] && state.lineRes[key].bars[k]; return b ? b.events.map(e => [String(e.t), String(e.dur), e.voice, e.midis || null, e.pos == null ? null : e.pos, !!e.edited, !!e.tie]) : null; }, xml: () => { const x = buildMusicXml(); return x.length; }, xmlFile: () => buildMusicXml(), pos: (x, y) => { const e = document.elementFromPoint(x, y), ch = e && e.closest('.rec-chunk'); if (!ch) return 'no chunk'; const P = recPosAt({ currentTarget: ch, clientX: x, clientY: y }, palDur()); return P && { k: P.k, key: P.key, t: String(P.t), pitch: P.pitch }; }, pal: () => ({ ...PAL, el: !!PAL.el && !PAL.el.hidden, ghost: null }), pdfAt: (x, y) => { const el = document.elementFromPoint(x, y), d = el && el.closest('.sv-page'); if (!d) return 'no page'; const pi = +(d.dataset.panel != null ? d.dataset.panel : d.dataset.page); return edPdfNoteAt(pi, d, { clientX: x, clientY: y }); } };   // 시험용
 window.__recSys = () => { const G = svGeo(); return REC.chunks.flatMap(c => [...c.el.querySelectorAll('g.system')].map(sy => [...sy.querySelectorAll('g.measure')].map(m => { const k = c.from + c.ms.indexOf(m), g = G && G.geo[k]; return g ? g.page + '.' + g.staff : '?'; }))); };   // 시험용(221번): 인식 악보 단마다 마디의 PDF 쪽.단
 window.__recState = () => ({ tok: REC.tok, nbars: state.bars.length, hl: REC.hl && !REC.hl.hidden ? REC.hl.textContent : '', status: REC.status, chunks: REC.chunks.map(c => [c.from, c.to, c.ms ? c.ms.length : -1]), idx: REC.idx.size, on: REC.on.length, part: svPart, src: svSrcEff() });
 // ---------- 악보 보기의 마디 미리보기(217번 — 마디맵에서 옮김) ----------
@@ -4273,6 +4340,8 @@ function svInfoShow(k) {
   more.addEventListener('click', ev => { ev.stopPropagation(); const bb = state.bars[svInfoK]; if (bb) { svTipPinned = true; showBarTip(bb, el); } });
   el.append(more);
 }
+$('svLab').addEventListener('change', () => { svLab = $('svLab').value; $('svBaseLbl').hidden = svLab !== 'yul'; saveViewPref(); REC.key = ''; ED.dirty = true; buildScoreView(); });
+$('svBase').addEventListener('change', () => { svBase = +$('svBase').value; saveViewPref(); REC.key = ''; ED.dirty = true; buildScoreView(); });
 $('svTipMode').addEventListener('change', () => { svTipPref = $('svTipMode').value; saveViewPref(); hideBarTip(0); if (svTipPref === 'strip') svInfoShow(svInfoK >= 0 ? svInfoK : Math.max(0, svCurrent)); else $('svInfo').hidden = true; });
 let svTipPinned = false;   // 223번: 길게 누르기·[상세 ▸]로 연 창은 악보 밖으로 마우스가 나가도 닫지 않음(바깥을 누르거나 굴리면 닫힘)
 function svTipLeave() { svTipK = -1; clearTimeout(svTipTimer); if (!svTipPinned) hideBarTip(); }
@@ -4354,8 +4423,9 @@ function applyEdits(raw, sc, srcKey) {
         if (shift.n) e.t = e.t.add(shift);
         const rec = B[v + '|' + ord]; if (!rec) return;
         if (!sameOrig(rec.o, o)) { miss++; return; }
-        applied++; e.edited = true;
+        applied++; if (rec.m || rec.d || rec.tie != null || rec.pz || rec.ps) e.edited = true;   // 구음만 적은 음은 '고친 음'(보라)이 아님
         if (rec.memo) e.edMemo = rec.memo;
+        if (rec.gu) e.gu = rec.gu;   // 사람이 적은 구음(225번)
         if (rec.m && e.midis) e.midis = rec.m.slice();
         if (rec.tie === true && e.midis && e.midis.length) { e.tie = true; e.tieEd = true; }   // 앞 음과 붙임줄로 잇기(168번)
         if (rec.pz && e.midis && e.midis.length) e.pzEd = rec.pz;
@@ -4534,8 +4604,9 @@ function setEdit(key, bi, v, ord, rawEv, patch) {
     if (rec.tie != null && !(rec.tie === true && !rawEv.tie) && !(rec.tie === false && rawEv.tie)) delete rec.tie;   // 원래와 같으면 지움
     if (!rec.pz) delete rec.pz;   // 주법 '악보대로'
     if (!rec.ps) delete rec.ps;   // 타악 소리 '줄 설정대로'
-    if (!rec.memo) delete rec.memo;   // '악보와 다르게' 메모(219번) — 메모만으로는 수정으로 남기지 않음
-    if (rec.m || rec.d || rec.tie != null || rec.pz || rec.ps) B[id] = rec; else delete B[id];
+    if (!rec.memo) delete rec.memo;
+    if (!rec.gu) delete rec.gu;   // '악보와 다르게' 메모(219번) — 메모만으로는 수정으로 남기지 않음
+    if (rec.m || rec.d || rec.tie != null || rec.pz || rec.ps || rec.gu) B[id] = rec; else delete B[id];   // 구음만 적은 음도 남김(225번)
   }
   if (!Object.keys(B).length) delete L[bi];
   if (!Object.keys(L).length) delete E.lines[srcKey];
@@ -5290,6 +5361,7 @@ function renderRehearsal() {
 let svFlashEl = null;
 function svGoBar(k) {
   const eff = svSrcEff();
+  if (eff === 'jg') return jgShow(k, true, true);
   if (eff !== 'pdf') { const ok = recGoBar(k); if (eff === 'rec') return ok; }   // 인식 악보(나란히면 두 칸 모두)
   const r = svRect(k), P = svPanelOf(r); if (!P || !P.w) return false;
   const wrap = $('svWrap');
@@ -6619,6 +6691,37 @@ function buildMidi() {
 window.__swScreenXml = () => buildMusicXml({ ids: true });
 window.__swFileXml = () => buildMusicXml();
 // 긴 악기 이름 접기(224번, 화면용 인식 악보만): '/'·','·'·'·빈칸 뒤에서 끊어 한 줄 폭(한글 2·그 밖 1) 12 안으로. 끊을 곳이 없는 긴 낱말은 그대로
+// ---------- 율명·구음 (225번 — Studio 접목 5단계) ----------
+const YUL_KO = ['황', '대', '태', '협', '고', '중', '유', '임', '이', '남', '무', '응'], YUL_OCT = { [-2]: '하배', [-1]: '배', 0: '', 1: '청', 2: '중청' };
+function yulName(m, base) { const d = m - base, i = ((d % 12) + 12) % 12, oc = Math.floor(d / 12), pre = YUL_OCT[oc]; return pre != null ? pre + YUL_KO[i] : (oc > 0 ? '↑' : '↓') + YUL_KO[i]; }
+const isJangguName = t => /장구|장고|janggu|janggo/i.test(t || '');
+// 한 오선 마디의 음 객체에 가사 칸(lyric)으로 글자를 단다. mode: 'yul' 율명 · 'gu' 구음 · 'none' 없음 · 'man' 사람이 적은 구음만(파일로 내보낼 때)
+//  선율: 율명은 화음이면 높은 음부터 1·2·3째 줄, 구음은 사람이 적은 것(검사기 '구음')만. 장구: 같은 박의 채편(윗성부)·북편(아랫성부)으로 덕·쿵·덩·기덕·더러러러
+function lyricObjs(objs, S, mode, base) {
+  if (mode === 'none') return;
+  const ok = o => !o.rest && !o.backup && !o.dirXml && !o.grace && !o.tieStop;
+  const nm = (S.ln && S.ln.name) || '', snd = m => m + 12 * (S.gOct || 0);
+  if (S.perc) {
+    if (mode !== 'man' && isJangguName(nm)) {
+      const byT = new Map(); for (const o of objs) if (o.perc && ok(o)) { const k = o.st; if (!byT.has(k)) byT.set(k, []); byT.get(k).push(o); }
+      for (const os of byT.values()) {
+        const man = os.find(o => o.gu), chae = os.some(o => !o.low), buk = os.some(o => o.low), gr = os.some(o => !o.low && o.gr), roll = os.some(o => !o.low && (o.roll || o.trill));
+        const t = man ? man.gu : roll && !buk ? '더러러러' : chae && buk ? (gr ? '기덩' : '덩') : chae ? (gr ? '기덕' : '덕') : '쿵';
+        (os.find(o => !o.low && !o.chord) || os.find(o => !o.chord) || os[0]).lyr = [[1, t]];
+      }
+    } else for (const o of objs) if (o.perc && ok(o) && o.gu) o.lyr = [[1, o.gu]];
+    return;
+  }
+  // 선율: 화음(같은 성부·같은 자리) 묶음
+  const groups = []; let cur = null;
+  for (const o of objs) { if (o.backup || o.dirXml || o.rest || o.grace) { cur = null; continue; } if (!o.chord || !cur) { cur = [o]; groups.push(cur); } else cur.push(o); }
+  for (const gq of groups) {
+    const hs = gq.filter(ok); if (!hs.length) continue;
+    const man = gq.find(o => o.gu);
+    if (mode === 'yul') hs.slice().sort((a, b) => b.midi - a.midi).forEach((o, k) => { o.lyr = [[k + 1, yulName(snd(o.midi), base)]]; });
+    else if (man) hs[0].lyr = [[1, man.gu]];
+  }
+}
 function wrapPartName(name) {
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const w = t => [...t].reduce((n, ch) => n + (/[\u1100-\u11ff\u3130-\u318f\uac00-\ud7af\u4e00-\u9fff]/.test(ch) ? 2 : 1), 0);
@@ -6878,7 +6981,7 @@ function buildMusicXml(xo) {
           add(bi, pos, `<direction placement="above"><direction-type><words font-style="italic">${pz ? 'pizz.' : 'arco'}</words></direction-type>@STAFF@${pzSound(pz)}</direction>`);
         }
       }
-      return { ln, perc, pcb, oct, mine, allM, avg, res, lb: res ? res.bars : null, oneLine: !!(item && item.oneLine), cls, dirs, lastNote: new Map(), endAt: new Map(), ttPend: new Set() };
+      return { ln, gOct, perc, pcb, oct, mine, allM, avg, res, lb: res ? res.bars : null, oneLine: !!(item && item.oneLine), cls, dirs, lastNote: new Map(), endAt: new Map(), ttPend: new Set() };
     });
     const perc = SS[0].perc, two = SS.length > 1;
     // 마디별 조표: 그 마디에서 여러 줄이 읽은 조표(다수) → 앞 마디 → 음으로 추정
@@ -6976,7 +7079,7 @@ function buildMusicXml(xo) {
             ps.forEach((pd, pi) => {
               heads.forEach((h, j) => {
                 const idx = h.pos != null ? mid - h.pos : e.voice === 'L' ? mid - 3 : mid + 1;
-                objs.push({ sid: SCREEN && h.sid ? h.sid + '_' + pi + '_' + j : undefined, d: pd, voice, st: p, perc: true, inst: g.instOf ? g.instOf(S.ln, e.voice, e) : null, chord: j > 0, low: e.voice === 'L', dstep: LET[((idx % 7) + 7) % 7], doct: Math.floor(idx / 7), accent: pi === 0 && e.accent, xh: h.xh, stacc: pi === ps.length - 1 && e.stacc, roll: pi === 0 && e.roll && !!e.rollDur, trill: pi === 0 && e.roll && !e.rollDur, twoV, tieStart: pi < ps.length - 1, tieStop: pi > 0, inner: pi > 0 });   // 굴림: 빗금(트레몰로)으로 적힌 것은 빗금, tr로 적힌 것은 tr
+                objs.push({ sid: SCREEN && h.sid ? h.sid + '_' + pi + '_' + j : undefined, gu: pi === 0 && j === 0 && !e.tie ? e.gu : undefined, gr: pi === 0 && !e.tie && e.grace > 0, d: pd, voice, st: p, perc: true, inst: g.instOf ? g.instOf(S.ln, e.voice, e) : null, chord: j > 0, low: e.voice === 'L', dstep: LET[((idx % 7) + 7) % 7], doct: Math.floor(idx / 7), accent: pi === 0 && e.accent, xh: h.xh, stacc: pi === ps.length - 1 && e.stacc, roll: pi === 0 && e.roll && !!e.rollDur, trill: pi === 0 && e.roll && !e.rollDur, twoV, tieStart: pi < ps.length - 1, tieStop: pi > 0, inner: pi > 0 });   // 굴림: 빗금(트레몰로)으로 적힌 것은 빗금, tr로 적힌 것은 tr
               });
               p += pd;
             });
@@ -6988,7 +7091,7 @@ function buildMusicXml(xo) {
             let p = st, prevPiece = null;
             const fresh = !e.tie;   // 꾸밈·셈여림 표시는 새로 치는 음에만
             ps.forEach((pd, pi) => {
-              const piece = ms.map((mm, j) => ({ sid: SCREEN && sidOf[mm] ? sidOf[mm] + '_' + pi + '_' + j : undefined, d: pd, voice, st: p, midi: mm, dia: diaOf[mm], K, chord: j > 0, accent: fresh && pi === 0 && e.accent, stacc: fresh && pi === ps.length - 1 && e.stacc, ten: fresh && pi === 0 && e.ten, trill: fresh && pi === 0 && e.trill, vib: j === 0 && pi === 0 && !!e.vib, roll: j === 0 && fresh && pi === 0 && !!e.roll && !e.trill, twoV,
+              const piece = ms.map((mm, j) => ({ sid: SCREEN && sidOf[mm] ? sidOf[mm] + '_' + pi + '_' + j : undefined, gu: fresh && pi === 0 && j === 0 ? e.gu : undefined, d: pd, voice, st: p, midi: mm, dia: diaOf[mm], K, chord: j > 0, accent: fresh && pi === 0 && e.accent, stacc: fresh && pi === ps.length - 1 && e.stacc, ten: fresh && pi === 0 && e.ten, trill: fresh && pi === 0 && e.trill, vib: j === 0 && pi === 0 && !!e.vib, roll: j === 0 && fresh && pi === 0 && !!e.roll && !e.trill, twoV,
                 slurS: j === 0 && pi === 0 && !!e.slurS, slurE: j === 0 && pi === ps.length - 1 && !!e.slurE,
                 slurNs: j === 0 && pi === 0 && e.slurNs && e.slurNs.length ? e.slurNs : null, slurNe: j === 0 && pi === ps.length - 1 && e.slurNe && e.slurNe.length ? e.slurNe : null }));
               piece.forEach((o, j) => {
@@ -7147,6 +7250,7 @@ function buildMusicXml(xo) {
         if (brokenTup) { S.lastNote.clear(); for (const [k, v] of keepLN) S.lastNote.set(k, v); o2 = staffObjs(S, b, L, beat, K, si * 4, bi, bounds, regular, grpAt, bt === 4 && (bs === 4 || bs === 2) ? Q * 2 : 0, true); }
         if (two) o2.forEach(o => { if (!o.backup) o.staff = si + 1; });
         if (SCREEN) o2.forEach(o => { if (o.sid) o.xid = 'n' + li + '_' + si + '_' + bi + '_' + o.sid; });
+        lyricObjs(o2, S, SCREEN ? (xo.lab || 'man') : 'man', (xo && xo.base) || 63);   // 율명·구음(225번): 화면용은 고른 글자, 파일은 사람이 적은 구음만
         // 같은 마디 되풀이(%) 마디: 뮤즈스코어는 첫 성부만 %로 바꾸므로 둘째 성부는 숨긴다(소리는 남김)
         if (S.lb && S.lb[bi] && /^repeat/.test(S.lb[bi].kind || '')) o2.forEach(o => { if (!o.backup && o.voice % 4 !== 1) o.hidden = true; });
         // 늘임표: 이 줄의 그 마디에 늘임표가 있으면 첫 성부의 마지막 음(없으면 쉼표)에
@@ -7217,6 +7321,7 @@ function buildMusicXml(xo) {
         if (orn) nots.push(`<ornaments>${orn}</ornaments>`);
         if (o.fermata) nots.push('<fermata type="upright"/>');
         if (nots.length) x += `<notations>${nots.join('')}</notations>`;
+        if (o.lyr) for (const [n, t] of o.lyr) x += `<lyric number="${n}"><syllabic>single</syllabic><text>${esc(t)}</text></lyric>`;
         return x + '</note>\n';
       };
       // 글로 옮기는 것은 파트를 다 만든 뒤에: 다음 마디로 넘어가는 붙임줄의 시작 표시·짝 없는 이음줄 지우기가 앞 마디 음에 나중에 붙기 때문

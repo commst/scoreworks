@@ -1,6 +1,6 @@
 # ScoreWorks(옛 이름 합주연습기) 인수인계 메모
 
-새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-25, CHANGELOG 224번까지)
+새 대화에서 이어 작업할 때 먼저 읽는 문서입니다. 무엇을 왜 고쳤는지는 CHANGELOG.md, 사용법·구성·빌드는 README.md에 있습니다. 이 문서는 **작업 규칙, 작업 환경, 샘플 목록, 검사 순서, 남은 과제**만 모았습니다. (마지막 갱신: 2026-11-25, CHANGELOG 225번까지)
 
 
 ## ★ Studio 기능 접목 (11-25~) — 기획·롤백
@@ -24,14 +24,16 @@
 - **222 — 4단계 구조 편집·음표판·전체화면 편집**(자세한 것은 CHANGELOG 222): PAL·palRender·palPlace·palClick·palHover, recPosAt(오선 줄·음표 data-id로 박·높이), opInsert/opDelete/opVoice → rewriteBar → 수정 기록 마디 칸 `bar {o: barSig, ev}` → applyEdits가 applyRewrite(지문 같을 때만), baseBar(그 위 음 수정 기준). 겹쳐 보기 rb.rew 마디의 짝 없는 머리 = 주황. 전체화면: body.sv-lock이면 검사기·음표판 z 1600, palPlace가 .sv-fdock 위로. recHit·recPosAt은 세로로 가장 가까운 마디. 시험 test/pwpal.cjs(PC·휴대폰)
 - **223 — 마디 정보 줄**(사용자가 고른 1+4안): svTipPref('strip' 처음·'hover'·'off', hapju-view.tip), svInfoShow(#svInfo, [상세 ▸] → showBarTip). 시험 pwnomap
 - **224 — 인식 악보 긴 악기 이름 여러 줄**(사용자 11-25: 이름이 길면 두세 줄로 접더라도 마디 폭을 넓게): buildMusicXml 화면용(SCREEN)만 `wrapPartName`(폭 12, '/'·','·'·'·빈칸 뒤, `&#10;` → Verovio 여러 줄). 시험 test/pwname.cjs
-- **다음 할 일**: 5단계 율명·구음·정간보(인식 악보 아래 글자: 없음/율명/구음, 25현 가야금은 율명 아래 줄 번호, 정간보 보기 — Studio yul.ts·gueum.ts, 구음 적기는 MusicXML 가사 칸과 함께 정함). 4단계 남은 것: 손가락 끌어 넣기·옮기기(6단계), 마디 넣기·지우기(7단계와 함께), 셋잇단 넣은 마디의 MusicXML 잇단 괄호 확인
+- **225 — 5단계 율명·구음·정간보**(자세한 것은 CHANGELOG 225): 아래 글자 svLab('none'·'yul'·'gu')·svBase → recXmlOpts()(recBuild·edEnsureIds 같은 글) → buildMusicXml 화면용 lyricObjs(가사 칸), 파일은 적은 구음(rec.gu → e.gu)만 가사. 정간보 svSrc 'jg'(svSrcEff, svSyncView, buildScoreView → jgBuildSoon, svShow → jgShow, svCursor·svNotesAt·svGoBar 분기), SWS.parseMusicXml + renderJeonggan. 시험 test/pwyul.cjs
+- **25현 가야금 줄 번호는 보류**: 사용자에게 늘봄 기본 조율(1~25현 음) 또는 곡마다 조현표인지 물어봄(11-25) — 답을 받으면 율명 아래 줄 번호(lyricObjs에 줄 하나 더)
+- **다음 할 일**: 6단계 태블릿·휴대폰(손가락 끌어 넣기·옮기기 — 길게 눌러 끌기, 음표판 손가락 끌어 넣기, 줄 사이 11px 기준 크기). 5단계에서 남은 것: 정간보에 장구 말고 다른 타악은 아직 비어 있음, 산조가야금 줄 구음(12현)은 25현 쓰는 늘봄에는 안 넣음, 한자 율명 고르기
 - 남은 시험 문제: pwovfix2 'Ctrl+Z 뒤 단추 1개' 한 줄 실패(218번 판도 같음 — 원인 미확인). 예전 시험(pwedit·pwshare)은 219번에서 마디맵 없는 화면으로 옮김. 다른 시험에도 `#bars .b`(마디 칸)를 쓰는 것이 남아 있으면 같은 방식(__openEditor·__barClick)으로 옮길 것
 - 214(긴급): MuseScore 3 PDF('MScore' 글꼴이 SMuFL 번호)를 못 읽던 것 고침 — 글꼴마다 두 번호표 맞는 수로 고름. 샘플 신아리랑 73929564 — 비공개 샘플 저장소에는 사용자가 직접 올리기로 함(11-25). 216: 음표를 거의 못 읽은 악보 경고(glyphStats·readHealth, test/pwreadwarn.cjs), 옛 저장 설정 바로잡기(줄 설정 pitched, test/pwcfgfix.cjs)
 - 213에서 남은 것: 조각 경계를 넘는 붙임줄·이음줄·꺾쇠는 끊겨 보임, 인식 악보에서 [MusicXML 겹쳐 보기]·[⚠ 경고]·[✎ 악보대로]는 원본 PDF 쪽 기능(인식 악보만 볼 때는 효과 없음)
 - 단계: 0 준비 → 1 마디맵 지우기 → 2 대조(인식 악보 + 나란히) → 3 수정·바로 듣기 → 4 구조 편집 → 5 율명·구음·정간보 → 6 태블릿·휴대폰 → 7 마디 나누기·합치기
 - **롤백(사용자 요구)**: 단계마다 배포 전 판을 브랜치로 남김 — `rollback/sw-before-studio`(210번, 접목 전), 이후 `rollback/before-<번호>`. 이 작업 공간은 **태그 올리기가 403으로 막힘** → 브랜치 사용
   - 되돌리기(앱이 올린 settings/ 커밋을 지우지 않게 reset 대신 파일만 되돌림): `git fetch origin main rollback/<이름> && git checkout origin/main -B main && git checkout origin/rollback/<이름> -- src index.html version.json build.py && python3 build.py && git commit -am "롤백: <이름> 판으로" && git push origin main`
-  - 남긴 브랜치: `rollback/sw-before-studio`(210), `rollback/before-212`(211), `rollback/before-213`(212), `rollback/before-218`(217), `rollback/before-219`(218), `rollback/before-220`(219), `rollback/before-222`(220·221)
+  - 남긴 브랜치: `rollback/sw-before-studio`(210), `rollback/before-212`(211), `rollback/before-213`(212), `rollback/before-218`(217), `rollback/before-219`(218), `rollback/before-220`(219), `rollback/before-222`(220·221), `rollback/before-225`(222~224)
   - 저장 형식은 더하기만(hapju-edits 등에 새 칸을 더하되 옛 판이 읽는 칸은 그대로) → 옛 판으로 돌아가도 단원 설정·수정 기록이 깨지지 않음. 새 기록은 옛 판에서는 무시됨
 
 ## 210번(11-24) 타악 마디별 소리 — 끝남
