@@ -30,7 +30,8 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
   if (!phone) ok('PC: 편집을 켜면 나란히', (await p.evaluate(() => window.__recState().src)) === 'side');
   await drawn(); await p.waitForTimeout(500);
   // 음 하나 누르기(넷째 마디 이후 첫 음표)
-  const pickNote = () => p.evaluate(FROM => {
+  const pickNote = async () => { const n0 = await pickNote0(); if (!n0) return n0; await p.waitForTimeout(700); return (await p.evaluate(id => { const el = document.querySelector(`#recWrap g.note[data-id^="${id}_"]`) || document.querySelector(`#recWrap g.note[data-id="${id}"]`); if (!el) return null; const h = el.querySelector('.notehead') || el, r = h.getBoundingClientRect(); return { id, x: r.left + r.width / 2, y: r.top + r.height / 2 }; }, n0.id)) || n0; };   // 230번: 굴린 뒤(나란히 함께 넘기기) 자리를 다시 잼
+  const pickNote0 = () => p.evaluate(FROM => {
     const ids = window.__ed.ids().filter(i => /_R\d+$/.test(i) && +i.split('_')[2] >= FROM);
     for (const id of ids) { window.__ed.select(id); const cx = window.__ed.ctx(); window.__ed.select(null); if (!cx || !cx.now || !cx.now.length) continue; const el = document.querySelector(`#recWrap g.note[data-id^="${id}_"]`) || document.querySelector(`#recWrap g.note[data-id="${id}"]`); if (!el) continue; el.scrollIntoView({ block: 'center' }); const h = el.querySelector('.notehead') || el, r = h.getBoundingClientRect(); if (r.width) return { id, x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
     return null;
@@ -96,7 +97,7 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
   if (!phone) { await p.keyboard.press('Escape'); await p.waitForTimeout(200); ok('Esc → 고르기 풀림·검사기 닫힘', await p.evaluate(() => !window.__ed.sel() && document.getElementById('edInsp').hidden)); }
   // 원본 PDF에서 마디 → 음 목록 창(예전과 같음)
   if (!phone) {
-    const r = await p.evaluate(() => { const d = document.querySelector('#svWrap .sv-page'); d.scrollIntoView({ block: 'start' }); const b = d.getBoundingClientRect(); return { x: b.left + b.width * 0.45, y: b.top + Math.min(b.height, 600) * 0.35 }; });
+    const r = await p.evaluate(() => { const d = document.querySelectorAll('#svWrap .sv-strip.sv-sys1')[2] || document.querySelector('#svWrap .sv-page'); d.scrollIntoView({ block: d.classList.contains('sv-strip') ? 'center' : 'start' }); const b = d.getBoundingClientRect(); return d.classList.contains('sv-strip') ? { x: b.left + b.width * 0.45, y: b.top + b.height * 0.06 } : { x: b.left + b.width * 0.45, y: b.top + Math.min(b.height, 600) * 0.35 }; });   // 230번: 나란히 켠 줄 띠면 띠 위쪽 빈 곳(음표 머리에서 먼 곳)
     await p.mouse.click(r.x, r.y); await p.waitForTimeout(800);
     ok('원본 PDF 마디 → 음 목록 창', await p.evaluate(() => !!document.querySelector('.edit-dlg')));
     await p.keyboard.press('Escape'); await p.waitForTimeout(200);

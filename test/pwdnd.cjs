@@ -51,7 +51,7 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
     await p.mouse.move(h.x, h.y); await p.mouse.down(); await p.mouse.move(h.x + 30, h.y, { steps: 4 }); await p.mouse.move(m.l + m.w * 0.47, h.y, { steps: 8 });
     const tip = await p.evaluate(() => (document.querySelector('.ed-dragtip') || {}).textContent);
     await p.mouse.up(); await p.waitForTimeout(1200);
-    const e2 = await evs(), moved = e2.filter(e => e[5] && e[2] === 'R' && e[3] && e[3][0] === 68 && e[0] !== '0');
+    const e2 = await evs(), moved = e2.filter(e => e[5] && e[2] === 'R' && e[3] && e[3][0] === 68 && e[0] !== '0' && e[1] === '1/4');   // 옮긴 음(덮어쓰기로 줄어든 이웃 음은 빼고)
     ok('② 옆으로 끌어 다른 박으로 옮김(높이·길이 그대로)', !e2.some(e => e[0] === '0' && e[2] === 'R') && moved.length >= 1 && moved[0][1] === '1/4', `${tip} → ${JSON.stringify(e2)}`);
     const s2 = await p.evaluate(() => window.__ed.sel());
     ok('  옮긴 음을 고름', s2 && s2.k === 114, JSON.stringify(s2));

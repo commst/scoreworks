@@ -24,7 +24,9 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
       const rb = st.lineRaw[key].bars[k], cand = [];
       for (const v of ['R', 'L']) A.noteList(rb, v).forEach((e, ord) => { if (e.midis && e.midis.length === 1 && e.dur.v <= 0.25 && e.dia) cand.push({ v, ord, e }); });
       if (cand.length < 5 || cand[1].e.midis[0] === cand[3].e.midis[0]) continue;
-      const pickd = [cand[1], cand[3]].map(c => { const m = c.e.midis[0], d0 = c.e.dia[m]; if (d0 == null) return null; const nm = A.diaToMidi(d0 + 1, c.e.kf || 0); A.setEdit(key, k, c.v, c.ord, c.e, { m: [nm] }); return [m, nm]; });
+      // 229번: 220번부터 사용자가 고친 음은 '악보와 다르게'(주황) — 잘못 읽은 음 흉내는 인식 결과(lineRaw)를 직접 바꾸고 빈 수정으로 다시 입힘
+      const pickd = [cand[1], cand[3]].map(c => { const m = c.e.midis[0], d0 = c.e.dia[m]; if (d0 == null) return null; const nm = A.diaToMidi(d0 + 1, c.e.kf || 0); c.e.midis = [nm]; c.e.dia = { [nm]: d0 + 1 }; return [m, nm]; });
+      A.setEdit(key, k, cand[1].v, cand[1].ord, cand[1].e, null); A.fixRecount();
       if (pickd.some(x => !x)) continue;
       return { key, k, bar: st.bars[k].number, notes: pickd }; }
     return null; });

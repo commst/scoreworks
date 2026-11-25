@@ -22,6 +22,16 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
   ok('나란히: PDF 한 단이 인식 악보 한 단(나뉘지 않음)', !dup.length, dup.slice(0, 5).join(' '));
   const per = sys.map(a => a.length); console.log('  단마다 마디 수', per.slice(0, 12).join(' '));
   await p.screenshot({ path: '/tmp/pwside-' + (phone ? 'phone' : 'pc') + '.png' });
+  // 230번: 왼쪽 원본 PDF도 켠 줄 오선만(총보 19줄 중 2줄) — 띠 = 단 수 × 켠 줄 수, 오른쪽 단 수와 같은 단
+  const strips = await p.evaluate(() => ({ n: document.querySelectorAll('#svWrap .sv-strip').length, sys1: document.querySelectorAll('#svWrap .sv-strip.sv-sys1').length, keys: window.__ovDbgApi ? 0 : 0 }));
+  ok('230: 나란히 왼쪽 PDF는 켠 줄 오선만 잘라 이어 붙임', strips.n > 0 && strips.sys1 > 0 && strips.n >= strips.sys1, JSON.stringify(strips));
+  ok('  왼쪽 단 수 = 오른쪽 단 수', strips.sys1 === sys.length, `${strips.sys1} / ${sys.length}`);
+  // 크기 +: 나란히 인식 악보도 커짐(다시 그리지 않고)
+  const w1 = await p.evaluate(() => document.querySelector('#recWrap .rec-chunk').getBoundingClientRect().width), n1 = await p.evaluate(() => window.__recState().nRender);
+  await p.click('#svZoomIn'); await p.waitForTimeout(800);
+  const w2 = await p.evaluate(() => document.querySelector('#recWrap .rec-chunk').getBoundingClientRect().width), n2 = await p.evaluate(() => window.__recState().nRender);
+  ok('230: 나란히에서 [크기 +] → 인식 악보도 커짐(다시 그리지 않음)', w2 > w1 * 1.2 && n2 === n1, `${Math.round(w1)} → ${Math.round(w2)}, 다시 그림 ${n2 - n1}`);
+  await p.click('#svZoomOut'); await p.waitForTimeout(500);
   await p.click('#viewRec'); await p.waitForTimeout(500); await drawn(); await p.waitForTimeout(500);
   const sys2 = await p.evaluate(() => window.__recSys());
   ok('인식 악보만: 예전처럼 화면 폭에 맞춘 자동 단 나눔', sys2.length > 0 && JSON.stringify(sys2) !== JSON.stringify(sys), `단 ${sys2.length}개`);

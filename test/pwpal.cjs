@@ -60,6 +60,7 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
   await drawn(); await p.waitForTimeout(1200);
   const sel = await p.evaluate(() => { const e = document.querySelector('#recWrap g.note.ed-sel'); if (!e) return null; const h = e.querySelector('.notehead') || e, r = h.getBoundingClientRect(); const st = e.closest('g.staff'), ys = [...st.querySelectorAll(':scope > path')].slice(0, 5).map(p => { const q = p.getBoundingClientRect(); return q.top + q.height / 2; }); return { x: r.left + r.width / 2, y: (Math.max(...ys) + Math.min(...ys)) / 2, sp: (Math.max(...ys) - Math.min(...ys)) / 4 }; });   // y = 가온 줄(넣은 음 자리)
   await p.waitForTimeout(300);
+  if (process.env.DBG && sel) console.log('  dbg', JSON.stringify(sel), JSON.stringify(await p.evaluate(([x, y, sp]) => [window.__ed.pos(x, y), window.__ed.pos(x, y - sp * 1.5)], [sel.x, sel.y, sel.sp])));
   if (sel) { if (phone) await p.touchscreen.tap(sel.x, sel.y - sel.sp * 1.5); else await p.mouse.click(sel.x, sel.y - sel.sp * 1.5); }
   await p.waitForTimeout(1200);
   const s3 = await p.evaluate(() => window.__ed.ctx());
