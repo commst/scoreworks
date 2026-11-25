@@ -1968,7 +1968,9 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       <li><details><summary>새 이름 ScoreWorks Studio</summary><p>악보를 대조하고 고쳐 쓰는 기능(오선보로 보기·편집·율명·정간보)을 차례로 더해 가면서 이름을 <b>ScoreWorks Studio</b>로 바꿨습니다. 주소와 저장한 설정·음 수정은 그대로입니다.</p></details></li>
       <li><details><summary>휴대폰 화면 정리</summary><p>휴대폰 악보로 보기에서 따라가기·숨은 쉼표·겹쳐 보기 같은 설정과 [전체화면 보기]를 <b>[보기 설정 ▾]</b> 안에 접어, 악보가 더 넓게 보입니다. 연주 막대의 속도 조절을 재생 단추 줄로 올려 막대가 한 줄 낮아졌습니다. 글자를 크게 하거나 가로로 돌려도 화면이 넘치지 않는지 점검했습니다.</p></details></li>
     </ul>
-    <h4>버그 수정 <small>2</small></h4><ul class="hlist">
+    <h4>버그 수정 <small>4</small></h4><ul class="hlist">
+      <li><details class="hbug"><summary>음표를 거의 못 읽은 악보를 알려 줌</summary><p>오선과 마디는 찾았지만 음표·쉼표 기호를 거의 알아보지 못한 악보는 이제 경고 없이 조용히 넘어가지 않고, 위쪽 안내에 원인(알 수 없는 악보 글꼴·만든 프로그램)을 보여 줍니다. 켠 줄 가운데 음을 하나도 못 읽은 줄이 있어도 알려 줍니다.</p></details></li>
+      <li><details class="hbug"><summary>예전에 저절로 장구가 된 줄 바로잡기</summary><p>음높이를 못 읽던 때 저장된 설정 때문에 모든 악기가 장구 소리로 나오던 악보(신아리랑 등)는, 다시 열면 음높이가 읽히는 줄을 선율 악기로 바꾸고 알려 줍니다. 직접 타악으로 바꿔 둔 줄은 그대로 둡니다.</p></details></li>
       <li><details class="hbug"><summary>보기 단추를 누르면 단추 줄이 위로 말려 올라가던 문제</summary><p>[원본 PDF]에서 [인식 악보]·[나란히] 등을 누르면 화면이 악보 칸으로 옮겨 가며 보기 단추 줄이 위로 사라져 다시 끌어내려야 했습니다. 악보 보기 안에서 바꿀 때는 화면을 옮기지 않고, 마디맵에서 처음 들어올 때는 보기 단추 줄이 위 막대 바로 아래에 오게 했습니다.</p></details></li>
       <li><details class="hbug"><summary>MuseScore 3로 만든 악보의 음표를 못 읽어 소리가 안 나던 문제</summary><p>MuseScore 3(·4)에서 PDF로 저장한 악보는 줄과 마디는 찾았지만 음표·쉼표 기호를 하나도 알아보지 못해 재생하면 박 소리만 났습니다(예: 신아리랑). 같은 이름의 악보 글꼴이 MuseScore 2와 다른 기호 번호를 쓰는 것을 구분해 읽도록 고쳤습니다. MuseScore 2로 만든 악보는 그대로입니다.</p></details></li>
     </ul>
@@ -4838,7 +4840,7 @@ const CFG_FIELDS = ['role', 'inst', 'oct', 'octUser', 'vol', 'R', 'L', 'nong', '
 function readSettings(key) { if (!key) return null; try { const t = localStorage.getItem(SET_KEY + key); return t ? JSON.parse(t) : null; } catch (e) { return null; } }
 function collectSettings() {
   const lines = {};
-  for (const l of state.lineList) { const c = state.lineCfg[cfgKey(l.id)]; if (!c) continue; const o = { name: l.label || '' }; for (const f of CFG_FIELDS) if (c[f] !== undefined) o[f] = c[f]; lines[stableKey(l)] = o; }
+  for (const l of state.lineList) { const c = state.lineCfg[cfgKey(l.id)]; if (!c) continue; const o = { name: l.label || '', pitched: !!c.pitched }; for (const f of CFG_FIELDS) if (c[f] !== undefined) o[f] = c[f]; lines[stableKey(l)] = o; }   // pitched: 저장할 때 음높이를 읽었는지(216번 — 옛 저장 설정 바로잡기)
   return { format: 'hapju-settings', v: 1, title: state.title || '', titleRead: state.titleRead || '', songTitle: state.title && state.title !== state.titleRead ? state.title : undefined, file: state.fileName || '', saved: new Date().toISOString(), lastBar: lastBar(),
     lines, tempoRows: state.tempoRows.map(r => ({ ...r })), tempoDet: state.bars.length ? defaultTempoRows(state.bars).map(r => `${r.start}|${r.unit}|${r.bpm ?? ''}`) : null, speed: +$('speed').value, ritF: $('ritF').value, accF: $('accF').value,
     play: { ...playOpts(), loop: $('optLoop').checked, rest: $('optRest').value, ramp: $('optRamp').checked, rampStart: +$('rampStart').value || 70, rampStep: +$('rampStep').value || 5 }, save: { ...saveOpts(), linked: saveLinked, format: $('saveFormat').value },
@@ -4864,17 +4866,24 @@ function scheduleAutoSave() {
 }
 // 줄 설정 입히기 (only: 이 열쇠들만)
 function applyLineSettings(S, only) {
-  let n = 0;
+  let n = 0; const fixed = [];
   if (!S || !S.lines) return n;
   for (const l of state.lineList) {
     const k = stableKey(l); if (only && !only.has(k)) continue;
     const o = S.lines[k], c = state.lineCfg[cfgKey(l.id)]; if (!o || !c) continue;
     for (const f of CFG_FIELDS) if (o[f] !== undefined) c[f] = o[f];
     if (c.role === 'melody' && !c.pitched) c.role = 'perc';
+    // 옛 저장 설정 바로잡기(216번): 저장할 때는 음높이를 못 읽어 저절로 '타악'이 된 줄(예: 214번 전 MuseScore 3 악보 — 모든 줄이 장구)이
+    // 지금은 음높이가 읽히면 선율로 되돌린다. 저장할 때도 음높이가 읽힌 줄(o.pitched)을 타악으로 둔 것은 일부러 고른 것이라 그대로. 이름이 타악기인 줄도 그대로
+    if (c.role === 'perc' && o.role === 'perc' && o.pitched !== true && c.pitched && !PERC_NAME.test(l.label || '')) {
+      c.role = 'melody'; if (!c.inst) c.inst = guessInstrument(l.label || '') || guessInstrument(l.sourceFileName || '');
+      fixed.push(l.label || '줄');
+    }
     if (c.role === 'melody') ensureInst(c);
     n++;
   }
   syncLineIds();
+  if (fixed.length) { setTimeout(() => showMsg(`저장한 설정에서 ${fixed.length}줄(${fixed.slice(0, 5).join(', ')}${fixed.length > 5 ? ' 등' : ''})은 예전에 음높이를 읽지 못해 저절로 타악(장구 소리)으로 정해져 있었습니다. 지금은 음높이를 읽으므로 선율 악기로 바꿨습니다. 설정은 다음 저장 때 새로 저장됩니다.`), 60); scheduleAutoSave(); }
   return n;
 }
 function applyRestSettings(S) {
@@ -5516,7 +5525,9 @@ function applySelection(first = false) {
   $('fileName').textContent = state.sourceScores.length > 1 ? `${state.sourceScores.length}개 파트보 · ${state.title || ''}` : (sc.title ? sc.title + ' · ' : '') + (state.fileName || '');
   const pgN = state.sourceScores.length > 1 ? state.sourceScores.reduce((n, x) => n + x.numPages, 0) : sc.numPages;
   $('fileInfo').textContent = `${pgN ? pgN + '쪽' : 'MusicXML'} · ${bars.length}마디를 읽었습니다.` + (sc.isFull ? ` · 총보 ${sc.lines.length}줄 중 ${ids.length}줄 켬` : state.sourceScores.length > 1 ? ` · 파트보 ${ids.length}개 켬` : '') + (state.extras && state.extras.length ? ` · 추가한 악보 ${state.extras.length}개` : '');
-  if (master.r.mismatches.length) showMsg(`악보에 인쇄된 마디 번호와 읽은 마디 수가 ${master.r.mismatches.length}곳에서 다릅니다(처음: ${master.r.mismatches[0][1]}마디 근처). 그 뒤 마디는 번호가 밀렸을 수 있습니다.`);
+  const lowRead = first ? readHealth(results) : '';
+  if (lowRead) { showMsg(lowRead); $('fileInfo').textContent += ' · ⚠ 음표를 거의 읽지 못함'; }
+  else if (master.r.mismatches.length) showMsg(`악보에 인쇄된 마디 번호와 읽은 마디 수가 ${master.r.mismatches.length}곳에서 다릅니다(처음: ${master.r.mismatches[0][1]}마디 근처). 그 뒤 마디는 번호가 밀렸을 수 있습니다.`);
   const prevLast = prevBars.length ? prevBars[prevBars.length - 1].number : null, curTo = +$('to').value || 0;
   if (first || curTo > lastBar() || (prevLast && curTo >= prevLast) || (!prevLast && curTo <= 1) || +$('from').value > lastBar()) {
     if (first || +$('from').value > lastBar()) $('from').value = 1;
@@ -5527,6 +5538,30 @@ function applySelection(first = false) {
   changed(); renderTempo(); renderBars(); refreshOrder(); updateEditTools(results);
 }
 
+// 음표를 거의 못 읽은 악보 경고와 원인(216번): 줄·마디는 찾았지만(오선·마디선은 선 그림이라 글꼴과 상관없음) 음표·쉼표 기호(악보 글꼴 글자)를
+// 알아보지 못하면 모든 마디가 경고 없는 '쉬는 마디'가 되어 조용히 소리가 안 났다(신아리랑, MuseScore 3 — 214번).
+// 해석기가 낸 sc.glyphStats(악보 글꼴 글자 수·음표 머리와 쉼표로 알아본 수·글꼴마다 모르는 기호 수)로 판단. 보통 악보는 52~76%, 못 읽은 악보는 0%
+function readHealth(results) {
+  const srcs = (state.sourceScores && state.sourceScores.length ? state.sourceScores : [state.score]).filter(x => x && x.glyphStats);
+  const bad = srcs.filter(x => x.glyphStats.music >= 40 && x.glyphStats.nr < x.glyphStats.music * 0.1);
+  const fmt = n => n.toLocaleString('ko-KR');
+  const out = [];
+  if (bad.length) {
+    const x = bad[0], g = x.glyphStats, fonts = Object.entries(g.fonts).sort((a, b) => b[1].n - a[1].n);
+    const unk = fonts.filter(([, o]) => o.unk > o.n * 0.5 && o.n >= 20);
+    const why = unk.length ? `'${unk.map(([f]) => f).join("', '")}' 글꼴의 기호 번호(${fmt(unk.reduce((n, [, o]) => n + o.unk, 0))}개)를 이 프로그램이 알지 못합니다`
+      : `악보 글꼴('${fonts.slice(0, 2).map(([f]) => f).join("', '")}')에서 음표 머리·쉼표 모양을 찾지 못했습니다`;
+    out.push(`⚠ 이 악보${bad.length > 1 || srcs.length > 1 ? `(${bad.map(y => y.fileName || y.title || '').filter(Boolean).slice(0, 3).join(', ')}${bad.length > 3 ? ' 등' : ''})` : ''}에서 음표·쉼표를 거의 읽지 못했습니다 — 악보 기호 ${fmt(g.music)}개 중 음표·쉼표로 알아본 것 ${fmt(g.nr)}개.`
+      + ` 원인: ${why}${x.creator ? `(만든 프로그램: ${x.creator})` : ''}. 오선과 마디는 찾았지만 음이 없어 재생해도 악기 소리가 나지 않습니다. [문제점 신고하기]로 이 악보 파일을 보내 주시면 읽을 수 있게 고치겠습니다.`);
+  }
+  // 줄마다: 켠 줄인데 곡 전체에서 음을 하나도 못 읽은 줄(다른 줄은 읽힐 때만 — 다 못 읽었으면 위 경고)
+  if (!out.length) {
+    const has = x => x.r.bars.some(b => b.events.length);
+    const empty = results.filter(x => !has(x)), any = results.some(has);
+    if (any && empty.length) out.push(`⚠ 켠 줄 가운데 음을 하나도 읽지 못한 줄이 있습니다: ${empty.map(x => lineLabel(x.id) || '줄').slice(0, 6).join(', ')}${empty.length > 6 ? ` 외 ${empty.length - 6}줄` : ''}. 곡 내내 쉬는 줄이 아니라면 인식 문제이니 [문제점 신고하기]로 알려 주세요.`);
+  }
+  return out.join(' ');
+}
 // 줄 카드: 번호·이름·첫 단 그림 + 역할·소리·음량·옥타브
 const PERC_OPTIONS = SOUND_OPTIONS.filter(([k]) => k !== 'off');
 // 성부 짝 소리: 윗성부를 고르면 아랫성부를(R2L), 아랫성부를 고르면 윗성부를(L2R). 같은 악기는 같은 소리로, 장구는 채편(따)·북편(궁), 북·봉고는 높은 쪽·낮은 쪽

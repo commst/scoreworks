@@ -331,7 +331,7 @@ export async function extractPages(doc, OPS, onPage) {
     {
       const hit = {};
       for (const g of glyphs) if (/MScore(?!Text)/i.test(g.font) && g.raw >= 0xE000 && g.raw <= 0xF8FF) { const h = hit[g.font] || (hit[g.font] = { m: 0, s: 0 }); if (MSCORE_PUA.has(g.raw)) h.m++; if (SMUFL_PUA.has(g.raw)) h.s++; }
-      for (const [f, h] of Object.entries(hit)) if (h.s >= 10 && h.s > h.m * 2) msSmufl.add(f);
+      if (!globalThis.__swNoMsSmufl) for (const [f, h] of Object.entries(hit)) if (h.s >= 10 && h.s > h.m * 2) msSmufl.add(f);   // __swNoMsSmufl: 시험용(216번 '음표를 거의 못 읽음' 경고를 214번 전 상태로 재현)
     }
     for (const g of glyphs) {
       const tab = /MScore(?!Text)/i.test(g.font) && !msSmufl.has(g.font) ? MSCORE_PUA : (msSmufl.has(g.font) || /Bravura|Leland|Petaluma|Gootville|Emmentaler|Edwin|Leipzig|Sebastian|Finale ?(Maestro|Broadway|Ash|Jazz|Legacy)/i.test(g.font)) && !/Text/i.test(g.font) ? SMUFL_PUA : null;
@@ -2781,6 +2781,20 @@ export async function loadScore(pdfjs, data, onPage) {
     return '';
   })();
   const musicCount = pages.reduce((a, p) => a + p.glyphs.filter(isMaestro).length, 0);
+  // 악보 기호 인식 통계(216번): 악보 글꼴 글자 중 음표 머리·쉼표로 알아본 수, 글꼴마다 모르는 기호(번호표에 없는 글자) 수 — 앱이 '음표를 거의 못 읽음' 경고와 원인에 씀
+  const glyphStats = (() => {
+    const NR = new Set([HEAD_FILLED, HEAD_WHOLE, HEAD_HALF, REST_Q, REST_8, REST_16, REST_32, REST_HALF, REST_WHOLE]), fonts = {};
+    let music = 0, nr = 0;
+    for (const p of pages) for (const g of p.glyphs) {
+      if (!isMaestro(g)) continue;
+      music++; const known = NR.has(g.code); if (known) nr++;
+      const f = String(g.font || '').replace(/^[A-Z]{6}\+/, '').replace(/ \(MusicFont\)$/, '').replace(/ Anastasia$/, ''), o = fonts[f] || (fonts[f] = { n: 0, nr: 0, unk: 0 });
+      o.n++; if (known) o.nr++; if (!g.code) o.unk++;
+    }
+    return { music, nr, fonts };
+  })();
+  let creator = '';
+  try { const md = await doc.getMetadata(); creator = String((md && md.info && (md.info.Creator || md.info.Producer)) || '').trim(); } catch (e) {}
   // 글꼴 탓에 첫 글자만 남은 악기 이름(예: Ghostscript로 만든 Finale PDF의 '소', '피', '거')을 채운다
   const ONE = { '소': '소금', '피': '피리', '거': '거문고', '해': '해금', '가': '가야금', '양': '양금', '아': '아쟁', '태': '태평소' };
   const named = new Set(lines.map(l => l.name));
@@ -2793,7 +2807,7 @@ export async function loadScore(pdfjs, data, onPage) {
   lines.forEach((l, i) => { const n = lines[i + 1]; if (n && l.name && n.name === l.name && !(lines[i - 1] && lines[i - 1].name === l.name)) { l.label = l.name + ' (윗줄)'; n.label = n.name + ' (아랫줄)'; } });
   // 이름 없는 오선이 이름 있는 선율 오선 바로 아래에 붙어 있으면 같은 악기의 아랫줄 (큰보표에 이름을 하나만 쓴 경우: '가야금1' 등)
   lines.forEach((l, i) => { const p = lines[i - 1]; if (!l.name && p && p.name && !/\(윗줄\)|\(아랫줄\)/.test(p.label) && l.clef === 'pitched' && p.clef === 'pitched') { p.label = p.name + ' (윗줄)'; l.label = p.name + ' (아랫줄)'; } });
-  return { doc, pages, layouts, lines: isFull ? lines : [], isFull, title, partName, numPages: doc.numPages, maestroCount: musicCount };
+  return { doc, pages, layouts, lines: isFull ? lines : [], isFull, title, partName, numPages: doc.numPages, maestroCount: musicCount, glyphStats, creator };
 }
 
 // 한 줄(파트보면 null)을 해석한다
