@@ -21,6 +21,7 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
   const n1 = await p.evaluate(() => document.querySelectorAll('.sv-hr').length); ok('숨은 쉼표 칸 그림', n1 > 0, String(n1));
   for (let z = 0; z < 4; z++) await p.click('#svZoomIn').catch(() => {}); await p.waitForTimeout(2500);
   const first = await p.$('.sv-hr'); if (first) { await first.evaluate(e => e.scrollIntoView({ block: 'center' })); await p.waitForTimeout(1500); const bb = await first.boundingBox(); console.log('bb', JSON.stringify(bb)); if (bb) await p.screenshot({ path: '/tmp/hidden.png', clip: { x: Math.max(0, Math.min(1366 - 640, bb.x - 320)), y: Math.max(0, bb.y - 90), width: 640, height: 200 } }); }
+  if (!(await p.isVisible('#svHidden'))) await p.click('#svMore');
   await p.click('#svHidden'); await p.waitForTimeout(400); ok('끄면 사라짐', await p.evaluate(() => document.querySelectorAll('.sv-hr').length) === 0);
   await p.click('#svHidden'); await p.waitForTimeout(400);
   ok('페이지 오류 없음', !errs.length, errs.join(' | '));

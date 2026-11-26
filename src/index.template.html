@@ -504,6 +504,12 @@ body.sv-lock #mini { display: none; }
 .summary .wnum.bad { color: #c5221f; border-color: #e8a19c; }
 .sv-tools .sv-warn { display: none; }
 .sv-tools .sv-more { display: none; }
+/* 241번: 자주 안 바꾸는 보기 설정(따라가기·빨간 선·숨은 쉼표·마디 정보)은 [보기 설정 ▾] 안에 — PC는 떠 있는 작은 창, 휴대폰은 펼친 줄 */
+.sv-tools { position: relative; } .sv-tools .sv-more { display: inline-flex; }
+.sv-tools:not(.open) .sv-pop { display: none; }
+.sv-tools .sv-pop { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+@media (min-width: 901px) { .sv-tools .sv-pop { position: absolute; right: 0; top: calc(100% + 4px); z-index: 60; flex-direction: column; align-items: stretch; min-width: 220px; padding: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 24px rgba(20,30,60,.16); } }
+@media (max-width: 900px) { .sv-tools .sv-pop { flex: 1 1 100%; } }
 .score-view.sv-full .sv-edit-hint { display: none; }
 /* 정간보(225번) — 오른쪽에서 왼쪽으로 한 줄(세로) = 한 마디 */
 .jg-wrap { overflow: auto; background: #fffdf8; border: 1px solid var(--line); border-radius: 10px; padding: 10px; color: #1b1b1b; }
@@ -2026,7 +2032,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
         <dl>
           <dt>원본 악보 · 인식 악보 · 나란히 보기 · 정간보 보기</dt>
           <dd>위의 단추로 보기를 고릅니다(악보를 내려도 단추 줄은 위에 붙어 있음). <b>원본 악보</b>는 올린 악보 PDF를 그대로, <b>인식 악보</b>는 읽어 낸 내용(내보낼 MusicXML)을 오선보로 그려, <b>나란히 보기</b>는 둘을 함께(컴퓨터는 좌우, 세로로 긴 화면은 위아래 — 한쪽을 넘기면 다른 쪽도 같은 마디로) 보여 줍니다. 쪽 그림이 없는 악보(MusicXML로 올린 악보·예시 장단)는 인식 악보로 봅니다.
-            연주하는 동안 지금 마디가 노란 칸, 지금 위치가 빨간 선으로 따라 움직이고, 다음 단·다음 쪽으로 넘어가면 악보 칸이 따라 내려갑니다(화면 전체는 움직이지 않음). '연주 위치 따라가기'를 끄면 직접 넘겨 볼 수 있습니다.
+            연주하는 동안 지금 마디가 노란 칸, 지금 위치가 빨간 선으로 따라 움직이고, 다음 단·다음 쪽으로 넘어가면 악보 칸이 따라 내려갑니다(화면 전체는 움직이지 않음). [보기 설정 ▾] 안의 '연주 위치 따라가기'를 끄면 직접 넘겨 볼 수 있습니다.
             마디를 누르면 그 마디부터 재생하고, [−]·[+]로 크기를 바꿉니다. <b>[전체화면 보기]</b>를 누르면 화면 전체에 악보만 보이고, 아래 연주 막대로 연주를 다룹니다(✕ 닫기나 Esc로 돌아옴). 고른 보기와 크기는 이 기기에 기억됩니다.</dd>
           <dt>마디 미리보기</dt>
           <dd>컴퓨터는 마디 위에 마우스를 잠깐 두면, 휴대폰·태블릿은 마디를 길게 누르면 그 마디의 미리보기가 뜹니다. 위에는 마디 번호·박자·빠르기·반복·✎ 고침·⚠ 확인 필요 표시가, 아래에는 켠 악기마다 음이 나옵니다.
@@ -2043,20 +2049,22 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       </details>
       <div class="score-view" id="scoreView" hidden>
         <div class="sv-tools">
-          <label class="chk"><input type="checkbox" id="svFollow" checked>연주 위치 따라가기</label>
-          <label class="chk" title="재생하는 동안 지금 소리 나는 음표 머리를 악기 갈래 색으로 칠하며 따라갑니다(켠 줄, 'OO만' 보기면 그 줄)"><input type="checkbox" id="svNotes" checked>음표 따라가기</label>
-          <label class="chk" title="빨간 선을 음표 자리를 따라 움직입니다. 끄면 마디 안에서 시간에 맞춰 고른 빠르기로 움직여 메트로놈 박과 맞습니다(음표 간격이 고르지 않은 악보에서 선이 멈칫하거나 휙 넘어가지 않음)"><input type="checkbox" id="svCurNotes">빨간 선 음표 따라</label>
           <label class="sv-part">보기 <select id="svPartSel" aria-label="악보 보기에서 볼 줄"><option value="">총보 전체</option></select></label>
-          <label class="chk" title="해석기가 쉼표 자리를 추정한 마디에서, 성부마다 음도 쉼표도 적혀 있지 않은 빈 자리를 흐린 빗금 칸으로 보여 줍니다(윗성부는 오선 위쪽, 아랫성부는 아래쪽)"><input type="checkbox" id="svHidden" checked>숨은 쉼표</label>
           <button type="button" class="btn" id="svFull">전체화면 보기</button>
           <button type="button" class="btn sv-warn" id="svWarn" hidden title="확인 필요 마디 목록(마디로 · 여기부터 · 고치기)">⚠ 경고 <b id="svWarnN"></b><span class="sv-warn-bad" id="svWarnBad"></span></button> <button type="button" class="btn" id="svFix" hidden title="악보대로 고칠 수 있는 곳 모아 보기">✎ 악보대로</button> <button type="button" class="btn sv-diff" id="svDiff" hidden title="일부러 PDF와 다르게 고친 곳 목록(겹쳐 보기의 주황 점선 ✎)">✎ 악보와 다르게</button>
           <span class="sv-modes sv-labs" id="svLabLbl" role="group" aria-label="음 아래 글자" title="음 아래에 적을 글자 — 율명(황·태·중…), 구음(장구는 덩·쿵·덕 자동, 다른 악기는 검사기에서 적은 구음). 인식 악보·나란히·정간보에 보이고, 원본 PDF에서 누르면 인식 악보로 바뀝니다"><button type="button" class="btn" data-lab="none" aria-pressed="true">음표만</button><button type="button" class="btn" data-lab="yul" aria-pressed="false">율명</button><button type="button" class="btn" data-lab="gu" aria-pressed="false">구음</button><select id="svLab" hidden aria-hidden="true" tabindex="-1"><option value="none">없음</option><option value="yul">율명</option><option value="gu">구음</option></select></span>
           <label class="sv-base" id="svBaseLbl" hidden title="율명의 황종(黃)을 어느 음으로 볼지 — 정악은 보통 E♭4">황종 <select id="svBase" aria-label="황종 높이"><option value="57">A3</option><option value="58">B♭3</option><option value="59">B3</option><option value="60">C4</option><option value="61">C♯4</option><option value="62">D4</option><option value="63">E♭4 (정악)</option><option value="64">E4</option><option value="65">F4</option><option value="66">F♯4</option><option value="67">G4</option><option value="68">A♭4</option></select></label>
-          <label class="chk" id="svTipLbl" title="마디 위에 마우스를 둘 때: 정보 줄 = 악보 위 얇은 줄에만 핵심을 보여 주고 [상세]를 누를 때만 큰 창, 떠오르는 창 = 예전처럼 마디 위에 큰 창, 끔 = 보여 주지 않음">마디 정보 <select id="svTipMode" aria-label="마디 정보 보기"><option value="strip">정보 줄</option><option value="hover">떠오르는 창</option><option value="off">끔</option></select></label>
           <label class="chk" id="svOverLbl" title="내보낼 MusicXML의 음을 악보 위에 동그라미로 겹쳐 그립니다. PDF 음표 머리와 맞으면 파랑, 맞지 않으면 빨강, 자리는 맞지만 적힌 모양(음표 종류·점·기둥·아티큘레이션·붙임줄·이음줄)이 다르면 주황, 쪽 그림의 실제 머리 높이와 다르면 보라, 맞는 음이 없는 PDF 머리는 빨간 네모. 보라·높이만 다른 빨강은 눌러서 [악보대로 고치기]. 짧은 선은 해석기가 읽은 기둥(윗성부 파랑·아랫성부 초록). 내보낸 셈여림·꺾쇠는 오선 아래 글자(PDF와 다르면 주황). 표시를 누르면 이유"><input type="checkbox" id="svOver">MusicXML 겹쳐 보기</label>
           <span class="sv-modes sv-mode-sw" id="svModes" role="group" aria-label="모드"><button type="button" class="btn" id="svPractice" aria-pressed="true" title="연습: 마디를 누르면 그 마디부터 재생합니다">연습</button><button type="button" class="btn" id="svEdit" aria-pressed="false" title="편집: 인식 악보에서 음을 눌러 고르고 검사기에서 높이·길이를 수정합니다. 원본 PDF에서 마디를 누르면 그 마디의 음 목록 창이 열립니다">✎ 편집</button></span>
           <span class="zoom">크기 <button type="button" id="svZoomOut" aria-label="작게">−</button><span id="svZoomVal">100%</span><button type="button" id="svZoomIn" aria-label="크게">+</button></span>
-          <button type="button" class="btn sv-more" id="svMore" aria-expanded="false" aria-controls="scoreView" title="따라가기·숨은 쉼표·겹쳐 보기·전체화면 같은 보기 설정을 펼치고 접습니다">보기 설정 ▾</button>
+          <button type="button" class="btn sv-more" id="svMore" aria-expanded="false" aria-controls="scoreView" title="따라가기·빨간 선·숨은 쉼표·마디 정보 같은 보기 설정을 펼치고 접습니다">보기 설정 ▾</button>
+          <div class="sv-pop" id="svPop" role="group" aria-label="보기 설정">
+            <label class="chk"><input type="checkbox" id="svFollow" checked>연주 위치 따라가기</label>
+            <label class="chk" title="재생하는 동안 지금 소리 나는 음표 머리를 악기 갈래 색으로 칠하며 따라갑니다(켠 줄, 'OO만' 보기면 그 줄)"><input type="checkbox" id="svNotes" checked>음표 따라가기</label>
+            <label class="chk" title="빨간 선을 음표 자리를 따라 움직입니다. 끄면 마디 안에서 시간에 맞춰 고른 빠르기로 움직여 메트로놈 박과 맞습니다(음표 간격이 고르지 않은 악보에서 선이 멈칫하거나 휙 넘어가지 않음)"><input type="checkbox" id="svCurNotes">빨간 선 음표 따라</label>
+            <label class="chk" title="해석기가 쉼표 자리를 추정한 마디에서, 성부마다 음도 쉼표도 적혀 있지 않은 빈 자리를 흐린 빗금 칸으로 보여 줍니다(윗성부는 오선 위쪽, 아랫성부는 아래쪽)"><input type="checkbox" id="svHidden" checked>숨은 쉼표</label>
+            <label class="chk" id="svTipLbl" title="마디 위에 마우스를 둘 때: 정보 줄 = 악보 위 얇은 줄에만 핵심을 보여 주고 [상세]를 누를 때만 큰 창, 떠오르는 창 = 예전처럼 마디 위에 큰 창, 끔 = 보여 주지 않음">마디 정보 <select id="svTipMode" aria-label="마디 정보 보기"><option value="strip">정보 줄</option><option value="hover">떠오르는 창</option><option value="off">끔</option></select></label>
+          </div>
         </div>
         <p class="sv-edit-hint" id="svEditHint" hidden>✎ 편집 중: <b>인식 악보</b>에서 음을 누르면 검사기에서 높이·길이·붙임줄을 수정하고 바로 들어 봅니다(고친 음은 보라, 고른 음은 파랑). <b>원본 악보</b>에서 음표 머리를 눌러도 그 음을 고르고, 음표가 없는 곳을 누르면 그 마디의 음 목록 창이 열립니다. 마우스·펜으로는 음 머리를 위아래로 끌어 높이를 바꿀 수 있습니다. 아래 <b>음표판</b>의 [✚ 음표 넣기]로 오선 위를 눌러 음을 넣고, [⌫ 지우기]로 누르는 음을 지웁니다(N·R·Delete). PDF와 일부러 다르게 고친 음은 겹쳐 보기에서 주황 점선 ✎로 보이고 확인할 곳에서 빠집니다([✎ 악보와 다르게 n]). 다 고쳤으면 [연습]을 누르세요.</p>
         <div class="sv-info" id="svInfo" hidden></div>
@@ -2113,7 +2121,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 26일</h3>
-    <h4>기능 업데이트 <small>5</small></h4><ul class="hlist">
+    <h4>기능 업데이트 <small>6</small></h4><ul class="hlist">
+      <li><details><summary>보기 설정을 작은 창으로</summary><p>따라가기·빨간 선·숨은 쉼표·마디 정보처럼 자주 바꾸지 않는 보기 설정을 도구줄 오른쪽 <b>[보기 설정 ▾]</b> 안에 모았습니다. 누르면 작은 창이 열리고, 바깥을 누르거나 Esc를 누르면 닫힙니다. 도구줄이 한 줄로 줄어 악보가 더 넓게 보입니다.</p></details></li>
       <li><details><summary>단추·체크·고르기 모양 다듬기</summary><p>보기 설정 줄의 체크 상자가 켜고 끄는 <b>스위치</b>로 바뀌고, 켜진 항목은 파란 알약으로 표시됩니다. 고르기 상자는 둥근 모양으로 통일했고, 음표판 단추는 테두리 없는 아이콘 단추로 깔끔하게 정리했습니다(휴대폰은 화면이 좁아 작은 스위치만).</p></details></li>
       <li><details><summary>[연습 | 편집]을 위 오른쪽으로</summary><p>연습·편집 전환 단추를 보기 단추 줄 오른쪽 끝에 크게 옮겼습니다(휴대폰은 예전 자리). 편집을 켜면 단추가 보라색이 되고 악보 둘레에 보라 테두리가 생겨, 지금 누르면 재생이 아니라 음을 고른다는 것을 바로 알 수 있습니다.</p></details></li>
       <li><details><summary>확인 필요 목록을 접어 개수만</summary><p>악보를 열면 확인 필요 목록이 길게 펼쳐져 악보가 아래로 밀리던 것을, 요약 줄에 [⚠ 16마디 ▸ 펼치기]처럼 개수만 보이게 접었습니다. 누르면 펼쳐지고 다시 누르면 접히며, 펼친 상태는 이 기기에 기억됩니다.</p></details></li>
@@ -3214,7 +3223,11 @@ function setFull(on) {
 }
 $('svFull').addEventListener('click', () => setFull(!$('scoreView').classList.contains('sv-full')));
 // 휴대폰: 보기 설정(체크 상자·전체화면)을 접어 악보 칸을 넓게(211번)
-$('svMore').addEventListener('click', () => { const t = document.querySelector('.sv-tools'), on = !t.classList.contains('open'); t.classList.toggle('open', on); $('svMore').setAttribute('aria-expanded', String(on)); $('svMore').textContent = on ? '보기 설정 ▴' : '보기 설정 ▾'; });
+function svPopSet(on) { const t = document.querySelector('#scoreView .sv-tools'); if (!t) return; t.classList.toggle('open', on); $('svMore').setAttribute('aria-expanded', String(on)); $('svMore').textContent = on ? '보기 설정 ▴' : '보기 설정 ▾'; }
+$('svMore').addEventListener('click', () => svPopSet(!document.querySelector('#scoreView .sv-tools').classList.contains('open')));
+// 241번: PC에서 떠 있는 창은 바깥을 누르거나 Esc로 닫음(휴대폰은 펼친 줄이라 그대로)
+document.addEventListener('pointerdown', (ev) => { if (!matchMedia('(min-width: 901px)').matches) return; const t = document.querySelector('#scoreView .sv-tools'); if (t && t.classList.contains('open') && !ev.target.closest('#svPop, #svMore')) svPopSet(false); });
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && matchMedia('(min-width: 901px)').matches && document.querySelector('#scoreView .sv-tools.open')) svPopSet(false); });
 $('svEdit').addEventListener('click', () => setSvEdit(!svEditing));
 $('svPractice').addEventListener('click', () => { if (svEditing) setSvEdit(false); });
 // 내 파트만 크게 보기: 켠 줄 중 하나를 고르면 그 줄 오선만 잘라 이어 보여 준다
