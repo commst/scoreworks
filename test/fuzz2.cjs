@@ -6,7 +6,7 @@ const seed = +(process.argv[2] || 1), N = +(process.argv[3] || 120), mobile = pr
 let s = seed; const rnd = () => { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; }; const ri = n => Math.floor(rnd() * n);
 (async () => {
   const b = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
-  const ctx = await b.newContext(mobile ? devices['iPhone 13'] : { viewport: { width: 1280, height: 900 }, acceptDownloads: true });
+  const ctx = await b.newContext(mobile ? devices['iPhone 13'] : { viewport: { width: 1280, height: 900 }, acceptDownloads: true }); await ctx.addInitScript(() => { try { if (!localStorage.getItem('hapju-layout')) localStorage.setItem('hapju-layout', JSON.stringify({ mode: 'push', side: true, top: true })); } catch (e) {} }); 
   const p = await ctx.newPage(); const errs = [];
   p.on('pageerror', e => errs.push('PAGEERR ' + e.message + ' @' + log.slice(-3).join(' > ') + ' | ' + (e.stack || '').split('\n').slice(1, 4).map(x => x.trim().replace(/file:.*index.html:/, 'L')).join(' ; ')));
   p.on('console', m => { if (m.type() === 'error' && !/ERR_TUNNEL|Failed to load resource|MP3 인코더|lame/.test(m.text())) errs.push('CONSOLE ' + m.text().slice(0, 200) + ' @' + log.slice(-3).join(' > ')); });

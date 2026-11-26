@@ -4,7 +4,7 @@ const pre = '9203ad49', SM = '/home/claude/samples/'; const t = '/tmp/pick-' + p
 let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fails++; };
 (async () => { const b = await chromium.launch();
  for (const [name, vp] of [['desktop', { width: 1280, height: 860 }], ['phone', { width: 390, height: 844 }]]) {
-  const ctx = await b.newContext({ viewport: vp, hasTouch: name === 'phone' }); const p = await ctx.newPage();
+  const ctx = await b.newContext({ viewport: vp, hasTouch: name === 'phone' }); await ctx.addInitScript(() => { try { if (!localStorage.getItem('hapju-layout')) localStorage.setItem('hapju-layout', JSON.stringify({ mode: 'push', side: true, top: true })); } catch (e) {} });  const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message)); const dlg = []; p.on('dialog', d => { dlg.push(d.message()); d.accept(); });
   const store = {}; const calls = [];
   await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });

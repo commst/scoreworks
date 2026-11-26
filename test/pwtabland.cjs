@@ -6,7 +6,7 @@ const SIZES = [['iPad mini 가로', 1024, 768], ['iPad Air 가로', 1180, 820], 
 let bad = 0;
 (async () => { const b = await chromium.launch();
  for (const [nm, w, h] of SIZES) {
-  const ctx = await b.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: true });
+  const ctx = await b.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: true }); await ctx.addInitScript(() => { try { localStorage.setItem('hapju-layout', JSON.stringify({ mode: 'push', side: true, top: true })); } catch (e) {} });   // 235번 뒤: 왼쪽 패널 옆에 두기·열림(예전 배치)을 시험
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));

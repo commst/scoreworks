@@ -978,6 +978,26 @@ body { padding: 0 0 calc(var(--dockh) + 8px); background: var(--paper); }
   .stage { grid-column: 2; }
 }
 @media (min-width: 901px) and (max-width: 1180px) { .sidebar { width: 340px; } }
+/* 235번: 왼쪽 설정 패널 서랍(겹쳐 열기·옆에 두기)과 위 막대·보기 설정 줄 접기 — 단추는 늘 보이는 보기 단추 줄 양 끝 */
+.stage .vs-bar { display: flex; align-items: center; gap: 8px; }
+.lay-btn { flex: none; height: 38px; padding: 0 12px; border: 0; border-radius: 9px; background: var(--chip); color: var(--ink); font-weight: 600; font-size: 14px; white-space: nowrap; }
+.lay-btn[aria-expanded="false"] { background: var(--accent); color: #fff; }
+#topTgl { margin-left: auto; }
+.side-lay { display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--line); background: var(--card); }
+.side-lay select { flex: 1; min-width: 0; font-size: 13px; padding: 4px 6px; }
+@media (max-width: 900px) { #sideTgl, .side-lay { display: none; } .lay-btn { height: 34px; padding: 0 10px; font-size: 13px; } }
+@media (min-width: 901px) {
+  .sidebar { transition: transform .2s ease, visibility .2s; }
+  body.lay-ov:not(.all-panes) .shell, body.side-off:not(.all-panes) .shell { grid-template-columns: minmax(0, 1fr); }
+  body.lay-ov:not(.all-panes) .stage, body.side-off:not(.all-panes) .stage { grid-column: 1; }
+  body.side-off:not(.all-panes) .sidebar { transform: translateX(-102%); visibility: hidden; }
+  body.lay-ov .sidebar { z-index: 30; box-shadow: 6px 0 22px rgba(20, 30, 60, .2); }
+  body.lay-ov:not(.side-off):not(.welcome) .sheet-back { display: block; position: fixed; inset: 0; top: var(--tbh); bottom: var(--dockh); z-index: 29; background: rgba(30, 36, 51, .18); }
+  body.lay-ov:not(.side-off) .sheet-close { display: inline-grid; place-items: center; position: absolute; z-index: 4; top: 3px; right: 6px; width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 50%; background: var(--chip, var(--card)); color: var(--ink); font-size: 20px; font-weight: 700; line-height: 1; }
+  body.lay-ov:not(.side-off) .tabs2 { padding-right: 52px; }
+}
+body.top-off:not(.welcome) .topbar { display: none; }
+body.top-off:not(.welcome) .score-view:not(.sv-full) .sv-tools { display: none; }
 /* 탭 줄과 서랍 ✕를 한 머리로 묶어 함께 붙여 둠 (✕만 절대 위치라 굴리면 말려 올라가던 것) */
 .side-head { position: sticky; top: 0; z-index: 3; background: var(--card); }
 .tabs2 { position: relative; z-index: 3; display: flex; gap: 2px; padding: 6px 10px 0; background: var(--card); border-bottom: 1px solid var(--line); }
@@ -1541,7 +1561,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
   <div class="shell" id="shell">
     <aside class="sidebar" id="sidebar" aria-label="설정">
       <div class="sheet-grab" id="sheetGrab" aria-hidden="true"></div>
-      <div class="side-head"><nav class="tabs2" role="tablist" aria-label="설정 칸"><button class="tab2" type="button" role="tab" data-tab="inst" id="tab-inst" aria-controls="pane-inst">악기</button><button class="tab2" type="button" role="tab" data-tab="tempo" id="tab-tempo" aria-controls="pane-tempo">빠르기</button><button class="tab2" type="button" role="tab" data-tab="play" id="tab-play" aria-controls="pane-play">연주</button><button class="tab2" type="button" role="tab" data-tab="save" id="tab-save" aria-controls="pane-save">저장</button><button class="tab2" type="button" role="tab" data-tab="tone" id="tab-tone" aria-controls="pane-tone">음색</button></nav><button class="sheet-close" id="sheetClose" type="button" aria-label="서랍 닫기">✕</button></div>
+      <div class="side-head"><nav class="tabs2" role="tablist" aria-label="설정 칸"><button class="tab2" type="button" role="tab" data-tab="inst" id="tab-inst" aria-controls="pane-inst">악기</button><button class="tab2" type="button" role="tab" data-tab="tempo" id="tab-tempo" aria-controls="pane-tempo">빠르기</button><button class="tab2" type="button" role="tab" data-tab="play" id="tab-play" aria-controls="pane-play">연주</button><button class="tab2" type="button" role="tab" data-tab="save" id="tab-save" aria-controls="pane-save">저장</button><button class="tab2" type="button" role="tab" data-tab="tone" id="tab-tone" aria-controls="pane-tone">음색</button></nav><button class="sheet-close" id="sheetClose" type="button" aria-label="서랍 닫기">✕</button><div class="side-lay"><label for="sideMode">설정 패널</label><select id="sideMode"><option value="ov">악보 위에 겹쳐 열기</option><option value="push">옆에 두기(악보 칸이 좁아짐)</option></select></div></div>
       <div class="pane2" id="pane-inst" role="tabpanel" data-pane="inst" aria-labelledby="tab-inst">
       <section class="panel" id="linesPanel" aria-labelledby="tLines">
     <div class="ttl-row">
@@ -1961,12 +1981,12 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       <div class="row" style="justify-content:space-between">
         <h2 id="tBars">악보</h2>
       </div>
-      <div class="vs-bar" id="vsBar"><div class="view-switch" role="group" aria-label="보기 방식">
+      <div class="vs-bar" id="vsBar"><button type="button" class="lay-btn" id="sideTgl" aria-expanded="true" title="설정 패널(악기·빠르기·연주·저장·음색) 열기·닫기">☰ 설정</button><div class="view-switch" role="group" aria-label="보기 방식">
         <button type="button" id="viewScore" aria-pressed="false" title="올린 악보 PDF를 그대로 봅니다">원본 악보</button>
         <button type="button" id="viewRec" aria-pressed="false" title="읽어 낸 내용(내보낼 MusicXML)을 오선보로 그려 봅니다">인식 악보</button>
         <button type="button" id="viewSide" aria-pressed="false" title="원본 PDF와 인식 악보를 나란히 놓고 같은 마디를 함께 봅니다">나란히 보기</button>
         <button type="button" id="viewJg" aria-pressed="false" title="읽어 낸 내용을 정간보로(한 악기씩 — 보기에서 악기를 고름). 율명, 장구는 구음">정간보 보기</button>
-      </div></div>
+      </div><button type="button" class="lay-btn" id="topTgl" aria-expanded="true" title="위 막대(곡 이름·악보·이력·사용법)와 보기 설정 줄 접기·펴기">▴ 위 접기</button></div>
       <div class="summary" id="summary"></div>
       <div class="warnlist" id="warnList"></div>
       <div class="bar-actions">
@@ -2066,7 +2086,11 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 26일</h3>
-      <details class="hbug"><summary>버그 수정 <small>3건</small></summary><ul class="hlist bug">
+    <h4>기능 업데이트 <small>1</small></h4><ul class="hlist">
+      <li><details><summary>왼쪽 설정 패널을 서랍으로 · 위 막대 접기</summary><p>악보를 더 넓게 보도록 왼쪽 설정 패널(악기·빠르기·연주·저장·음색)이 서랍이 되었습니다. 보기 단추 줄 왼쪽 <b>[☰ 설정]</b>으로 열고 닫고(✕·바깥 누르기·Esc로도 닫힘), 패널 맨 위 '설정 패널'에서 <b>악보 위에 겹쳐 열기</b>와 <b>옆에 두기</b>를 고릅니다. 오른쪽 <b>[▴ 위 접기]</b>는 위 막대와 보기 설정 줄을 접습니다. 열고 접은 상태는 이 기기에 기억됩니다.</p></details></li>
+    </ul>
+      <details class="hbug"><summary>버그 수정 <small>4건</small></summary><ul class="hlist bug">
+      <li><details><summary>Safari에서 '프로그램이 시작되지 않았습니다'가 잘못 뜨던 문제</summary><p>앱 파일이 커서 느린 인터넷에서는 다 받기 전에 시작 검사 시간이 지나, 브라우저에서 열었는데도 경고가 떴습니다. 이제 다 받은 뒤부터 시간을 셉니다.</p></details></li>
       <li><details><summary>나란히 보기 오른쪽 악보가 칸 폭 절반에서 끝나던 문제</summary><p>나란히 보기에서 오른쪽 인식 악보의 단이 칸 폭의 절반쯤에서 끝나 작게 보였습니다. 이제 단마다 칸 폭 끝까지 씁니다.</p></details></li>
       <li><details><summary>나란히 보기에서 양쪽 악보 위치가 어긋나던 문제</summary><p>원본 악보 한 단이 인식 악보에서 두 단으로 갈라져 그려질 때가 있었고(어제 빠르게 바꾸면서 생김), 소나기처럼 악기가 많은 단은 한쪽은 단 위쪽, 다른 쪽은 단 아래쪽이 보였습니다. 이제 원본 한 단 = 인식 악보 한 단으로 그리고, 함께 넘길 때 같은 악기 줄 높이끼리 맞춥니다.</p></details></li>
       <li><details><summary>악보 칸 윗부분이 가려 내려지지 않던 문제</summary><p>아이패드처럼 보기 설정 줄이 여러 줄인 화면에서 끝까지 내리면 악보 칸 윗부분이 위에 붙은 줄 밑에 가려 있었습니다. 이제 칸 높이를 위에 붙은 줄들의 실제 높이에 맞춰, 끝까지 내리면 칸 전체가 보입니다.</p></details></li>
@@ -10087,6 +10111,7 @@ function edReveal() {
   if (!ED.sel) return;
   const src = svSrcEff();
   if (src !== 'rec') edRevealPdf(ED.sel.k);
+  REC.lastSync = { from: 'rec', k: ED.sel.k, t: performance.now() };   // 235번: 고른 음 마디를 두 칸에 보여 준 뒤 원본 쪽 스크롤 되울림이 인식 악보를 끌고 가지 않게(232번 되울림 막기와 같은 길)
   const els = REC.idx.get(ED.sel.id), el0 = els && els[0]; if (!el0 || src === 'pdf') return;
   const wrap = $('recWrap'), b = el0.getBoundingClientRect(), wb = wrap.getBoundingClientRect(), tools = document.querySelector('#scoreView .sv-tools'), ins = ED.el && !ED.el.hidden ? ED.el.getBoundingClientRect() : null;
   const top = Math.max(wb.top, tools ? tools.getBoundingClientRect().bottom : 0, 0) + 16;   // 위 도구줄(붙어 있음)에 가리지 않게
@@ -13911,7 +13936,7 @@ function showTab(t, open) {
   try { localStorage.setItem(TAB_KEY, t); } catch (e) {}
   document.querySelectorAll('.tab2').forEach(b => { const on = b.dataset.tab === t; b.setAttribute('aria-selected', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; });
   document.querySelectorAll('.pane2').forEach(p => p.classList.toggle('on', p.dataset.pane === t));
-  if (open && NARROW.matches) setSheet(true);
+  if (open && NARROW.matches) setSheet(true); else if (open && window.__layOpen && document.body.classList.contains('side-off')) window.__layOpen(true);   // 235번: 넓은 화면에서 닫힌 패널이면 염
   document.querySelectorAll('.dtab').forEach(b => b.classList.toggle('on', document.body.classList.contains('sheet-open') && b.dataset.tab === t));
   const sb = $('sidebar'); if (sb && !NARROW.matches) sb.scrollTop = 0;
 }
@@ -13931,8 +13956,8 @@ document.querySelectorAll('.tab2').forEach(b => {
 document.querySelectorAll('.dtab').forEach(b => b.addEventListener('click', () => {
   if (document.body.classList.contains('sheet-open') && curTab === b.dataset.tab) setSheet(false); else showTab(b.dataset.tab, true);
 }));
-$('sheetBack').addEventListener('click', () => setSheet(false));
-$('sheetClose').addEventListener('click', () => setSheet(false));
+$('sheetBack').addEventListener('click', () => { if (NARROW.matches) setSheet(false); else if (window.__layOpen) window.__layOpen(false); });
+$('sheetClose').addEventListener('click', () => { if (NARROW.matches) setSheet(false); else if (window.__layOpen) window.__layOpen(false); });
 NARROW.addEventListener('change', () => { if (!NARROW.matches) setSheet(false); });
 showTab(curTab);
 // 다른 곳에서 칸으로 데려갈 때: 탭을 바꾸고(좁은 화면은 서랍을 열고) 그 자리로
@@ -13945,11 +13970,29 @@ function goPane(t, el) {
 // 위 막대·연주 막대 높이를 CSS 변수로 (서랍·옆 칸 높이 계산)
 const setBarVars = () => {
   const r = document.documentElement.style;
-  r.setProperty('--tbh', ($('topbar').offsetHeight || 57) + 'px');
+  r.setProperty('--tbh', (document.body.classList.contains('top-off') && !document.body.classList.contains('welcome') ? 0 : ($('topbar').offsetHeight || 57)) + 'px');
   r.setProperty('--dockh', (document.body.classList.contains('welcome') ? 0 : ($('dock').offsetHeight || 112)) + 'px');
 };
 if ('ResizeObserver' in window) { const ro = new ResizeObserver(setBarVars); ro.observe($('topbar')); ro.observe($('dock')); }
 window.addEventListener('resize', setBarVars);
+// 235번: 왼쪽 설정 패널(넓은 화면) — 겹쳐 열기(ov, 처음)·옆에 두기(push), 열림·닫힘과 위 막대 접기는 이 기기에 기억(hapju-layout)
+const LAY_KEY = 'hapju-layout', LAY = { mode: 'ov', side: false, top: true };   // 처음 쓰는 기기: 겹쳐 열기·닫힘(열린 채 시작하면 악보 왼쪽을 덮음)
+try { const v = JSON.parse(localStorage.getItem(LAY_KEY) || 'null'); if (v) { if (v.mode === 'push' || v.mode === 'ov') LAY.mode = v.mode; LAY.side = v.side === true; LAY.top = v.top !== false; } } catch (e) {}
+function layApply(save) {
+  const B = document.body.classList, w0 = $('stage').clientWidth;
+  B.toggle('lay-ov', LAY.mode === 'ov'); B.toggle('side-off', !LAY.side); B.toggle('top-off', !LAY.top);
+  $('sideTgl').setAttribute('aria-expanded', LAY.side ? 'true' : 'false'); $('topTgl').setAttribute('aria-expanded', LAY.top ? 'true' : 'false');
+  $('topTgl').textContent = LAY.top ? '▴ 위 접기' : '▾ 위 펴기'; $('sideMode').value = LAY.mode;
+  setBarVars();
+  if (save) try { localStorage.setItem(LAY_KEY, JSON.stringify(LAY)); } catch (e) {}
+  if ($('stage').clientWidth !== w0) setTimeout(() => window.dispatchEvent(new Event('resize')), 240);   // 옆에 두기: 악보 칸 폭이 바뀌면 다시 맞춤(크기 바꾸기와 같은 길)
+}
+function layOpen(on) { LAY.side = !!on; layApply(true); }
+window.__layOpen = layOpen; window.__lay = () => Object.assign({}, LAY);
+$('sideTgl').addEventListener('click', () => layOpen(!LAY.side));
+$('topTgl').addEventListener('click', () => { LAY.top = !LAY.top; layApply(true); });
+$('sideMode').addEventListener('change', () => { LAY.mode = $('sideMode').value === 'push' ? 'push' : 'ov'; layApply(true); });
+layApply(false);
 
 // 첫 화면(악보를 아직 안 올림)과 악보 파일 창
 let demoChosen = false;
@@ -14017,6 +14060,7 @@ document.addEventListener('keydown', ev => {
   if (document.body.classList.contains('files-open')) { setFiles(false); ev.preventDefault(); }
   else if (document.body.classList.contains('help-open')) { setHelpView(false); ev.preventDefault(); }
   else if (document.body.classList.contains('sheet-open')) { setSheet(false); ev.preventDefault(); }
+  else if (!NARROW.matches && document.body.classList.contains('lay-ov') && !document.body.classList.contains('side-off') && window.__layOpen) { window.__layOpen(false); ev.preventDefault(); }
 });
 // 악보 화면에 파일을 끌어 오면 악보 파일 창을 연다(올리기 상자에 놓을 수 있게)
 document.addEventListener('dragenter', ev => {
@@ -15025,7 +15069,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-26 08:38';
+const APP_VERSION = '2026-11-26 09:02';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();

@@ -4,7 +4,7 @@ const pre = '9203ad49', SM = process.env.SAMPLES || '/home/claude/samples/'; con
 let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fails++; };
 (async () => { const b = await chromium.launch();
  for (const [name, vp] of [['phone', { width: 390, height: 844 }], ['phoneLand', { width: 844, height: 390 }], ['tablet', { width: 820, height: 1180 }], ['desktop', { width: 1280, height: 860 }]]) {
-  const ctx = await b.newContext({ viewport: vp, hasTouch: name !== 'desktop', isMobile: name.startsWith('phone') }); const p = await ctx.newPage();
+  const ctx = await b.newContext({ viewport: vp, hasTouch: name !== 'desktop', isMobile: name.startsWith('phone') }); await ctx.addInitScript(() => { try { localStorage.setItem('hapju-layout', JSON.stringify({ mode: 'push', side: true, top: true })); } catch (e) {} }); const p = await ctx.newPage();   // 235번 뒤: 왼쪽 패널 옆에 두기·열림(예전 배치)을 시험
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route(/^https:\/\/(?!cdn\.jsdelivr|commst\.github\.io).*/, r => r.abort());

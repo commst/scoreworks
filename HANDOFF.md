@@ -35,6 +35,7 @@
 - **232**: 보기 단추 이름(원본 악보·인식 악보·나란히 보기·정간보 보기 — id·값은 그대로), 단추 줄 #vsBar sticky(--vsh), 나란히 함께 넘기기 되울림 막기(REC.lastSync). 사용설명서 그림은 예전 단추 이름 그대로(다시 찍을 때 바꿀 것)
 - **233**: 나란히 조각 첫 마디에도 `<print new-system>`(없으면 Verovio가 encoded를 버림), 함께 넘기기는 마디 안 높이 비율로, 악보 칸 높이 svFit(--svwh). 아이패드 재현 /tmp/ipad.cjs 방식(devices['iPad Pro 11 landscape'], 소나기 61c75dd1 모두 켜기 → 나란히 → 끝까지 내림)
 - **234**: 나란히(breaks encoded)는 Verovio `minLastJustification: 0` — 조각마다 단 하나라 모든 단이 '마지막 단'으로 늘려지지 않던 것
+- **235**: 왼쪽 패널 서랍(LAY·layApply·layOpen, hapju-layout, body.lay-ov·side-off·top-off — 처음 쓰는 기기는 닫힘). 넓은 화면에서 왼쪽 탭을 누르는 옛 시험은 addInitScript로 hapju-layout {mode:'push', side:true}를 넣을 것(pwsheetx·pwtabland처럼)
 - **25현 가야금 줄 번호는 보류**: 사용자에게 늘봄 기본 조율(1~25현 음) 또는 곡마다 조현표인지 물어봄(11-25) — 답을 받으면 율명 아래 줄 번호(lyricObjs에 줄 하나 더)
 - **다음 할 일**: 6단계 태블릿·휴대폰(손가락 끌어 넣기·옮기기 — 길게 눌러 끌기, 음표판 손가락 끌어 넣기, 줄 사이 11px 기준 크기). 5단계에서 남은 것: 정간보에 장구 말고 다른 타악은 아직 비어 있음, 산조가야금 줄 구음(12현)은 25현 쓰는 늘봄에는 안 넣음, 한자 율명 고르기
 - 남은 시험 문제: pwovfix2 'Ctrl+Z 뒤 단추 1개' 한 줄 실패(218번 판도 같음 — 원인 미확인). 예전 시험(pwedit·pwshare)은 219번에서 마디맵 없는 화면으로 옮김. 다른 시험에도 `#bars .b`(마디 칸)를 쓰는 것이 남아 있으면 같은 방식(__openEditor·__barClick)으로 옮길 것

@@ -6,7 +6,7 @@ fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
 const HTML = process.env.HTML || __dirname + '/../index.html';
 let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'ok   ' : 'FAIL ') + n + (x ? ' ' + x : '')); };
 (async () => { const b = await chromium.launch();
-  const ctx = await b.newContext(phone ? { ...devices['iPhone 13'] } : { viewport: { width: 1366, height: 900 } }); const p = await ctx.newPage();
+  const ctx = await b.newContext(phone ? { ...devices['iPhone 13'] } : { viewport: { width: 1366, height: 900 } }); await ctx.addInitScript(() => { try { if (!localStorage.getItem('hapju-layout')) localStorage.setItem('hapju-layout', JSON.stringify({ mode: 'push', side: true, top: true })); } catch (e) {} });  const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));

@@ -6,7 +6,7 @@ const pre = process.env.PRE || '9203ad49', SM = process.env.SAMPLES || '/home/cl
 let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fails++; };
 (async () => { const b = await chromium.launch();
  for (const [name, vp] of [['desktop', { width: 1280, height: 860 }], ['phone', { width: 390, height: 844 }]]) {
-  const ctx = await b.newContext({ viewport: vp, hasTouch: name === 'phone', isMobile: name === 'phone' }); const p = await ctx.newPage();
+  const ctx = await b.newContext({ viewport: vp, hasTouch: name === 'phone', isMobile: name === 'phone' }); await ctx.addInitScript(() => { try { if (!localStorage.getItem('hapju-layout')) localStorage.setItem('hapju-layout', JSON.stringify({ mode: 'push', side: true, top: true })); } catch (e) {} });  const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept());
   await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route(/^https:\/\/(?!cdn\.jsdelivr).*/, r => r.abort());
@@ -105,7 +105,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); 
   ok(JSON.stringify(L) === '{"master":{},"inst":{},"perc":{}}' && (await p.textContent('#toneState')) === '모두 기본값' && (await p.$$eval('.tone-card.changed', e => e.length)) === 0, name + ' [모두 기본값으로]');
   // 실제 재생 소리: 크기 맞추기를 끄고(__rawLevel) 1~4마디를 만들어 견줌. 켠 악기 모두를 50%로 → 전체가 약 0.32배
   const render = () => p.evaluate(async () => {
-    window.__rawLevel = 0.2; for (const id of ['optCount', 'optMetro', 'sHuman']) { const e = document.getElementById(id); if (e.checked) e.click(); }
+    window.__rawLevel = 0.2; window.__noPre = 1;   /* 235번 뒤: 뒤에서 미리 만드는 소리(231번)와 섞이지 않게 */ for (const id of ['optCount', 'optMetro', 'sHuman']) { const e = document.getElementById(id); if (e.checked) e.click(); }
     const f = document.getElementById('from'), t = document.getElementById('to'); f.value = 1; f.dispatchEvent(new Event('change', { bubbles: true })); t.value = 4; t.dispatchEvent(new Event('change', { bubbles: true }));
     const st = window.__st; st.dirty = true; document.getElementById('playBtn').click();
     for (let i = 0; i < 600 && !(st.rendered && !st.dirty && st.playing); i++) await new Promise(r => setTimeout(r, 100));
@@ -114,7 +114,8 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); 
     for (let o = 44, k = 0; o + 1 < ab.byteLength; o += 2, k++) { const v = dv.getInt16(o, true) / 32768; s += v * v; n++; if (k % ch) continue; const d = v - 2 * pv + pv2; hf += d * d; pv2 = pv; pv = v; } return { rms: Math.sqrt(s / n), hf: Math.sqrt(hf / n), n };
   });
   const R0 = await render();
-  await p.evaluate(() => { const o = { master: {}, inst: {}, perc: {} }; for (const c of document.querySelectorAll('.tone-card')) if (c.dataset.kind !== 'master') o[c.dataset.kind][c.dataset.id] = { vol: 50 }; localStorage.setItem('hapju-tone', JSON.stringify(o)); });
+  await p.evaluate(() => { const o = { master: {}, inst: {}, perc: {} }; for (const c of document.querySelectorAll('.tone-card')) if (c.dataset.kind !== 'master') o[c.dataset.kind][c.dataset.id] = { vol: 50 }; localStorage.setItem('hapju-tone', JSON.stringify(o)); window.__toneO = o; });
+  await p.waitForTimeout(1200); await p.evaluate(() => localStorage.setItem('hapju-tone', JSON.stringify(window.__toneO)));   // 앱이 늦게 저장하는 값(되돌리기 등)이 덮어쓰지 않게
   await p.reload(); await p.waitForFunction(() => window.__appReady === 'ok');
   await p.waitForFunction(() => document.querySelectorAll('#lineList .lcard').length >= 1 && window.__st.score, null, { timeout: 150000 }).catch(() => {}); await p.waitForTimeout(1500);
   if (!(await p.evaluate(() => !!window.__st.score))) { await p.setInputFiles('#pdfInput', t); await p.waitForFunction(() => document.querySelectorAll('#lineList .lcard').length >= 1 && /읽었습니다/.test(document.getElementById('fileInfo').textContent), null, { timeout: 150000 }); await p.waitForTimeout(1200); }
