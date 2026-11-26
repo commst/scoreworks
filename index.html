@@ -980,12 +980,20 @@ body { padding: 0 0 calc(var(--dockh) + 8px); background: var(--paper); }
 @media (min-width: 901px) and (max-width: 1180px) { .sidebar { width: 340px; } }
 /* 235번: 왼쪽 설정 패널 서랍(겹쳐 열기·옆에 두기)과 위 막대·보기 설정 줄 접기 — 단추는 늘 보이는 보기 단추 줄 양 끝 */
 .stage .vs-bar { display: flex; align-items: center; gap: 8px; }
-.lay-btn { flex: none; height: 38px; padding: 0 12px; border: 0; border-radius: 9px; background: var(--chip); color: var(--ink); font-weight: 600; font-size: 14px; white-space: nowrap; }
-.lay-btn[aria-expanded="false"] { background: var(--accent); color: #fff; }
-#topTgl { margin-left: auto; }
+/* 237번: 접기·펴기는 서랍 손잡이 — 왼쪽 가장자리 가운데(설정 패널), 위 가운데(위 막대·보기 설정 줄). 누르면 열고 닫음(미는 동작은 Safari 뒤로 가기와 겹쳐 쓰지 않음) */
+.drawer-h { position: fixed; z-index: 31; display: grid; place-items: center; padding: 0; border: 1px solid var(--line); background: var(--card); color: var(--muted); box-shadow: 0 2px 8px rgba(20, 30, 60, .16); cursor: pointer; font-weight: 700; line-height: 1; touch-action: manipulation; }
+.drawer-h:hover { color: var(--accent); }
+.drawer-h[aria-expanded="false"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+#sideTgl { top: calc(var(--tbh) + (100dvh - var(--tbh) - var(--dockh)) / 2 - 36px); left: var(--sidew, 0px); width: 24px; height: 72px; border-left: 0; border-radius: 0 12px 12px 0; font-size: 20px; transition: left .2s ease; }
+#topTgl { top: var(--tbh); left: 50%; transform: translateX(-50%); width: 76px; height: 20px; border-top: 0; border-radius: 0 0 12px 12px; font-size: 12px; transition: top .2s ease; }
+#sideTgl::before { content: ''; position: absolute; inset: -8px -14px -8px -4px; }
+#topTgl::before { content: ''; position: absolute; inset: -4px -12px -6px; }
+.stage .vs-bar { padding-top: 22px !important; }   /* 위 손잡이 자리(보기 단추를 가리지 않게) */
+body.welcome .stage .vs-bar { padding-top: 0 !important; }   /* 누르는 자리를 넉넉히 */
+body.welcome .drawer-h, body.sv-lock .drawer-h { display: none; }
 .side-lay { display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--line); background: var(--card); }
 .side-lay select { flex: 1; min-width: 0; font-size: 13px; padding: 4px 6px; }
-@media (max-width: 900px) { #sideTgl, .side-lay { display: none; } .lay-btn { height: 34px; padding: 0 10px; font-size: 13px; } }
+@media (max-width: 900px) { #sideTgl, .side-lay { display: none; } }
 @media (min-width: 901px) {
   .sidebar { transition: transform .2s ease, visibility .2s; }
   body.lay-ov:not(.all-panes) .shell, body.side-off:not(.all-panes) .shell { grid-template-columns: minmax(0, 1fr); }
@@ -1981,12 +1989,13 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       <div class="row" style="justify-content:space-between">
         <h2 id="tBars">악보</h2>
       </div>
-      <div class="vs-bar" id="vsBar"><button type="button" class="lay-btn" id="sideTgl" aria-expanded="true" title="설정 패널(악기·빠르기·연주·저장·음색) 열기·닫기">☰ 설정</button><div class="view-switch" role="group" aria-label="보기 방식">
+      <div class="vs-bar" id="vsBar"><div class="view-switch" role="group" aria-label="보기 방식">
         <button type="button" id="viewScore" aria-pressed="false" title="올린 악보 PDF를 그대로 봅니다">원본 악보</button>
         <button type="button" id="viewRec" aria-pressed="false" title="읽어 낸 내용(내보낼 MusicXML)을 오선보로 그려 봅니다">인식 악보</button>
         <button type="button" id="viewSide" aria-pressed="false" title="원본 PDF와 인식 악보를 나란히 놓고 같은 마디를 함께 봅니다">나란히 보기</button>
         <button type="button" id="viewJg" aria-pressed="false" title="읽어 낸 내용을 정간보로(한 악기씩 — 보기에서 악기를 고름). 율명, 장구는 구음">정간보 보기</button>
-      </div><button type="button" class="lay-btn" id="topTgl" aria-expanded="true" title="위 막대(곡 이름·악보·이력·사용법)와 보기 설정 줄 접기·펴기">▴ 위 접기</button></div>
+      </div></div>
+      <button type="button" class="drawer-h" id="sideTgl" aria-expanded="true" aria-label="설정 패널 열기·닫기" title="설정 패널(악기·빠르기·연주·저장·음색) 열기·닫기"><span>›</span></button><button type="button" class="drawer-h" id="topTgl" aria-expanded="true" aria-label="위 막대·보기 설정 줄 접기·펴기" title="위 막대(곡 이름·악보·이력·사용법)와 보기 설정 줄 접기·펴기"><span>▴</span></button>
       <div class="summary" id="summary"></div>
       <div class="warnlist" id="warnList"></div>
       <div class="bar-actions">
@@ -2086,8 +2095,9 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 26일</h3>
-    <h4>기능 업데이트 <small>1</small></h4><ul class="hlist">
-      <li><details><summary>왼쪽 설정 패널을 서랍으로 · 위 막대 접기</summary><p>악보를 더 넓게 보도록 왼쪽 설정 패널(악기·빠르기·연주·저장·음색)이 서랍이 되었습니다. 보기 단추 줄 왼쪽 <b>[☰ 설정]</b>으로 열고 닫고(✕·바깥 누르기·Esc로도 닫힘), 패널 맨 위 '설정 패널'에서 <b>악보 위에 겹쳐 열기</b>와 <b>옆에 두기</b>를 고릅니다. 오른쪽 <b>[▴ 위 접기]</b>는 위 막대와 보기 설정 줄을 접습니다. 열고 접은 상태는 이 기기에 기억됩니다.</p></details></li>
+    <h4>기능 업데이트 <small>2</small></h4><ul class="hlist">
+      <li><details><summary>서랍 손잡이</summary><p>설정 패널과 위 막대를 여닫는 단추를 <b>서랍 손잡이</b>로 바꿨습니다. 화면 왼쪽 가장자리 가운데의 손잡이(›)를 누르면 설정 패널이 열리고, 위 가운데 손잡이(▴)를 누르면 위 막대와 보기 설정 줄이 접힙니다.</p></details></li>
+      <li><details><summary>왼쪽 설정 패널을 서랍으로 · 위 막대 접기</summary><p>악보를 더 넓게 보도록 왼쪽 설정 패널(악기·빠르기·연주·저장·음색)이 서랍이 되었습니다. 보기 단추 줄 왼쪽 <b>[☰ 설정]</b>(지금은 왼쪽 가장자리 손잡이)으로 열고 닫고(✕·바깥 누르기·Esc로도 닫힘), 패널 맨 위 '설정 패널'에서 <b>악보 위에 겹쳐 열기</b>와 <b>옆에 두기</b>를 고릅니다. 오른쪽 <b>[▴ 위 접기]</b>는 위 막대와 보기 설정 줄을 접습니다. 열고 접은 상태는 이 기기에 기억됩니다.</p></details></li>
     </ul>
       <details class="hbug"><summary>버그 수정 <small>4건</small></summary><ul class="hlist bug">
       <li><details><summary>Safari에서 '프로그램이 시작되지 않았습니다'가 잘못 뜨던 문제</summary><p>앱 파일이 커서 느린 인터넷에서는 다 받기 전에 시작 검사 시간이 지나, 브라우저에서 열었는데도 경고가 떴습니다. 이제 다 받은 뒤부터 시간을 셉니다.</p></details></li>
@@ -13982,12 +13992,14 @@ function layApply(save) {
   const B = document.body.classList, w0 = $('stage').clientWidth;
   B.toggle('lay-ov', LAY.mode === 'ov'); B.toggle('side-off', !LAY.side); B.toggle('top-off', !LAY.top);
   $('sideTgl').setAttribute('aria-expanded', LAY.side ? 'true' : 'false'); $('topTgl').setAttribute('aria-expanded', LAY.top ? 'true' : 'false');
-  $('topTgl').textContent = LAY.top ? '▴ 위 접기' : '▾ 위 펴기'; $('sideMode').value = LAY.mode;
+  $('topTgl').firstChild.textContent = LAY.top ? '▴' : '▾'; $('sideTgl').firstChild.textContent = LAY.side ? '‹' : '›'; $('sideMode').value = LAY.mode;
+  { const sb = $('sidebar'); document.documentElement.style.setProperty('--sidew', (LAY.side && !NARROW.matches && sb ? sb.offsetWidth : 0) + 'px'); }
   setBarVars();
   if (save) try { localStorage.setItem(LAY_KEY, JSON.stringify(LAY)); } catch (e) {}
   if ($('stage').clientWidth !== w0) setTimeout(() => window.dispatchEvent(new Event('resize')), 240);   // 옆에 두기: 악보 칸 폭이 바뀌면 다시 맞춤(크기 바꾸기와 같은 길)
 }
 function layOpen(on) { LAY.side = !!on; layApply(true); }
+window.addEventListener('resize', () => { const sb = $('sidebar'); document.documentElement.style.setProperty('--sidew', (LAY.side && !NARROW.matches && sb ? sb.offsetWidth : 0) + 'px'); });
 window.__layOpen = layOpen; window.__lay = () => Object.assign({}, LAY);
 $('sideTgl').addEventListener('click', () => layOpen(!LAY.side));
 $('topTgl').addEventListener('click', () => { LAY.top = !LAY.top; layApply(true); });
@@ -15069,7 +15081,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-26 09:02';
+const APP_VERSION = '2026-11-26 10:38';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();
