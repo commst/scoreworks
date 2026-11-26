@@ -1796,3 +1796,9 @@
 - 화면 전체의 성격을 바꾸는 스위치라 보기 설정 줄 가운데에서 꺼내, 늘 위에 붙어 있는 보기 단추 줄(#vsBar) 오른쪽 끝에 크게(높이 40px·글자 15). 같은 요소(#svModes, #svPractice·#svEdit)를 옮김(`svModesHome`) — 전체화면과 휴대폰(900px 이하, 위에 붙는 줄이 두 줄이 되므로)에서는 예전 자리(보기 설정 줄)
 - 편집 중 표시: [✎ 편집]이 눌리면 보라, 악보 칸 둘레에 보라 테두리(`.score-view.sv-editing .sv-panes` outline) — 누르면 재생이 아니라 고르기라는 것이 바로 보임
 - 시험: pwed(PC·휴대폰)·pwed2·pwpal(PC·휴대폰)·pwdnd·pwside·pwsvfull·pwswitch·pwzoom·pwyul·pwboot, 화면 /tmp/lay.cjs(아이패드·휴대폰)
+
+## 2026-11-26 (240) · 단추·체크·고르기 모양 다듬기(UI 다듬기 ③)
+- 보기 설정 줄의 체크 상자를 켜고 끄는 스위치로(`.chk input[type=checkbox]` appearance:none, 32×18 손잡이), 둘레를 둥근 알약(켜지면 파란 바탕). 휴대폰(900px 이하)은 줄이 늘지 않게 알약 테두리 없이 작은 스위치(28×16)만
+- 고르기 상자(select)는 PC에서 둥근 모서리·꺾쇠 표시로 통일(휴대폰은 기본 모양 유지 — 줄이 늘어 검사기가 [연습] 단추를 가리던 것 확인 후 되돌림)
+- 도구줄 보조 단추는 투명 바탕+얇은 테두리, 음표판 단추는 테두리 없는 아이콘 단추(36px, 누르면 파랑). PC 음표판 간격 4px 8px(되돌리기가 둘째 줄로 밀리지 않게)
+- 시험: pwpal(PC·휴대폰)·pwed·pwdnd·pwzoom·pwswitch·pwyul·pwsvfull·pwnomap·pwboot, 화면 /tmp/shot3.cjs(아이패드·휴대폰)

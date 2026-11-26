@@ -1414,6 +1414,24 @@ body, button, input, select, textarea { font-family: var(--font-body); }
   .load-view .hero .hero-steps li { flex-direction: row; align-items: flex-start; text-align: left; padding: 11px 13px; gap: 10px; }
   .hero-waves { height: 70px; }
 }
+
+/* 240번: 단추·체크·고르기 다듬기(UI 다듬기 ③) — 체크는 스위치, 악보 도구줄은 칩·테두리 단추, 음표판은 바탕 없는 아이콘 단추 */
+.chk input[type="checkbox"] { -webkit-appearance: none; appearance: none; flex: none; width: 32px; height: 18px; margin: 0 2px 0 0; border-radius: 9px; background: var(--line-2, #c9cfdc); position: relative; cursor: pointer; transition: background .15s; vertical-align: middle; }
+.chk input[type="checkbox"]::before { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; }
+.chk input[type="checkbox"]:checked { background: var(--accent); }
+.chk input[type="checkbox"]:checked::before { transform: translateX(14px); }
+.chk input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sv-tools .chk { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 12px 0 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-size: 13.5px; cursor: pointer; }
+.sv-tools .chk:has(input:checked) { border-color: var(--b-line); background: var(--b-bg); color: var(--b-ink); }
+@media (min-width: 901px) { .sv-tools select { -webkit-appearance: none; appearance: none; min-height: 34px; padding: 4px 30px 4px 12px; border: 1px solid var(--line-2, var(--line)); border-radius: 10px; background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23778' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 11px center; color: var(--ink); font: inherit; font-size: 13.5px; cursor: pointer; } }
+:root:not(#_) .sv-tools .btn:not(.primary):not([aria-pressed="true"]):not(.sv-modes .btn) { background: transparent; color: var(--ink); border-color: var(--line-2, var(--line)); }
+:root:not(#_) .sv-tools .btn:not(.primary):not([aria-pressed="true"]):not(.sv-modes .btn):hover { background: var(--b-bg); }
+@media (max-width: 900px) { .sv-tools .chk, .sv-tools .chk:has(input:checked) { min-height: 24px; padding: 0 4px 0 0; gap: 5px; font-size: 13px; border-color: transparent; background: transparent; color: inherit; } .sv-tools .chk input[type="checkbox"] { width: 28px; height: 16px; } .sv-tools .chk input[type="checkbox"]::before { width: 12px; height: 12px; } .sv-tools .chk input[type="checkbox"]:checked::before { transform: translateX(12px); } }
+@media (min-width: 901px) { .ed-pal { gap: 4px 8px; } }
+.ed-pal .pal-grp { gap: 2px; }
+.ed-pal button { min-height: 36px; min-width: 36px; padding: 2px 8px; border-color: transparent; background: transparent; border-radius: 8px; }
+.ed-pal button:hover:not(:disabled) { background: var(--b-bg); }
+.ed-pal button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink, #fff); border-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -2103,7 +2121,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 26일</h3>
-    <h4>기능 업데이트 <small>4</small></h4><ul class="hlist">
+    <h4>기능 업데이트 <small>5</small></h4><ul class="hlist">
+      <li><details><summary>단추·체크·고르기 모양 다듬기</summary><p>보기 설정 줄의 체크 상자가 켜고 끄는 <b>스위치</b>로 바뀌고, 켜진 항목은 파란 알약으로 표시됩니다. 고르기 상자는 둥근 모양으로 통일했고, 음표판 단추는 테두리 없는 아이콘 단추로 깔끔하게 정리했습니다(휴대폰은 화면이 좁아 작은 스위치만).</p></details></li>
       <li><details><summary>[연습 | 편집]을 위 오른쪽으로</summary><p>연습·편집 전환 단추를 보기 단추 줄 오른쪽 끝에 크게 옮겼습니다(휴대폰은 예전 자리). 편집을 켜면 단추가 보라색이 되고 악보 둘레에 보라 테두리가 생겨, 지금 누르면 재생이 아니라 음을 고른다는 것을 바로 알 수 있습니다.</p></details></li>
       <li><details><summary>확인 필요 목록을 접어 개수만</summary><p>악보를 열면 확인 필요 목록이 길게 펼쳐져 악보가 아래로 밀리던 것을, 요약 줄에 [⚠ 16마디 ▸ 펼치기]처럼 개수만 보이게 접었습니다. 누르면 펼쳐지고 다시 누르면 접히며, 펼친 상태는 이 기기에 기억됩니다.</p></details></li>
       <li><details><summary>서랍 손잡이</summary><p>설정 패널과 위 막대를 여닫는 단추를 <b>서랍 손잡이</b>로 바꿨습니다. 화면 왼쪽 가장자리 가운데의 손잡이(›)를 누르면 설정 패널이 열리고, 위 가운데 손잡이(▴)를 누르면 위 막대와 보기 설정 줄이 접힙니다.</p></details></li>
@@ -15110,7 +15129,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-26 11:29';
+const APP_VERSION = '2026-11-26 11:55';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();
