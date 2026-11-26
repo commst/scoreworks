@@ -10,6 +10,9 @@ const mode = process.argv[2]; let fail = 0; const ok = (c, m) => { console.log((
   await p.setInputFiles('#pdfInput', t); await p.waitForFunction(() => /읽었습니다/.test(document.getElementById('fileInfo').textContent), null, { timeout: 300000 });
   await p.evaluate(() => { const m = document.getElementById('msg'); if (m && !m.hidden) m.click(); });
   await p.evaluate(() => { const b = document.getElementById('allOn'); if (b) b.click(); }); await p.waitForTimeout(3000);
+  // 238번: 처음엔 경고 목록이 접혀 개수만 → 누르면 펼침(휴대폰은 악보 보기 중 요약 줄이 숨어 접힘 상태만 바꿈)
+  { const st0 = await p.evaluate(() => ({ hid: document.getElementById('warnList').hidden, tg: (document.getElementById('warnTgl') || {}).textContent || '' })); ok(st0.hid && /⚠ \d+마디/.test(st0.tg), '처음엔 접혀 개수만 (' + st0.tg + ')');
+    if (await p.isVisible('#warnTgl')) await p.click('#warnTgl'); else await p.evaluate(() => document.getElementById('warnTgl').click()); ok(await p.evaluate(() => !document.getElementById('warnList').hidden && document.querySelectorAll('#warnList .msg').length > 0), '누르면 펼침'); }
   // 217번: 마디맵이 없어져 [마디로]는 악보 보기(원본 PDF)의 그 마디로 가서 깜빡(.sv-flash)
   const rows = await p.$$eval('#warnList .msg', r => r.map(x => x.dataset.n + '마디 ' + x.textContent.slice(0, 40)));   // 마디 번호는 줄의 data-n(196번부터 붉은 길이 경고가 앞에 옴)
   ok(rows.length > 0 && rows.length <= 6, '경고 줄 ' + rows.length + ' ' + rows[0]);

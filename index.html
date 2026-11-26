@@ -160,6 +160,10 @@ body.picking .b, body.picking .sv-page, body.picking #svPages > * { cursor: cros
 .stop-near-bars { flex: none; border-color: var(--warn); color: var(--warn); font-weight: 600; }
 .stop-near-bars:hover { background: var(--warn-bg); }
 @media (max-width: 480px) { .bar-actions { align-items: flex-start; } .bar-actions .hint { flex: 1; } }
+#summary .wtgl { font: inherit; font-size: 13px; font-weight: 600; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--ink); padding: 2px 10px; margin-right: 4px; cursor: pointer; }
+#summary .wtgl .bad { color: var(--bad, #c0392b); }
+#summary .wtgl .car { color: var(--muted); font-weight: 500; }
+#summary.w-closed .wnum { display: none; }
 .summary { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13.5px; color: var(--muted); }
 .summary b { color: var(--ink); font-weight: 600; }
 .legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); }
@@ -11278,6 +11282,10 @@ function renderBars() {
   add('마디', state.bars.length); add('박자', ts.join(' · ')); add('확인 필요', warnBars.length ? '' : '없음');
   if (warnBars.length) {   // 확인 필요 마디 번호를 눌러 그 마디로 바로 가기(188번)
     const box = $('summary').lastChild.querySelector('b');
+    // 238번: 경고 목록은 처음엔 접어 개수만(누르면 펼침, 이 기기에 기억 hapju-warnopen) — 악보가 아래로 밀리지 않게
+    { const nb = warnBars.filter(b => lenWarn(b).length).length, t = document.createElement('button'); t.type = 'button'; t.className = 'wtgl'; t.id = 'warnTgl';
+      t.innerHTML = `⚠ ${warnBars.length}마디` + (nb ? ` <span class="bad">· 음 길이 ${nb}</span>` : '') + ' <span class="car"></span>';
+      t.addEventListener('click', () => { warnOpenSet(!warnOpenGet()); }); box.appendChild(t); }
     for (const b of warnBars) { const k = document.createElement('button'); k.type = 'button'; k.className = 'wnum'; k.textContent = b.number; k.title = `${b.number}마디로 가기: ${b.warnings.join(' / ')}`; k.addEventListener('click', () => warnGo(b.number)); box.appendChild(k); }
   }
   const cnt = {};
@@ -11301,9 +11309,17 @@ function renderBars() {
     });
     $('warnList').appendChild(more);
   }
+  warnOpenSet(warnOpenGet(), true);
   const fsig = exportLines().map(l => l.key).join(',') + '|' + state.bars.length;
   fixRender(); if (fixIdx == null || fsig !== fixSig) { fixSig = fsig; fixSoon(); }   // 229번: 경고 목록을 다시 그릴 때마다(음 하나 고칠 때마다) 곡 전체 대조(0.7초)를 하던 것 — 아직 안 셌을 때만. 고친 뒤는 overStale이 정함
   updateOut();
+}
+function warnOpenGet() { try { return localStorage.getItem('hapju-warnopen') === '1'; } catch (e) { return false; } }
+function warnOpenSet(on, quiet) {
+  if (!quiet) try { localStorage.setItem('hapju-warnopen', on ? '1' : '0'); } catch (e) {}
+  const t = $('warnTgl'), has = !!t;
+  $('warnList').hidden = has && !on; $('summary').classList.toggle('w-closed', has && !on);
+  if (t) { t.setAttribute('aria-expanded', on ? 'true' : 'false'); t.title = on ? '확인 필요 목록 접기' : '확인 필요 목록 펼치기'; t.querySelector('.car').textContent = on ? '▾ 접기' : '▸ 펼치기'; }
 }
 function updateOut() {
   const from = +$('from').value || 1, to = +$('to').value || lastBar();
@@ -15081,7 +15097,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-26 10:38';
+const APP_VERSION = '2026-11-26 11:18';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();

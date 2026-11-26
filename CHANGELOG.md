@@ -1785,3 +1785,9 @@
 - 누르면 열고 닫음. 밀어서 여는 동작은 넣지 않음(아이패드 Safari에서 왼쪽 가장자리 밀기는 '뒤로 가기')
 - 첫 화면·전체화면에서는 손잡이를 숨김
 - 시험: /tmp/lay.cjs(아이패드 가로·휴대폰), pwside·pwed(PC·휴대폰)·pwswitch·pwzoom·pwsheetx·pwnomap·pwpal 휴대폰·pwboot
+
+## 2026-11-26 (238) · 경고 목록을 접어 개수만(UI 다듬기 ①)
+- 사용자(11-26): 경고 목록을 모두 펼쳐 보여 주지 말고 접어 개수만, 누르면 펼침 → 화면 다듬기 제안 문서(https://claude.ai/artifact/WaxbbubNVCc4Arkqo8AyfG) 진행 순서 ①
+- 요약 줄 '확인 필요' 칸에 **[⚠ n마디 · 음 길이 m ▸ 펼치기]**(#warnTgl). 처음엔 접힘(#warnList hidden, 마디 번호 칩 `.wnum`도 숨김 `#summary.w-closed`), 누르면 지금 목록 그대로 펼침, 다시 누르면 접음. 이 기기에 기억(localStorage `hapju-warnopen`). 악보 위 노란 테두리·도구줄 [⚠ 경고]·휴대폰 경고 창은 그대로
+- 결과: 소나기 총보(16마디) 아이패드 가로에서 악보가 화면 위쪽(약 830px → 약 830−700)에 바로 보임
+- 시험: pwwarngo(PC·휴대폰 — 접힘·펼침 확인 더함), pwlenwarn·pwhidden·pwnomap(펼친 목록을 쓰므로 hapju-warnopen=1을 넣음), pwboot. pwwarnsheet·pwreload는 이번 전 판에서도 실패(창 단추 보이지 않음·스캔 샘플 파일 없음 — 예전부터)
