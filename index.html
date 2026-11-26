@@ -2185,7 +2185,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       <li><details><summary>서랍 손잡이</summary><p>설정 패널과 위 막대를 여닫는 단추를 <b>서랍 손잡이</b>로 바꿨습니다. 화면 왼쪽 가장자리 가운데의 손잡이(›)를 누르면 설정 패널이 열리고, 위 가운데 손잡이(▴)를 누르면 위 막대와 보기 설정 줄이 접힙니다.</p></details></li>
       <li><details><summary>왼쪽 설정 패널을 서랍으로 · 위 막대 접기</summary><p>악보를 더 넓게 보도록 왼쪽 설정 패널(악기·빠르기·연주·저장·음색)이 서랍이 되었습니다. 보기 단추 줄 왼쪽 <b>[☰ 설정]</b>(지금은 왼쪽 가장자리 손잡이)으로 열고 닫고(✕·바깥 누르기·Esc로도 닫힘), 패널 맨 위 '설정 패널'에서 <b>악보 위에 겹쳐 열기</b>와 <b>옆에 두기</b>를 고릅니다. 오른쪽 <b>[▴ 위 접기]</b>는 위 막대와 보기 설정 줄을 접습니다. 열고 접은 상태는 이 기기에 기억됩니다.</p></details></li>
     </ul>
-      <details class="hbug"><summary>버그 수정 <small>5건</small></summary><ul class="hlist bug">
+      <details class="hbug"><summary>버그 수정 <small>6건</small></summary><ul class="hlist bug">
+        <li><details><summary>율명·구음 글자가 겹쳐 보임</summary><p>음표가 빽빽한 곳에서 '청황'처럼 두 글자 율명이 옆 글자와 겹쳐 알아볼 수 없던 것을 고쳤습니다. 글자 자리를 넉넉히 잡고, 그래도 좁은 곳은 글자를 조금 좁게 그립니다.</p></details></li>
         <li><details><summary>태블릿 세로에서 악보 칸이 낮게 잘려 보임</summary><p>아이패드를 세로로 두고 악보를 불러오면 악보 칸이 낮아 첫 단만 보이고, 끝까지 내려도 칸 아래가 비어 있던 것을 고쳤습니다. 이제 위에 붙은 단추 줄 바로 밑부터 연주 막대 바로 위까지 악보가 보입니다.</p></details></li>
       <li><details><summary>Safari에서 '프로그램이 시작되지 않았습니다'가 잘못 뜨던 문제</summary><p>앱 파일이 커서 느린 인터넷에서는 다 받기 전에 시작 검사 시간이 지나, 브라우저에서 열었는데도 경고가 떴습니다. 이제 다 받은 뒤부터 시간을 셉니다.</p></details></li>
       <li><details><summary>나란히 보기 오른쪽 악보가 칸 폭 절반에서 끝나던 문제</summary><p>나란히 보기에서 오른쪽 인식 악보의 단이 칸 폭의 절반쯤에서 끝나 작게 보였습니다. 이제 단마다 칸 폭 끝까지 씁니다.</p></details></li>
@@ -10024,8 +10025,33 @@ async function recRender(c, src, width, decide, pre, onCut) {
 }
 // 그린 뒤: 음 id 찾아보기 표, 고친 마디 ✎, 지금 마디 다시 표시
 // only: 다시 그린 조각들만(229번 — 고친 조각만 찾아보기 표·✎ 표시를 고침, 전체는 처음 그릴 때)
+// 245번: 아래 글자(율명·구음)가 겹치지 않게 — Verovio는 한글 글자 폭을 모르고(글꼴 수치에 없음) 자리를 잡아 빽빽한 8분·16분음표에서 '청태'처럼 두 글자 율명이 옆 글자와 겹침.
+// 그린 뒤 같은 단·같은 줄(verse)의 글자끼리 가운데 사이 거리를 재서, 넘치는 글자만 가운데를 두고 가로로 줄이고(최대 40%까지) 많이 줄면 세로도 조금 줄임
+function recLyricFit(root) {
+  const syls = root ? root.querySelectorAll('g.syl > text') : []; if (!syls.length) return;
+  const rows = new Map();
+  for (const t of syls) {
+    t.removeAttribute('transform');
+    let bb; try { bb = t.getBBox(); } catch (e) { continue; } if (!bb.width) continue;
+    const sys = t.closest('g.system'), v = t.closest('g.verse'), y = +t.getAttribute('y') || 0;
+    let row = null; for (const [k, r] of rows) if (k.sys === sys && k.v === (v && v.getAttribute('data-n') || '') && Math.abs(k.y - y) < bb.height * 0.5) { row = r; break; }
+    if (!row) { row = []; rows.set({ sys, v: v && v.getAttribute('data-n') || '', y }, row); }
+    row.push({ t, c: bb.x + bb.width / 2, w: bb.width, h: bb.height, y });
+  }
+  for (const row of rows.values()) {
+    row.sort((a, b) => a.c - b.c);
+    for (let i = 0; i < row.length; i++) {
+      const it = row[i], gap = it.h * 0.12;
+      const room = Math.min(i ? it.c - row[i - 1].c : Infinity, i < row.length - 1 ? row[i + 1].c - it.c : Infinity) - gap;
+      if (!(room < it.w)) continue;
+      const sx = Math.max(0.4, room / it.w), sy = Math.max(0.72, Math.min(1, sx * 1.3));
+      it.t.setAttribute('transform', `translate(${it.c} ${it.y}) scale(${sx.toFixed(3)} ${sy.toFixed(3)}) translate(${-it.c} ${-it.y})`);
+    }
+  }
+}
 function recAfterDraw(only) {
   const cs = only && only.length && REC.idx ? only : REC.chunks;
+  for (const c of cs) recLyricFit(c.el);
   if (cs === REC.chunks) REC.idx = new Map();
   else for (const k of [...REC.idx.keys()]) { const bi = +k.split('_')[2]; if (cs.some(c => bi >= c.from && bi < c.to)) REC.idx.delete(k); }
   for (const c of cs) for (const el of c.el.querySelectorAll('g.note[data-id^="n"]')) {
@@ -13333,6 +13359,9 @@ function wrapPartName(name) {
   if (cur.trim()) lines.push(cur.trim());
   return lines.map(esc).join('&#10;');
 }
+// 245번: 화면용 가사(율명·구음)는 한글 한 글자마다 양옆에 좁은 빈칸(U+2009)을 붙여 Verovio가 글자 폭을 넉넉히 잡게 함(한글 폭을 모름) — 파일용은 그대로
+const LYR_PAD = '\u2009';
+function lyrPad(t) { const n = (String(t).match(/[\uac00-\ud7a3\u3131-\u318e]/g) || []).length; if (n < 2) return t; const p = LYR_PAD.repeat(n - 1); return p + t + p; }
 function buildMusicXml(xo) {
   // xo.ids: 화면용(인식 악보 보기) — 음마다 id(줄·오선·마디·성부·순번)를 붙임. 파일로 내보낼 때는 붙이지 않음(내보낸 파일이 전과 같게, 212번)
   const SCREEN = !!(xo && xo.ids);
@@ -13922,7 +13951,7 @@ function buildMusicXml(xo) {
         if (orn) nots.push(`<ornaments>${orn}</ornaments>`);
         if (o.fermata) nots.push('<fermata type="upright"/>');
         if (nots.length) x += `<notations>${nots.join('')}</notations>`;
-        if (o.lyr) for (const [n, t] of o.lyr) x += `<lyric number="${n}"><syllabic>single</syllabic><text>${esc(t)}</text></lyric>`;
+        if (o.lyr) for (const [n, t] of o.lyr) x += `<lyric number="${n}"><syllabic>single</syllabic><text>${esc(SCREEN ? lyrPad(t) : t)}</text></lyric>`;
         return x + '</note>\n';
       };
       // 글로 옮기는 것은 파트를 다 만든 뒤에: 다음 마디로 넘어가는 붙임줄의 시작 표시·짝 없는 이음줄 지우기가 앞 마디 음에 나중에 붙기 때문
@@ -15193,7 +15222,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-26 19:42';
+const APP_VERSION = '2026-11-26 19:52';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();
