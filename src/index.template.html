@@ -961,6 +961,8 @@ input:focus-visible, select:focus-visible, button:focus-visible, .b:focus-visibl
 :root[data-theme="dark"]:not(#_) { color-scheme: dark; }
 body { padding: 0 0 calc(var(--dockh) + 8px); background: var(--paper); }
 .app2 { min-height: 100vh; }
+/* 243번 2차: 악보 보기 칸 높이를 맞출 때(svfit)는 최소 높이를 두지 않음 — 100vh에 body 아래 여백(연주 막대 자리)이 더해져 끝까지 내리면 악보 칸 아래가 비었음 */
+body.svfit .app2 { min-height: 0; }
 .app2 > .msg { margin: 8px 16px 0; }
 #mini { display: none !important; }
 
@@ -2176,7 +2178,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       <li><details><summary>왼쪽 설정 패널을 서랍으로 · 위 막대 접기</summary><p>악보를 더 넓게 보도록 왼쪽 설정 패널(악기·빠르기·연주·저장·음색)이 서랍이 되었습니다. 보기 단추 줄 왼쪽 <b>[☰ 설정]</b>(지금은 왼쪽 가장자리 손잡이)으로 열고 닫고(✕·바깥 누르기·Esc로도 닫힘), 패널 맨 위 '설정 패널'에서 <b>악보 위에 겹쳐 열기</b>와 <b>옆에 두기</b>를 고릅니다. 오른쪽 <b>[▴ 위 접기]</b>는 위 막대와 보기 설정 줄을 접습니다. 열고 접은 상태는 이 기기에 기억됩니다.</p></details></li>
     </ul>
       <details class="hbug"><summary>버그 수정 <small>5건</small></summary><ul class="hlist bug">
-        <li><details><summary>태블릿 세로에서 악보 칸이 낮게 잘려 보임</summary><p>아이패드를 세로로 두고 악보를 처음 불러오면 악보 칸이 낮아 첫 단만 보이고 아래가 비어 있던 것을 고쳤습니다. 이제 연주 막대 바로 위까지 악보가 보입니다.</p></details></li>
+        <li><details><summary>태블릿 세로에서 악보 칸이 낮게 잘려 보임</summary><p>아이패드를 세로로 두고 악보를 불러오면 악보 칸이 낮아 첫 단만 보이고, 끝까지 내려도 칸 아래가 비어 있던 것을 고쳤습니다. 이제 위에 붙은 단추 줄 바로 밑부터 연주 막대 바로 위까지 악보가 보입니다.</p></details></li>
       <li><details><summary>Safari에서 '프로그램이 시작되지 않았습니다'가 잘못 뜨던 문제</summary><p>앱 파일이 커서 느린 인터넷에서는 다 받기 전에 시작 검사 시간이 지나, 브라우저에서 열었는데도 경고가 떴습니다. 이제 다 받은 뒤부터 시간을 셉니다.</p></details></li>
       <li><details><summary>나란히 보기 오른쪽 악보가 칸 폭 절반에서 끝나던 문제</summary><p>나란히 보기에서 오른쪽 인식 악보의 단이 칸 폭의 절반쯤에서 끝나 작게 보였습니다. 이제 단마다 칸 폭 끝까지 씁니다.</p></details></li>
       <li><details><summary>나란히 보기에서 양쪽 악보 위치가 어긋나던 문제</summary><p>원본 악보 한 단이 인식 악보에서 두 단으로 갈라져 그려질 때가 있었고(어제 빠르게 바꾸면서 생김), 소나기처럼 악기가 많은 단은 한쪽은 단 위쪽, 다른 쪽은 단 아래쪽이 보였습니다. 이제 원본 한 단 = 인식 악보 한 단으로 그리고, 함께 넘길 때 같은 악기 줄 높이끼리 맞춥니다.</p></details></li>
