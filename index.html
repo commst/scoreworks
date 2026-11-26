@@ -2183,7 +2183,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
       <li><details><summary>서랍 손잡이</summary><p>설정 패널과 위 막대를 여닫는 단추를 <b>서랍 손잡이</b>로 바꿨습니다. 화면 왼쪽 가장자리 가운데의 손잡이(›)를 누르면 설정 패널이 열리고, 위 가운데 손잡이(▴)를 누르면 위 막대와 보기 설정 줄이 접힙니다.</p></details></li>
       <li><details><summary>왼쪽 설정 패널을 서랍으로 · 위 막대 접기</summary><p>악보를 더 넓게 보도록 왼쪽 설정 패널(악기·빠르기·연주·저장·음색)이 서랍이 되었습니다. 보기 단추 줄 왼쪽 <b>[☰ 설정]</b>(지금은 왼쪽 가장자리 손잡이)으로 열고 닫고(✕·바깥 누르기·Esc로도 닫힘), 패널 맨 위 '설정 패널'에서 <b>악보 위에 겹쳐 열기</b>와 <b>옆에 두기</b>를 고릅니다. 오른쪽 <b>[▴ 위 접기]</b>는 위 막대와 보기 설정 줄을 접습니다. 열고 접은 상태는 이 기기에 기억됩니다.</p></details></li>
     </ul>
-      <details class="hbug"><summary>버그 수정 <small>4건</small></summary><ul class="hlist bug">
+      <details class="hbug"><summary>버그 수정 <small>5건</small></summary><ul class="hlist bug">
+        <li><details><summary>태블릿 세로에서 악보 칸이 낮게 잘려 보임</summary><p>아이패드를 세로로 두고 악보를 처음 불러오면 악보 칸이 낮아 첫 단만 보이고 아래가 비어 있던 것을 고쳤습니다. 이제 연주 막대 바로 위까지 악보가 보입니다.</p></details></li>
       <li><details><summary>Safari에서 '프로그램이 시작되지 않았습니다'가 잘못 뜨던 문제</summary><p>앱 파일이 커서 느린 인터넷에서는 다 받기 전에 시작 검사 시간이 지나, 브라우저에서 열었는데도 경고가 떴습니다. 이제 다 받은 뒤부터 시간을 셉니다.</p></details></li>
       <li><details><summary>나란히 보기 오른쪽 악보가 칸 폭 절반에서 끝나던 문제</summary><p>나란히 보기에서 오른쪽 인식 악보의 단이 칸 폭의 절반쯤에서 끝나 작게 보였습니다. 이제 단마다 칸 폭 끝까지 씁니다.</p></details></li>
       <li><details><summary>나란히 보기에서 양쪽 악보 위치가 어긋나던 문제</summary><p>원본 악보 한 단이 인식 악보에서 두 단으로 갈라져 그려질 때가 있었고(어제 빠르게 바꾸면서 생김), 소나기처럼 악기가 많은 단은 한쪽은 단 위쪽, 다른 쪽은 단 아래쪽이 보였습니다. 이제 원본 한 단 = 인식 악보 한 단으로 그리고, 함께 넘길 때 같은 악기 줄 높이끼리 맞춥니다.</p></details></li>
@@ -9393,7 +9394,9 @@ function svSyncView() {
     const sticky = getComputedStyle(tools).position === 'sticky';
     const top = ($('topbar').offsetHeight || 57) + (vb && vb.offsetParent && getComputedStyle(vb).position === 'sticky' ? vb.offsetHeight : 0) + (sticky ? tools.offsetHeight + mg(tools) : 0);
     const inf = $('svInfo'), infH = inf && !inf.hidden ? inf.offsetHeight + mg(inf) : 0;
-    const after = document.documentElement.scrollHeight - (panes.getBoundingClientRect().bottom + scrollY);
+    // 243번: 아래 끝은 본문(#shell) 끝 + body 아래 여백(연주 막대 자리)으로 셈 — 문서 높이(scrollHeight)는 닫힌 아래 서랍(화면 밖으로 밀어 둔 설정 칸)까지 세어 태블릿 세로에서 악보 칸이 280px로 줄었음
+    const sh = $('shell'), pb = panes.getBoundingClientRect().bottom;
+    const after = sh ? Math.max(0, sh.getBoundingClientRect().bottom - pb) + px(getComputedStyle(document.body).paddingBottom) : document.documentElement.scrollHeight - (pb + scrollY);
     const minH = innerWidth <= 900 ? 280 : 320, H = Math.max(minH, Math.floor(innerHeight - after - top - infH - 6));
     const v = H + 'px'; if (v !== lastH) { lastH = v; document.documentElement.style.setProperty('--svwh', v); }
     if (!B.contains('svfit')) B.add('svfit');
@@ -15188,7 +15191,7 @@ $('histBtn').addEventListener('click', openHistory); $('histBtn2').addEventListe
 // ---------- 판 번호와 새 판 알림 ----------
 // 빌드할 때 판 번호(만든 날짜·시각)를 넣는다. 웹 주소(GitHub Pages)에서 열었을 때는 version.json을 가끔 확인해
 // 열어 둔 화면보다 새 판이 올라와 있으면 '새로 고침' 안내를 띄운다
-const APP_VERSION = '2026-11-26 14:35';
+const APP_VERSION = '2026-11-26 18:57';
 $('appVer').textContent = APP_VERSION && !APP_VERSION.startsWith('/*') ? `ScoreWorks ${APP_VERSION} 판` : 'ScoreWorks';
 {
   const hosted = (() => { try { return window.top === window && /^https?:/.test(location.href) && !/claude\.ai|claudeusercontent/.test(location.host); } catch (e) { return false; } })();
