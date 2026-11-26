@@ -1791,3 +1791,8 @@
 - 요약 줄 '확인 필요' 칸에 **[⚠ n마디 · 음 길이 m ▸ 펼치기]**(#warnTgl). 처음엔 접힘(#warnList hidden, 마디 번호 칩 `.wnum`도 숨김 `#summary.w-closed`), 누르면 지금 목록 그대로 펼침, 다시 누르면 접음. 이 기기에 기억(localStorage `hapju-warnopen`). 악보 위 노란 테두리·도구줄 [⚠ 경고]·휴대폰 경고 창은 그대로
 - 결과: 소나기 총보(16마디) 아이패드 가로에서 악보가 화면 위쪽(약 830px → 약 830−700)에 바로 보임
 - 시험: pwwarngo(PC·휴대폰 — 접힘·펼침 확인 더함), pwlenwarn·pwhidden·pwnomap(펼친 목록을 쓰므로 hapju-warnopen=1을 넣음), pwboot. pwwarnsheet·pwreload는 이번 전 판에서도 실패(창 단추 보이지 않음·스캔 샘플 파일 없음 — 예전부터)
+
+## 2026-11-26 (239) · [연습 | 편집]을 보기 단추 줄 오른쪽 끝으로(UI 다듬기 ②)
+- 화면 전체의 성격을 바꾸는 스위치라 보기 설정 줄 가운데에서 꺼내, 늘 위에 붙어 있는 보기 단추 줄(#vsBar) 오른쪽 끝에 크게(높이 40px·글자 15). 같은 요소(#svModes, #svPractice·#svEdit)를 옮김(`svModesHome`) — 전체화면과 휴대폰(900px 이하, 위에 붙는 줄이 두 줄이 되므로)에서는 예전 자리(보기 설정 줄)
+- 편집 중 표시: [✎ 편집]이 눌리면 보라, 악보 칸 둘레에 보라 테두리(`.score-view.sv-editing .sv-panes` outline) — 누르면 재생이 아니라 고르기라는 것이 바로 보임
+- 시험: pwed(PC·휴대폰)·pwed2·pwpal(PC·휴대폰)·pwdnd·pwside·pwsvfull·pwswitch·pwzoom·pwyul·pwboot, 화면 /tmp/lay.cjs(아이패드·휴대폰)
