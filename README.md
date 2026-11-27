@@ -508,7 +508,7 @@ python3 tools/gen_outline_templates.py <fonts 폴더> src/outline-templates.js
 | `NODE_PATH=/opt/npm-tools/node_modules node test/pwspill.cjs <접두어> [out.json]` | 총보를 열고 모든 줄을 켠 뒤 재생 마디(state.bars)에서 마디 길이를 넘어 잘리는 음을 줄·마디별로 셈(170번 점검 도구). out.json에 마디 길이 목록도 |
 | `node test/pwxml.cjs <접두어…>` → `xsdcheck.py`·`xmlcheck.py`·`integrity.py`·`msall.sh` | MusicXML 내보내기 검사(표준 규칙, 원래 음 대비, 붙임줄·이음줄·잇단 짝, 뮤즈스코어로 열기) |
 
-이어 작업할 때의 규칙·샘플 목록·검사 순서·남은 과제는 `HANDOFF.md`에 모아 두었습니다.
+이어 작업할 때의 규칙·샘플 목록·검사 순서·남은 과제는 `HANDOFF.md`에 모아 두었습니다. Claude Code는 저장소 맨 위 `CLAUDE.md`(요약 규칙)를 세션마다 읽고, 새 작업 공간은 `bash tools/setup-workspace.sh`로 준비합니다.
 
 샘플 악보 PDF는 저작권 때문에 저장소에 넣지 않습니다. 각자 가진 악보로 실행하세요.
 

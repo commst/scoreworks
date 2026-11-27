@@ -42,7 +42,7 @@
 - **243**: svFit 아래 남는 높이 = #shell 끝 − 칸 끝 + body padding-bottom(scrollHeight는 닫힌 아래 서랍까지 세어 아이패드 세로에서 칸이 280px로 줄었음). 재현 /tmp/ipadp.cjs(devices['iPad Pro 11'], 어두운 모드). 244: body.svfit .app2 min-height 0(100vh + body 아래 여백이 끝에 빈 곳을 만듦)
 - **245**: 율명·구음 겹침 — 화면용 가사 lyrPad(두 글자 이상 한글 양옆 U+2009 ×(n−1)), 그린 뒤 recLyricFit(넘치는 글자만 가로 줄임). 겹침 세기 /tmp/sylp3.cjs
 - **사용자 할 일 목록(11-27 — 지금은 하지 말고 기록만, 사용자가 물으면 알려 줄 것)**:
-  1. Claude Code로 작업을 옮기기 위한 인수인계 문서 작성
+  1. ~~Claude Code로 작업을 옮기기 위한 인수인계 문서 작성~~ — 11-27 끝남: 저장소 맨 위 `CLAUDE.md`(Claude Code가 세션마다 자동으로 읽음 — 규칙·빌드·경로·진행 요약), `tools/setup-workspace.sh`(새 작업 공간 준비), 아래 'Claude Code로 이어 하기'
   2. 변경 내용 되돌리기(history back): 음표판에 [되돌리기] — 마디 음표 편집을 할 때마다 이전 변경을 하나씩 되돌림, [모두 되돌리기] — 마디 변경사항 모두 취소
   3. 속도 개선: 악보 불러오기가 상당히 느림, 편집 중 화면 스크롤·음표 끌기에서 랙이 많이 걸림 → 최적화·개선 방안
   4. 악보 보기의 '보기'(#svPartSel, 화면에 표시할 악보 고르기)를 하나만이 아니라 여러 개 고를 수 있게 — 지금은 '총보 전체' 또는 한 줄('OO만'). 여러 줄 띠 보기는 나란히(230번 svCropKeys)에 이미 있음
@@ -56,6 +56,13 @@
   - 되돌리기(앱이 올린 settings/ 커밋을 지우지 않게 reset 대신 파일만 되돌림): `git fetch origin main rollback/<이름> && git checkout origin/main -B main && git checkout origin/rollback/<이름> -- src index.html version.json build.py && python3 build.py && git commit -am "롤백: <이름> 판으로" && git push origin main`
   - 남긴 브랜치: `rollback/sw-before-studio`(210), `rollback/before-212`(211), `rollback/before-213`(212), `rollback/before-218`(217), `rollback/before-219`(218), `rollback/before-220`(219), `rollback/before-222`(220·221), `rollback/before-225`(222~224), `rollback/before-229`(228), `rollback/before-231`(229·230)
   - 저장 형식은 더하기만(hapju-edits 등에 새 칸을 더하되 옛 판이 읽는 칸은 그대로) → 옛 판으로 돌아가도 단원 설정·수정 기록이 깨지지 않음. 새 기록은 옛 판에서는 무시됨
+
+## Claude Code로 이어 하기 (11-27)
+
+- 사용자는 VS Code의 Claude Code 확장으로 이어 가려 함. 저장소를 열면 `CLAUDE.md`를 자동으로 읽고, 거기서 이 문서로 옴
+- 새 환경 준비: `bash tools/setup-workspace.sh` — 시험 도구가 `/home/claude/...` 경로를 그대로 쓰므로 그 구조를 만듦(Linux·WSL·클라우드). macOS처럼 `/home/claude`를 못 만들면 시험은 클라우드(claude.ai/code)·WSL에서, 또는 시험 경로를 환경 변수로 바꾸는 작업을 먼저(132개 파일 — `/home/claude/samples` 121곳, `/home/claude/web` 101곳, `/home/claude/work` 63곳)
+- 장소 옮기기: VS Code 확장과 터미널은 대화 기록을 함께 씀(터미널 `claude --resume`, 터미널용 CLI는 따로 설치). VS Code → 웹·휴대폰은 패널에서 `/remote-control`(PC에서 계속 돎). 웹 클라우드 세션 → VS Code는 세션 기록의 Web 탭, 터미널은 `claude --teleport`(사본이라 웹으로 다시 반영 안 됨). 코드는 언제나 main에 올리고 받아서 맞춤
+- claude.ai 프로젝트 '악보 리더기'의 문서(claude/CHANGELOG.md·README.md·HANDOFF.md)는 이 저장소 파일의 사본 — Claude Code에서는 저장소 파일만 고치면 됨(프로젝트 동기화는 claude.ai에서 작업할 때만)
 
 ## 210번(11-24) 타악 마디별 소리 — 끝남
 
