@@ -1,4 +1,5 @@
 const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
+// 249번: 휴대폰은 높이(↑8)·길이(4분음표)를 음표판에서 누름(검사기에서 한 음의 높이·길이 단추를 뺌)
 // 3단계(219번) 편집 모드·검사기 시험: NODE_PATH=/opt/npm-tools/node_modules node test/pwed.cjs [접두어] [phone]
 //  ① [연습 | ✎ 편집] — 편집을 켜면 PC는 나란히, 끄면 원본 PDF로 돌아감
 //  ② 인식 악보에서 음을 누르면 고름(파랑) + 검사기 + 원본 PDF 머리에 파란 동그라미, 판정('PDF 음표와 맞음' 등)
@@ -52,7 +53,7 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
   const v0 = await p.evaluate(() => window.__ed.verdict()); ok('판정이 나옴', v0 === 'ok' || v0 === 'diff' || v0 === 'na', v0);
   const c0 = await p.evaluate(() => window.__ed.ctx());
   // 높이 올리기
-  if (phone) await p.click('#edInsp button[title^="한 옥타브 올림"]'); else await p.keyboard.press('Control+ArrowUp');
+  if (phone) await p.click('#edPal button[title^="한 옥타브 올림"]'); else await p.keyboard.press('Control+ArrowUp');
   await p.waitForTimeout(400);
   const c1 = await p.evaluate(() => window.__ed.ctx());
   ok('Ctrl+↑/↑8 → 수정 기록에 높이', c1 && c1.rec && c1.rec.m && c1.rec.m[0] === c0.now[0] + 12, JSON.stringify(c1 && c1.rec));
@@ -71,7 +72,7 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
   await p.screenshot({ path: '/tmp/pwed-insp-' + (phone ? 'phone' : 'pc') + '.png' });
   // 길이
   const durBefore = (await p.evaluate(() => window.__ed.ctx())).dur;
-  if (phone) await p.click('#edInsp button[title^="4분음표"]'); else await p.keyboard.press('3');
+  if (phone) await p.click('#edPal button[aria-label="4분음표"]'); else await p.keyboard.press('3');
   await p.waitForTimeout(400);
   const c2 = await p.evaluate(() => window.__ed.ctx());
   ok('길이 4분음표', c2.dur === '1/4' && (durBefore === '1/4' || c2.rec.d === '1/4'), durBefore + ' → ' + c2.dur);

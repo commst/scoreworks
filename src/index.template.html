@@ -318,6 +318,7 @@ body.picking .b, body.picking .sv-page, body.picking #svPages > * { cursor: cros
 .ed-pal[hidden] { display: none; }
 .ed-pal .pal-grp { display: inline-flex; gap: 3px; padding-right: 10px; border-right: 1px solid var(--line); }
 .ed-pal .pal-grp:last-of-type { border-right: 0; padding-right: 0; }
+@media (min-width: 901px) { .ed-pal .pal-grp { position: relative; padding-top: 15px; } .ed-pal .pal-grp::before { content: attr(data-l); position: absolute; top: 0; left: 2px; font-size: 10.5px; line-height: 13px; color: var(--muted); white-space: nowrap; letter-spacing: .02em; } }
 .ed-pal button { min-height: 32px; min-width: 32px; padding: 2px 8px; border-radius: 9px; border: 1px solid var(--line); background: var(--btn-bg); color: var(--ink); font: inherit; font-size: 13.5px; cursor: pointer; }
 .ed-pal button:disabled { opacity: .4; cursor: default; }
 .ed-pal button.ico, .ed-insp button.ico { display: inline-flex; align-items: center; justify-content: center; gap: 3px; padding-top: 1px; padding-bottom: 1px; }
@@ -2106,7 +2107,7 @@ body, button, input, select, textarea { font-family: var(--font-body); }
           <dt>내 파트만 보기</dt>
           <dd>위쪽의 <b>보기</b> 단추를 누르면 켠 줄 목록이 열립니다. 하나를 체크하면 그 악기만('대금만'), 여러 개를 체크하면 고른 악기들만 함께('대금·해금') 보여 줍니다(원본 PDF는 그 오선만 단마다 잘라 이어서, 인식 악보는 그 파트만 다시 그려서). [총보 전체]로 돌아옵니다. 크기를 키우면 내 파트를 크게 볼 수 있습니다.</dd>
           <dt>음 수정 (✎)</dt>
-          <dd>악보 칸 위 <b>[연습 | ✎ 편집]</b>에서 <b>편집</b>을 켜면(컴퓨터는 나란히 보기로) 마디를 눌러도 재생하지 않고 고칩니다. <b>인식 악보에서 음을 누르면</b> 그 음이 파랗게 골라지고 원본 PDF의 같은 머리에 파란 동그라미, 오른쪽(휴대폰은 아래)에 <b>검사기</b>가 열립니다 — 높이(♭·♯·↓8·↑8), 길이(온~32분·점·잇단), 붙임줄, ◀ 앞 음·뒤 음 ▶, <b>[▶ 이 마디]</b>(고친 대로 그 마디만 듣기), ↺ 되돌리기. 고친 음은 보라색이고, 원본 PDF 음표와 견줘 <b>'악보대로'</b> 또는 <b>'악보와 다르게'</b>(메모 칸)가 저절로 붙습니다(♯·♭은 견주지 않음). 컴퓨터 자판: ← → 음 이동, ↑ ↓ 반음, Ctrl+↑↓ 옥타브, 1~6 길이, . 점, Space 이 마디 듣기, Esc 닫기. 원본 PDF의 <b>음표 머리를 눌러도</b> 그 음을 고르고, 마우스·펜으로는 인식 악보의 <b>음 머리를 위아래로 끌어</b> 높이를 바꿉니다(반 칸마다 한 음). 일부러 PDF와 다르게 고친 음은 겹쳐 보기에서 <b>주황 점선 ✎</b>로 보이고 확인할 곳에서 빠집니다 — 도구줄 <b>[✎ 악보와 다르게 n]</b>에서 모아 봅니다. 검사기의 <b>[✓ 이 마디 맞음]</b>은 그 악기 그 마디를 확인했다고 표시합니다(겹쳐 보기에 초록 ✓, 확인할 곳에서 빠짐). 편집 중에는 아래에 <b>음표판</b>이 나옵니다 — [✚ 음표 넣기]를 누르고 길이·성부를 고른 뒤 인식 악보 오선 위를 누르면 그 박·높이에 음이 들어가고(미리 보기, 같은 성부의 겹친 음은 덮어씀, [화음]이면 같은 박 음에 더함), [⌫ 지우기]는 누르는 음을 지웁니다. 고른 음은 ♭·♮·♯·⌒·성부 ⇅·🗑. 자판 N·R·H·Delete·Esc. 전체화면에서도 음표판·검사기를 씁니다. 원본 PDF에서 음표가 없는 곳을 누르거나 마디 미리보기의 <b>[✎ 수정]</b>을 누르면 그 마디의 모든 음을 한 창에서 고칩니다(아쟁 주법·타악 소리도). 선율 음은 ♭·♯(반음), ↓8·↑8(옥타브)로 높이를, 목록에서 음 길이를 고르고, 타악은 길이만 고릅니다. 길이를 바꾸면 같은 성부의 뒤 음들이 따라 밀립니다. 인식 악보는 고친 마디가 바로 다시 그려집니다.
+          <dd>악보 칸 위 <b>[연습 | ✎ 편집]</b>에서 <b>편집</b>을 켜면(컴퓨터는 나란히 보기로) 마디를 눌러도 재생하지 않고 고칩니다. <b>인식 악보에서 음을 누르면</b> 그 음이 파랗게 골라지고 원본 PDF의 같은 머리에 파란 동그라미, 오른쪽(휴대폰은 아래)에 <b>검사기</b>가 열립니다 — 높이(♭·♯·↓8·↑8), 길이(온~32분·점·잇단), 붙임줄, ◀ 앞 음·뒤 음 ▶, <b>[▶ 이 마디]</b>(고친 대로 그 마디만 듣기), ↺ 되돌리기. 고친 음은 보라색이고, 원본 PDF 음표와 견줘 <b>'악보대로'</b> 또는 <b>'악보와 다르게'</b>(메모 칸)가 저절로 붙습니다(♯·♭은 견주지 않음). 컴퓨터 자판: ← → 음 이동, ↑ ↓ 반음, Ctrl+↑↓ 옥타브, 1~6 길이, . 점, Space 이 마디 듣기, Esc 닫기. 원본 PDF의 <b>음표 머리를 눌러도</b> 그 음을 고르고, 마우스·펜으로는 인식 악보의 <b>음 머리를 위아래로 끌어</b> 높이를 바꿉니다(반 칸마다 한 음). 일부러 PDF와 다르게 고친 음은 겹쳐 보기에서 <b>주황 점선 ✎</b>로 보이고 확인할 곳에서 빠집니다 — 도구줄 <b>[✎ 악보와 다르게 n]</b>에서 모아 봅니다. 검사기의 <b>[✓ 이 마디 맞음]</b>은 그 악기 그 마디를 확인했다고 표시합니다(겹쳐 보기에 초록 ✓, 확인할 곳에서 빠짐). 편집 중에는 아래에 <b>음표판</b>이 나옵니다 — [✚ 음표 넣기]를 누르고 길이·성부를 고른 뒤 인식 악보 오선 위를 누르면 그 박·높이에 음이 들어가고(미리 보기, 같은 성부의 겹친 음은 덮어씀, [화음]이면 같은 박 음에 더함), [⌫ 지우기]는 누르는 음을 지웁니다. 음표판은 <b>도구 · 길이 · 높이(↓8 ♭ ♮ ♯ ↑8) · 잇기·성부(⌒ 성부 ⇅ 윗/아랫성부 화음) · 되돌리기(🗑 ↶)</b> 다섯 묶음이고, 고른 음의 높이·길이·붙임줄은 음표판으로 바꿉니다(검사기는 음 정보·판정·메모·구음, 화음의 음마다 높이와 잇단음표 같은 다른 길이만). 자판 N·R·H·Delete·Esc. 전체화면에서도 음표판·검사기를 씁니다. 원본 PDF에서 음표가 없는 곳을 누르거나 마디 미리보기의 <b>[✎ 수정]</b>을 누르면 그 마디의 모든 음을 한 창에서 고칩니다(아쟁 주법·타악 소리도). 선율 음은 ♭·♯(반음), ↓8·↑8(옥타브)로 높이를, 목록에서 음 길이를 고르고, 타악은 길이만 고릅니다. 길이를 바꾸면 같은 성부의 뒤 음들이 따라 밀립니다. 인식 악보는 고친 마디가 바로 다시 그려집니다.
             고친 내용은 이 기기에 바로 저장되어 같은 악보 PDF를 다시 올리면 자동으로 적용됩니다. 음마다 [↺ 되돌리기], 마디마다 [이 마디 모두 되돌리기], 악보 전체는 [수정 모두 되돌리기]로 되돌리고, 방금 한 수정은 Ctrl+Z로 취소합니다.
             [수정 내보내기]로 파일을 받아 두었다가 다른 기기에서 같은 악보를 올린 뒤 [수정 가져오기]로 불러올 수 있습니다. 휴대폰 브라우저는 오래 쓰지 않으면 저장 내용을 지우기도 하니 많이 고쳤다면 내보내 두세요.</dd>
           <dt>확인 필요 마디</dt>
@@ -2190,7 +2191,8 @@ body, button, input, select, textarea { font-family: var(--font-body); }
 
 <template id="histTpl">
   <section class="hday"><h3>11월 27일</h3>
-    <h4>기능 업데이트 <small>2</small></h4><ul class="hlist">
+    <h4>기능 업데이트 <small>3</small></h4><ul class="hlist">
+      <li><details><summary>음표판 다섯 묶음·검사기 정리</summary><p>편집 음표판을 <b>도구 · 길이 · 높이 · 잇기·성부 · 되돌리기</b> 다섯 묶음으로 나누고(컴퓨터는 묶음 이름이 위에 작게), 높이에 옥타브 ↓8·↑8을 더했습니다. 고른 음의 높이·길이·붙임줄은 음표판으로 바꾸고, 오른쪽(휴대폰은 아래) 검사기에서는 겹치던 단추를 빼 음 정보·판정·메모·구음 위주로 짧아졌습니다.</p></details></li>
       <li><details><summary>[검토] 단추로 묶기</summary><p>악보 칸 위의 확인 필요 마디(⚠ 경고), ✎ 악보대로, ✎ 악보와 다르게, MusicXML 겹쳐 보기를 <b>[검토 n ▾]</b> 단추 하나의 작은 창에 모았습니다. 숫자는 확인할 마디 수이고, 음 길이 문제가 있으면 빨갛게 함께 보입니다. 도구줄이 짧아집니다.</p></details></li>
       <li><details><summary>보기에서 여러 악기 고르기</summary><p>악보 보기 위쪽의 <b>보기</b> 단추를 누르면 켠 줄 목록이 열리고, 여러 악기를 체크할 수 있습니다. 고른 악기들의 오선만 이어서 보여 주고(원본·나란히·인식 악보 모두), 단추에는 '대금·해금'처럼 고른 악기가 표시됩니다. [총보 전체]로 돌아옵니다.</p></details></li>
     </ul>
@@ -4605,18 +4607,17 @@ function palRender() {
   const keepX = el.scrollLeft; el.hidden = false; el.textContent = ''; document.body.classList.add('pal-open');
   const c = ED.sel && edCtx();
   const btn = (label, fn, o = {}) => { const b = tipNode('button', o.cls || '', o.icon ? null : label); if (o.icon) { b.innerHTML = o.icon + (o.iconText ? `<span>${o.iconText}</span>` : ''); b.classList.add('ico'); b.setAttribute('aria-label', label); } b.type = 'button'; if (o.title) b.title = o.title; if (o.pressed != null) b.setAttribute('aria-pressed', String(o.pressed)); if (o.disabled) b.disabled = true; b.addEventListener('click', ev => { ev.stopPropagation(); fn(); }); return b; };
-  const grp = (...xs) => { const g = tipNode('span', 'pal-grp'); g.append(...xs); el.append(g); return g; };
-  grp(btn('↖ 고르기', () => palSetMode('sel'), { pressed: PAL.mode === 'sel', title: '음을 눌러 고르기 (Esc)' }), btn('음표 넣기', () => palSetMode(PAL.mode === 'note' ? 'sel' : 'note'), { icon: noteIcon('q', '<path d="M17 25h7M20.5 21.5v7" stroke="currentColor" stroke-width="1.8"/>'), iconText: '넣기', pressed: PAL.mode === 'note', cls: 'pal-ins-b', title: '오선 위를 누르면 그 박·그 높이에 음표 (N)' }), btn('지우기(쉼표로)', () => palSetMode(PAL.mode === 'rest' ? 'sel' : 'rest'), { icon: ICON_REST, iconText: '지우기', pressed: PAL.mode === 'rest', title: '누르는 음을 지움(쉼표가 됨) (R)' }));
+  const grp = (l, ...xs) => { const g = tipNode('span', 'pal-grp'); g.dataset.l = l; g.setAttribute('role', 'group'); g.setAttribute('aria-label', l); g.append(...xs); el.append(g); return g; };   // 249번: 묶음마다 이름(도구·길이·높이·잇기·성부·되돌리기)
+  grp('도구', btn('↖ 고르기', () => palSetMode('sel'), { pressed: PAL.mode === 'sel', title: '음을 눌러 고르기 (Esc)' }), btn('음표 넣기', () => palSetMode(PAL.mode === 'note' ? 'sel' : 'note'), { icon: noteIcon('q', '<path d="M17 25h7M20.5 21.5v7" stroke="currentColor" stroke-width="1.8"/>'), iconText: '넣기', pressed: PAL.mode === 'note', cls: 'pal-ins-b', title: '오선 위를 누르면 그 박·그 높이에 음표 (N)' }), btn('지우기(쉼표로)', () => palSetMode(PAL.mode === 'rest' ? 'sel' : 'rest'), { icon: ICON_REST, iconText: '지우기', pressed: PAL.mode === 'rest', title: '누르는 음을 지움(쉼표가 됨) (R)' }));
   const selDur = c && !c.s.tie && PAL.mode === 'sel';
-  grp(...ED_DUR.map(([v, t], i) => palDurBtn(v, btn(t + '음표', () => { if (Date.now() - (PAL.dragDone || 0) < 400) return; PAL.dur = v; PAL.dot = false; PAL.tri = false; if (selDur) edDur(v); palRender(); }, { icon: noteIcon(NOTE_KIND[i]), pressed: (selDur ? String(c.ce.dur) === v : PAL.dur === v && !PAL.dot && !PAL.tri) || (!selDur && PAL.dur === v), title: `${t}음표 (${i + 1})${selDur ? ' — 고른 음 길이' : ' — 넣을 길이'} · 악보로 끌어다 놓으면 그 자리에 넣기` }))),
+  grp('길이', ...ED_DUR.map(([v, t], i) => palDurBtn(v, btn(t + '음표', () => { if (Date.now() - (PAL.dragDone || 0) < 400) return; PAL.dur = v; PAL.dot = false; PAL.tri = false; if (selDur) edDur(v); palRender(); }, { icon: noteIcon(NOTE_KIND[i]), pressed: (selDur ? String(c.ce.dur) === v : PAL.dur === v && !PAL.dot && !PAL.tri) || (!selDur && PAL.dur === v), title: `${t}음표 (${i + 1})${selDur ? ' — 고른 음 길이' : ' — 넣을 길이'} · 악보로 끌어다 놓으면 그 자리에 넣기` }))),
     btn('점', () => { if (selDur) edDot(); else { PAL.dot = !PAL.dot; if (PAL.dot) PAL.tri = false; palRender(); } }, { icon: ICON_DOT, pressed: !selDur && PAL.dot, title: '점 (.)' }),
     btn('셋잇단', () => { if (selDur) edDur(String(c.ce.dur.mul(F(2, 3)))); else { PAL.tri = !PAL.tri; if (PAL.tri) PAL.dot = false; palRender(); } }, { icon: ICON_TRI, pressed: !selDur && PAL.tri, title: '셋잇단 (넣을 길이의 2/3)' }));
-  grp(btn('윗성부', () => { PAL.voice = 'R'; palRender(); }, { pressed: PAL.voice === 'R', title: '넣을 성부: 윗성부(기둥 위)' }), btn('아랫성부', () => { PAL.voice = 'L'; palRender(); }, { pressed: PAL.voice === 'L', title: '넣을 성부: 아랫성부(기둥 아래)' }), btn('화음', () => { PAL.chord = !PAL.chord; palRender(); }, { pressed: PAL.chord, title: '같은 박에 음이 있으면 화음으로 더함 (H)' }));
   const no = !c || c.s.tie, pit = !no && c.ce.midis && c.ce.midis.length;
-  grp(btn('♭', () => edPitch(-1), { disabled: !pit, title: '고른 음 반음 내림 (↓)' }), btn('♮', palNatural, { disabled: !pit, title: '고른 음을 조표대로' }), btn('♯', () => edPitch(1), { disabled: !pit, title: '고른 음 반음 올림 (↑)' }),
-    btn('⌒', () => { const on = !!(c.rec && c.rec.tie === true); edPatch({ tie: !on }); }, { disabled: !pit, title: '앞 음과 붙임줄' }),
-    btn('성부 ⇅', palVoice, { disabled: no, title: '고른 음을 다른 성부로' }), btn('🗑', palDelete, { disabled: no, cls: 'pal-del-b', title: '고른 음 지우기 (Delete)' }));
-  grp(btn('↶', () => { if (undoEdit()) showMsg('되돌렸습니다.'); }, { title: '되돌리기 (Ctrl+Z)' }));
+  grp('높이', btn('↓8', () => edPitch(-12), { disabled: !pit, title: '한 옥타브 내림 (Ctrl+↓)' }), btn('♭', () => edPitch(-1), { disabled: !pit, title: '반음 내림 (↓)' }), btn('♮', palNatural, { disabled: !pit, title: '조표대로' }), btn('♯', () => edPitch(1), { disabled: !pit, title: '반음 올림 (↑)' }), btn('↑8', () => edPitch(12), { disabled: !pit, title: '한 옥타브 올림 (Ctrl+↑)' }));
+  grp('잇기·성부', btn('⌒', () => { const on = !!(c.rec && c.rec.tie === true); edPatch({ tie: !on }); }, { disabled: !pit, pressed: !!(pit && c.rec && c.rec.tie === true), title: '앞 음과 붙임줄로 잇기·풀기' }),
+    btn('성부 ⇅', palVoice, { disabled: no, title: '고른 음을 다른 성부로' }), btn('윗성부', () => { PAL.voice = 'R'; palRender(); }, { pressed: PAL.voice === 'R', title: '넣을 성부: 윗성부(기둥 위)' }), btn('아랫성부', () => { PAL.voice = 'L'; palRender(); }, { pressed: PAL.voice === 'L', title: '넣을 성부: 아랫성부(기둥 아래)' }), btn('화음', () => { PAL.chord = !PAL.chord; palRender(); }, { pressed: PAL.chord, title: '같은 박에 음이 있으면 화음으로 더함 (H)' }));
+  grp('되돌리기', btn('🗑', palDelete, { disabled: no, cls: 'pal-del-b', title: '고른 음 지우기 (Delete)' }), btn('↶', () => { if (undoEdit()) showMsg('되돌렸습니다.'); }, { title: '되돌리기 (Ctrl+Z)' }));
   const hint = PAL.mode === 'note' ? `넣기: 오선 위를 누르면 ${durName(String(palDur()))} · ${PAL.voice === 'R' ? '윗' : '아랫'}성부${PAL.chord ? ' · 화음' : ''}` : PAL.mode === 'rest' ? '지우기: 누르는 음을 지웁니다' : '';
   if (hint) el.append(tipNode('span', 'pal-hint', hint));
   el.scrollLeft = keepX;   // 휴대폰 한 줄 음표판: 다시 그려도 가로 위치 그대로
@@ -4712,26 +4713,24 @@ function edRender() {
     inp.addEventListener('change', () => edPatch({ memo: inp.value.trim() })); inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') inp.blur(); ev.stopPropagation(); });
     el.append(inp);
   }
-  // 높이
-  if (pitched && !c.s.tie && c.ce.midis) c.ce.midis.forEach((m, j) => {
+  // 높이 — 249번: 한 음은 음표판(↓8 ♭ ♮ ♯ ↑8)으로, 화음만 음마다 여기서
+  if (pitched && !c.s.tie && c.ce.midis && c.ce.midis.length > 1) c.ce.midis.forEach((m, j) => {
     const row = tipNode('div', 'ei-row'); if (j === 0) row.append(tipNode('span', 'lab', c.ce.midis.length > 1 ? '높이 (화음은 음마다)' : '높이'));
     row.append(btn('↓8', () => edPitch(-12, j), { title: '한 옥타브 내림 (Ctrl+↓)' }), btn('♭', () => edPitch(-1, j), { title: '반음 내림 (↓)' }), tipNode('b', 'ei-name', pitchName(m)), btn('♯', () => edPitch(1, j), { title: '반음 올림 (↑)' }), btn('↑8', () => edPitch(12, j), { title: '한 옥타브 올림 (Ctrl+↑)' }));
     el.append(row);
   });
   // 길이
   if (!c.s.tie) {
-    const row = tipNode('div', 'ei-row'); row.append(tipNode('span', 'lab', '길이 (같은 성부의 뒤 음들이 따라 밀림)'));
+    // 249번: 온~32분·점·셋잇단은 음표판으로 — 여기는 그 밖의 길이(잇단음표 등)만
+    const row = tipNode('div', 'ei-row'); row.append(tipNode('span', 'lab', '다른 길이 (잇단음표 등 — 온~32분·점은 아래 음표판)'));
     const cur = String(c.ce.dur);
-    ED_DUR.forEach(([v, t], i) => row.append(btn(t + '음표', () => edDur(v), { icon: noteIcon(NOTE_KIND[i]), pressed: cur === v, title: `${t}음표 (${i + 1})` })));
-    const dotted = ED_DUR.some(x => parseFr(x[0]).mul(F(3, 2)).eq(c.ce.dur));
-    row.append(btn('점', edDot, { icon: ICON_DOT, pressed: dotted, title: '점 붙이기·떼기 (.)' }));
     const sel = document.createElement('select'); sel.setAttribute('aria-label', '음 길이(잇단음표 등)'); sel.title = '잇단음표 등 다른 길이';
     for (const [v, t] of DUR_OPTS.some(o => o[0] === cur) ? DUR_OPTS : [[cur, durName(cur)], ...DUR_OPTS]) { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.append(o); }
     sel.value = cur; sel.addEventListener('change', () => edDur(sel.value)); row.append(sel);
     el.append(row);
   }
-  // 붙임줄
-  if (pitched) {
+  // 붙임줄 — 249번: 잇기·풀기는 음표판 ⌒, 붙임줄로 이어 온 음의 '다시 침'만 여기
+  if (pitched && c.s.tie) {
     const row = tipNode('div', 'ei-row');
     if (!c.s.tie) { const on = !!(c.rec && c.rec.tie === true); row.append(btn(on ? '⌒ 앞 음과 이어 감' : '⌒ 앞 음과 잇기', () => edPatch({ tie: !on }), { pressed: on, title: on ? '붙임줄을 풀어 다시 칩니다' : '앞 음(같은 높이)과 붙임줄로 이어 다시 치지 않습니다' })); }
     else { const off = !!(c.rec && c.rec.tie === false); row.append(btn(off ? '다시 침' : '⌒ 이어 감', () => edPatch({ tie: off }), { pressed: !off, title: off ? '붙임줄로 다시 이어 앞 음을 길게 울립니다' : '붙임줄을 끊고 이 음을 다시 칩니다' })); }
