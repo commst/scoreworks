@@ -1845,3 +1845,11 @@
 - 여러 줄은 230번의 오선 띠 보기(svCropKeys → svPartRes().keys → svLayoutPart)를 원본 악보·나란히 모두에 씀, 인식 악보는 recKeepParts가 고른 파트 모두, 음표 따라가기(svNotesAt·recNotesAt)·겹쳐 보기·숨은 쉼표·PDF 음 고르기·정간보(첫 고른 줄)는 `svSelKeys()`/`svSelHas()`로
 - 앱 사용법·사용설명서(7장 '보기' 줄, PDF 다시 만듦 51쪽) 글 갱신
 - 시험: 새 test/pwparts.cjs(PC·휴대폰 — 단추·창·한 줄·두 줄·세 줄 띠 수, 바깥 누르면 닫힘, 인식 악보 한 마디 오선 3 → 총보 전체 19), pwrec·pwyul(PC·휴대폰)·pwhidden·pwside·pwswitch·pwzoom·pwed·pwnomap·pwboot
+
+## 2026-11-27 (248) · [검토 n ▾] 묶음(UI 다듬기 ④-2) + 휴대폰 화면이 옆으로 넓어지던 것
+- 도구줄의 ⚠ 경고(휴대폰만 보이던 #svWarn)·✎ 악보대로(#svFix)·✎ 악보와 다르게(#svDiff)·MusicXML 겹쳐 보기(#svOverLbl)를 단추 하나 **[검토 n ▾]**(#svRev, 작은 창 #svRevPop)로 묶음 — PC·휴대폰 같음. n = 확인 필요 마디 수, 음 길이 문제가 있으면 '· 음 길이 m' 빨강(svRevCount — 경고 단추 갱신 때 함께). 창 안 단추는 예전 단추 그대로(보이기·숫자는 각자 갱신), 누르면 창을 닫고 예전 창을 엶. 고칠 곳이 없으면 '확인할 마디·고칠 곳이 없습니다'(svRevNone). 바깥·Esc로 닫힘. 넓은 화면의 경고 목록(238번 접기)은 그대로
+- 떠 있는 작은 창(보기·검토)이 화면 오른쪽 밖으로 나가면 왼쪽으로 당김(popFit)
+- 버그: 휴대폰에서 악보 보기 위 마디 정보 줄(#svInfo, 223번)의 긴 경고 글이 줄 바꿈 없이 길어 화면 전체(레이아웃 폭)를 776px까지 넓힘 → 도구 단추가 화면 밖으로, 좌우로 밀림. `.sv-info { width: 0; min-width: 100% }`로 글 길이가 폭을 정하지 않게. pwwarnsheet의 '[마디로] 누르면 창 닫힘'이 예전부터 실패하던 원인도 이것(창 단추가 화면 밖)
+- 247번의 `let svParts`를 renderPartSel 앞으로(선언 전 접근 후보 — tdzcheck)
+- 앱 사용법·사용설명서(7장·9장 겹쳐 보기 자리, PDF 51쪽) 갱신
+- 시험: pwwarnsheet(휴대폰 [검토]·폭 넘침 없음·창이 화면 안·[⚠ 경고] 창, PC [검토] 창·Esc — 처음으로 모두 통과), pwed2([검토]를 열고 ✎ 악보와 다르게), pwparts(PC·휴대폰)·pwfixlist·pwed·pwnomap·pwswitch·pwzoom·pwsvfull·pwpal 휴대폰·pwhidden·pwlenwarn·pwboot

@@ -6,7 +6,7 @@
 ## 먼저 읽을 것
 - `HANDOFF.md` — 작업 규칙·작업 환경·샘플 목록·검사 순서·남은 과제·**사용자 할 일 목록**(맨 위 ★ 절). 새 세션은 이것부터
 - `README.md` — 사용법·구조·빌드·도구·시험 목록
-- `CHANGELOG.md` — 고친 내용(번호 순, 지금 247번까지). 새 항목은 `## YYYY-MM-DD (번호) · 제목` + 원인·고친 것·시험
+- `CHANGELOG.md` — 고친 내용(번호 순, 지금 248번까지). 새 항목은 `## YYYY-MM-DD (번호) · 제목` + 원인·고친 것·시험
 
 ## 작업 규칙 (사용자 요구 — 꼭 지킬 것)
 1. **고칠 때마다 함께 갱신**: CHANGELOG.md(날짜+번호), README.md(사용법·구조가 바뀌면), HANDOFF.md(진행 메모), 앱 안 업데이트 이력(`src/index.template.html`의 `<template id="histTpl">` — 날짜 section, 기능은 `<h4>기능 업데이트 <small>n</small>`, 버그는 접힌 묶음 `<details class="hbug"><summary>버그 수정 <small>n건</small>…`, 개수 맞출 것), 앱 사용법 글, 화면이 바뀌면 사용설명서(`tools/manual/manual.html` → PDF, README 1-1-1)
@@ -32,6 +32,6 @@
 - 화면 시험은 Playwright(`test/pw*.cjs`), pdf.js·Verovio CDN은 시험 안에서 로컬 파일로 바꿔 끼움. 한글 파일 이름은 setInputFiles가 못 올려 `/tmp/pick-<접두어>.pdf`로 복사해 씀
 
 ## 지금 진행 중인 것 (자세한 것은 HANDOFF)
-- UI 다듬기(제안 문서 https://claude.ai/artifact/WaxbbubNVCc4Arkqo8AyfG): ①경고 접기 238 ②연습·편집 239 ③단추 240 ④보기▾ 241(남은 것 [검토 n]) ⑤편집 도구 역할 ⑥첫 사용 안내 ⑦사용설명서 보강(악보 불러오기 → 경우별 음 고치기 → 내보내기 따라 하기). 242 설정 칸 모양, 243·244 태블릿 세로 악보 칸, 245 율명 겹침
+- UI 다듬기(제안 문서 https://claude.ai/artifact/WaxbbubNVCc4Arkqo8AyfG): ①경고 접기 238 ②연습·편집 239 ③단추 240 ④보기▾ 241·검토 248 ⑤편집 도구 역할 ⑥첫 사용 안내 ⑦사용설명서 보강(악보 불러오기 → 경우별 음 고치기 → 내보내기 따라 하기). 242 설정 칸 모양, 243·244 태블릿 세로 악보 칸, 245 율명 겹침
 - 사용자 할 일 목록(HANDOFF ★ 절): 되돌리기·모두 되돌리기 단추, 속도 개선(불러오기·스크롤·끌기 랙), '보기' 여러 악보 고르기(247 끝)
 - 25현 가야금 줄 번호: 사용자에게 늘봄 조율을 물어 둔 상태

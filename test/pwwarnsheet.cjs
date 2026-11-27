@@ -17,8 +17,12 @@ const open = async (b, opt) => { const p = await (await b.newContext(opt)).newPa
     await p.evaluate(() => { const v = [...document.querySelectorAll('button')].find(x => /악보로 보기/.test(x.textContent) && x.offsetParent); if (v) v.click(); }); await p.waitForTimeout(1500);
     ok('악보로 보기 중', await p.evaluate(() => document.body.classList.contains('sv-mode')));
     ok('경고 목록 숨김', !(await p.isVisible('#warnList')));
+    ok('[검토 n] 보임·수', await p.isVisible('#svRev') && /검토 \d+/.test(await p.textContent('#svRev')), await p.textContent('#svRev'));   // 248번: 경고는 [검토] 창 안
+    ok('화면 폭 넘침 없음', await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), await p.evaluate(() => document.documentElement.scrollWidth + '/' + innerWidth));   // 248번: 정보 줄 긴 글이 폭을 넓히던 것
+    await p.click('#svRev'); await p.waitForTimeout(300); await p.screenshot({ path: '/tmp/revpop-phone.png' }); ok('[검토] 창이 화면 안', await p.evaluate(() => document.getElementById('svRevPop').getBoundingClientRect().right <= document.documentElement.clientWidth));
     ok('[⚠ 경고] 보임', await p.isVisible('#svWarn'), await p.textContent('#svWarn'));
     await p.click('#svWarn'); await p.waitForTimeout(400);
+    ok('[검토] 창 닫힘', !(await p.isVisible('#svRevPop')));
     const r = await p.evaluate(() => ({ rows: document.querySelectorAll('.warn-dlg .msg').length, bad: document.querySelectorAll('.warn-dlg .msg.bad').length, n: document.getElementById('svWarnN').textContent }));
     ok('창: 경고 마디 모두', r.rows > 0 && String(r.rows) === r.n, JSON.stringify(r));
     await p.screenshot({ path: '/tmp/warnsheet-phone.png' });
@@ -27,5 +31,8 @@ const open = async (b, opt) => { const p = await (await b.newContext(opt)).newPa
     ok('페이지 오류 없음', !errs.length, errs.join(' | ')); }
   { const { p } = await open(b, { viewport: { width: 1366, height: 900 } });
     await p.evaluate(() => { const v = [...document.querySelectorAll('button')].find(x => /악보로 보기/.test(x.textContent) && x.offsetParent); if (v) v.click(); }); await p.waitForTimeout(1500);
-    ok('컴퓨터: 단추 숨김, 목록 보임', !(await p.isVisible('#svWarn')) && await p.isVisible('#warnList')); }
+    ok('컴퓨터: 단추 숨김, 목록 보임', !(await p.isVisible('#svWarn')) && await p.isVisible('#warnList'));
+    await p.click('#svRev'); await p.waitForTimeout(300); await p.screenshot({ path: '/tmp/revpop-pc.png' });
+    ok('컴퓨터: [검토] 창에 경고·겹쳐 보기', await p.isVisible('#svWarn') && await p.isVisible('#svOver'));
+    await p.keyboard.press('Escape'); await p.waitForTimeout(200); ok('Esc로 닫힘', !(await p.isVisible('#svRevPop'))); }
   await b.close(); console.log(fail ? `${fail}개 실패` : 'ALL OK'); process.exit(fail ? 1 : 0); })();

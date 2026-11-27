@@ -61,6 +61,7 @@ let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'o
   await p.screenshot({ path: '/tmp/pwed2-ov.png' });
   const lst = await p.evaluate(() => window.__ed.diff());
   ok('  [✎ 악보와 다르게 n] 단추·목록', await p.evaluate(() => !document.getElementById('svDiff').hidden) && lst.length >= 1 && lst.some(x => x[3] === '지휘자 지시'), JSON.stringify(lst.slice(0, 3)));
+  if (!(await p.isVisible('#svDiff'))) await p.click('#svRev');   // 248번: [검토] 창 안
   await p.click('#svDiff'); await p.waitForTimeout(400);
   ok('  목록 창', await p.evaluate(() => /악보와 다르게 고친 곳/.test((document.querySelector('.edit-dlg h2') || {}).textContent || '')));
   await p.keyboard.press('Escape'); await p.waitForTimeout(200);

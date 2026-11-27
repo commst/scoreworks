@@ -38,7 +38,7 @@
 - **235**: 왼쪽 패널 서랍(LAY·layApply·layOpen, hapju-layout, body.lay-ov·side-off·top-off — 처음 쓰는 기기는 닫힘). 넓은 화면에서 왼쪽 탭을 누르는 옛 시험은 addInitScript로 hapju-layout {mode:'push', side:true}를 넣을 것(pwsheetx·pwtabland처럼)
 - **236(긴급)**: 시작 검사 6초는 DOMContentLoaded부터(16MB 받는 중 잘못된 경고), preSoon에서 SV_PHONE 대신 matchMedia
 - **237**: 접기·펴기 = 서랍 손잡이(.drawer-h #sideTgl 왼쪽 가장자리 가운데 --sidew, #topTgl 위 가운데) — 밀기 동작 없음(Safari 뒤로 가기)
-- **UI 다듬기(11-26~, 제안 문서 https://claude.ai/artifact/WaxbbubNVCc4Arkqo8AyfG)**: 사용자 결정 — 율명·구음 단추는 바깥 유지, 단위 작업마다 배포, 가벼운 것부터 ①경고 목록 접기(238 끝) ②연습·편집을 첫 줄로(239 끝 — svModesHome, 휴대폰·전체화면은 예전 자리) ③단추 모양(240 끝 — 스위치·알약·select, 휴대폰은 작은 스위치만·select 기본) ④[보기▾](241 — #svPop·svPopSet, 전체화면은 바깥에 둠)·[검토 n] (242 — 사용자 요청으로 설정 칸 모양 맞추기 먼저: `.pane2` CSS, 제목 왼쪽·스위치 목록) ⑤편집 도구 역할 ⑥첫 사용 안내 ⑦사용설명서 보강(악보 불러오기→경우별 음 고치기→내보내기 따라하기). 나머지 '정할 것'은 작업하며 정함
+- **UI 다듬기(11-26~, 제안 문서 https://claude.ai/artifact/WaxbbubNVCc4Arkqo8AyfG)**: 사용자 결정 — 율명·구음 단추는 바깥 유지, 단위 작업마다 배포, 가벼운 것부터 ①경고 목록 접기(238 끝) ②연습·편집을 첫 줄로(239 끝 — svModesHome, 휴대폰·전체화면은 예전 자리) ③단추 모양(240 끝 — 스위치·알약·select, 휴대폰은 작은 스위치만·select 기본) ④[보기▾](241 — #svPop·svPopSet, 전체화면은 바깥에 둠)·[검토 n](248 끝 — #svRev·#svRevPop·svRevCount·popFit, 휴대폰 폭 넘침 .sv-info 고침) (242 — 사용자 요청으로 설정 칸 모양 맞추기 먼저: `.pane2` CSS, 제목 왼쪽·스위치 목록) ⑤편집 도구 역할 ⑥첫 사용 안내 ⑦사용설명서 보강(악보 불러오기→경우별 음 고치기→내보내기 따라하기). 나머지 '정할 것'은 작업하며 정함
 - **243**: svFit 아래 남는 높이 = #shell 끝 − 칸 끝 + body padding-bottom(scrollHeight는 닫힌 아래 서랍까지 세어 아이패드 세로에서 칸이 280px로 줄었음). 재현 /tmp/ipadp.cjs(devices['iPad Pro 11'], 어두운 모드). 244: body.svfit .app2 min-height 0(100vh + body 아래 여백이 끝에 빈 곳을 만듦)
 - **245**: 율명·구음 겹침 — 화면용 가사 lyrPad(두 글자 이상 한글 양옆 U+2009 ×(n−1)), 그린 뒤 recLyricFit(넘치는 글자만 가로 줄임). 겹침 세기 /tmp/sylp3.cjs
 - **사용자 할 일 목록(11-27 — 지금은 하지 말고 기록만, 사용자가 물으면 알려 줄 것)**:
