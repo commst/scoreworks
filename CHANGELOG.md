@@ -1838,3 +1838,10 @@
 - 고친 것(앱은 그대로): 시험·도구 스크립트 119개(.cjs·.mjs)의 `/home/claude` 287곳을 `__SWR`(= `process.env.SW_ROOT || '/home/claude'`)로, 파이썬 7개는 `SWR = os.environ.get('SW_ROOT', …)`, 셸 5개는 `${SW_ROOT:-/home/claude}`. `/opt/npm-tools/node_modules/…`를 직접 부르던 14개는 `process.env.NPM_TOOLS`(없으면 /opt/npm-tools) — .mjs의 정적 import는 동적 import로(ESM은 NODE_PATH를 안 봄). 기본값이 예전 경로라 지금 작업 공간은 그대로
 - `tools/setup-workspace.sh`: `SW_ROOT`(기본 /home/claude) 아래에 저장소 링크·샘플(비공개 저장소)·pdf.js·Verovio를 꾸림, `/opt`에 쓸 수 없으면 도구는 `$SW_ROOT/npm-tools`에. 맥 예: `SW_ROOT=$HOME/sw bash tools/setup-workspace.sh` 뒤 `export SW_ROOT=$HOME/sw NPM_TOOLS=$HOME/sw/npm-tools NODE_PATH=$HOME/sw/npm-tools/node_modules`
 - 확인: 바꾼 파일 모두 `node --check`·`py_compile`·`bash -n`, 기본 경로로 pwboot·tdzcheck·musicxml-import, 빈 폴더 `SW_ROOT=/tmp/sw`에 setup-workspace.sh를 돌려 그 경로로 pwyul·pwside·회귀 스냅숏(snap check — 101파일 차이 0)
+
+## 2026-11-27 (247) · 보기에서 여러 악기 고르기(사용자 할 일 4)
+- 사용자: 악보 보기의 '보기'(화면에 표시할 악보)를 하나만이 아니라 여러 개 고를 수 있게
+- 고친 것: '보기' 고르기 상자를 단추 #svPartBtn + 작은 창 #svPartPop(총보 전체 단추 + 켠 줄마다 체크)으로. 체크 0개 = 총보 전체, 1개 = 예전 'OO만'(svPart), 2개 이상 = `svParts`(줄 차례). 단추 글은 '소금만'·'소금·태평소'·'소금 외 2'. 바깥·Esc로 닫힘. 숨은 select #svPartSel은 한 줄 고르기·시험용으로 그대로(값을 바꾸면 svParts는 비움)
+- 여러 줄은 230번의 오선 띠 보기(svCropKeys → svPartRes().keys → svLayoutPart)를 원본 악보·나란히 모두에 씀, 인식 악보는 recKeepParts가 고른 파트 모두, 음표 따라가기(svNotesAt·recNotesAt)·겹쳐 보기·숨은 쉼표·PDF 음 고르기·정간보(첫 고른 줄)는 `svSelKeys()`/`svSelHas()`로
+- 앱 사용법·사용설명서(7장 '보기' 줄, PDF 다시 만듦 51쪽) 글 갱신
+- 시험: 새 test/pwparts.cjs(PC·휴대폰 — 단추·창·한 줄·두 줄·세 줄 띠 수, 바깥 누르면 닫힘, 인식 악보 한 마디 오선 3 → 총보 전체 19), pwrec·pwyul(PC·휴대폰)·pwhidden·pwside·pwswitch·pwzoom·pwed·pwnomap·pwboot
