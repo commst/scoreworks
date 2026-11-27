@@ -6,7 +6,7 @@
 ## 먼저 읽을 것
 - `HANDOFF.md` — 작업 규칙·작업 환경·샘플 목록·검사 순서·남은 과제·**사용자 할 일 목록**(맨 위 ★ 절). 새 세션은 이것부터
 - `README.md` — 사용법·구조·빌드·도구·시험 목록
-- `CHANGELOG.md` — 고친 내용(번호 순, 지금 245번까지). 새 항목은 `## YYYY-MM-DD (번호) · 제목` + 원인·고친 것·시험
+- `CHANGELOG.md` — 고친 내용(번호 순, 지금 246번까지). 새 항목은 `## YYYY-MM-DD (번호) · 제목` + 원인·고친 것·시험
 
 ## 작업 규칙 (사용자 요구 — 꼭 지킬 것)
 1. **고칠 때마다 함께 갱신**: CHANGELOG.md(날짜+번호), README.md(사용법·구조가 바뀌면), HANDOFF.md(진행 메모), 앱 안 업데이트 이력(`src/index.template.html`의 `<template id="histTpl">` — 날짜 section, 기능은 `<h4>기능 업데이트 <small>n</small>`, 버그는 접힌 묶음 `<details class="hbug"><summary>버그 수정 <small>n건</small>…`, 개수 맞출 것), 앱 사용법 글, 화면이 바뀌면 사용설명서(`tools/manual/manual.html` → PDF, README 1-1-1)
@@ -26,8 +26,9 @@
 - `src/studio/*.ts`를 고쳤으면 먼저 `node tools/build-studio.mjs`(esbuild) → `src/studio-bundle.js`
 - Node·Playwright·esbuild·acorn은 `NODE_PATH=<npm-tools>/node_modules`로 찾음(이전 작업 공간은 `/opt/npm-tools/node_modules`)
 
-## 작업 공간 (경로 주의)
-- 시험 도구 대부분이 **`/home/claude/...` 경로를 그대로 씀**(샘플 `/home/claude/samples`, pdf.js `/home/claude/web/node_modules`, Verovio `/home/claude/work/vrv`, 저장소 `/home/claude/scoreplay`). 새 환경이면 먼저 `bash tools/setup-workspace.sh`(Linux·WSL·클라우드). `/home/claude`를 만들 수 없는 환경(macOS 등)이면 사용자에게 알리고, 시험만 클라우드(claude.ai/code)나 WSL에서 돌리거나 경로를 환경 변수로 바꾸는 작업을 제안할 것
+## 작업 공간 (경로)
+- 시험 도구는 **작업 공간 뿌리 `SW_ROOT`**(기본 `/home/claude`) 아래 `samples/`(샘플 PDF)·`scoreplay_sample/`(비공개 샘플 저장소·회귀 기준 golden)·`web/node_modules`(pdf.js)·`work/vrv`(Verovio)·`scoreplay/`(이 저장소)를 씀. 도구(Playwright·esbuild·acorn)는 `NPM_TOOLS`(기본 `/opt/npm-tools`) — 246번
+- **새 환경(맥 등)**: `SW_ROOT=$HOME/sw bash tools/setup-workspace.sh` 한 번, 시험 전에는 `export SW_ROOT=$HOME/sw NPM_TOOLS=$HOME/sw/npm-tools NODE_PATH=$HOME/sw/npm-tools/node_modules`. 새 시험 스크립트도 경로는 `__SWR`(js)·`SWR`(py)·`${SW_ROOT:-/home/claude}`(sh)로 쓸 것
 - 화면 시험은 Playwright(`test/pw*.cjs`), pdf.js·Verovio CDN은 시험 안에서 로컬 파일로 바꿔 끼움. 한글 파일 이름은 setInputFiles가 못 올려 `/tmp/pick-<접두어>.pdf`로 복사해 씀
 
 ## 지금 진행 중인 것 (자세한 것은 HANDOFF)

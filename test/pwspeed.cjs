@@ -1,12 +1,13 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 const { chromium } = require('playwright'); const fs = require('fs');
-const SM = '/home/claude/samples/', pick = p => { const s = SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t = '/tmp/pick-' + p + '.pdf'; fs.copyFileSync(s, t); return t; }   // 한글 파일 이름은 setInputFiles가 올리지 못해 영어 이름으로 복사;
+const SM = __SWR + '/samples/', pick = p => { const s = SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t = '/tmp/pick-' + p + '.pdf'; fs.copyFileSync(s, t); return t; }   // 한글 파일 이름은 setInputFiles가 올리지 못해 영어 이름으로 복사;
 const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) process.exitCode = 1; };
 (async () => { const b = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] }); const p = await (await b.newContext({ viewport: { width: 1280, height: 860 } })).newPage();
  const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
- await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+ await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
  await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
  await p.addInitScript(() => { const O = window.Audio; window.Audio = function (...a) { const e = new O(...a); window.__au = e; return e; }; window.Audio.prototype = O.prototype; });
- await p.goto('file://' + (process.argv[3] || '/home/claude/web/deploy-hapju/index.html')); await p.setInputFiles('#pdfInput', pick(process.argv[2] || 'b3a31a97'));
+ await p.goto('file://' + (process.argv[3] || __SWR + '/web/deploy-hapju/index.html')); await p.setInputFiles('#pdfInput', pick(process.argv[2] || 'b3a31a97'));
  await p.waitForFunction(() => document.querySelectorAll('#lineList .lcard').length >= 1 && !document.body.classList.contains('welcome'), null, { timeout: 90000 }); await p.waitForTimeout(1200);
  const A = () => p.evaluate(() => { const a = window.__au; return { src: a.src, rate: a.playbackRate, t: a.currentTime, paused: a.paused, now: document.getElementById('nowText').textContent }; });
  const waitPlay = () => p.waitForFunction(() => /마디|카운트/.test(document.getElementById('nowText').textContent) && !/만드는/.test(document.getElementById('nowText').textContent), null, { timeout: 120000 });

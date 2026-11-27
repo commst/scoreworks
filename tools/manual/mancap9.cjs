@@ -1,13 +1,14 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 사용설명서 그림: 27_tone_tab(음색 칸: 태평소를 펼쳐 음량 80%·높은음 −3dB), 28_report(문제점 신고하기 창, 악보 파일 첨부 체크)
 const { chromium } = require('playwright'); const fs = require('fs');
-const SM = '/home/claude/samples/', pick = p => { const t = '/tmp/manual-pick/Yeonbyeon-Mokga-score.pdf'; fs.mkdirSync('/tmp/manual-pick', { recursive: true }); fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t); return t; };
-const O = '/home/claude/work/manual/img/', HTML = 'file:///home/claude/web/deploy-hapju/index.html';
+const SM = __SWR + '/samples/', pick = p => { const t = '/tmp/manual-pick/Yeonbyeon-Mokga-score.pdf'; fs.mkdirSync('/tmp/manual-pick', { recursive: true }); fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t); return t; };
+const O = __SWR + '/work/manual/img/', HTML = 'file://' + __SWR + '/web/deploy-hapju/index.html';
 (async () => { const b = await chromium.launch();
   const p = await (await b.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2, colorScheme: 'light', locale: 'ko-KR' })).newPage();
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ contentType: 'text/css', body: "@font-face{font-family:'Outfit';font-weight:100 900;font-display:swap;src:url(https://fonts.gstatic.com/outfit.woff2) format('woff2')}" }));
-  await p.route('https://fonts.gstatic.com/**', r => r.fulfill({ path: '/home/claude/work/fonts/node_modules/@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2', contentType: 'font/woff2' }));
-  await p.route('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/**', r => { const fp = '/home/claude/work/fonts/node_modules/pretendard/dist/web/variable/' + r.request().url().split('/variable/')[1].replace('.min.css', '.css'); return fs.existsSync(fp) ? r.fulfill({ path: fp }) : r.fulfill({ status: 404, body: '' }); });
+  await p.route('https://fonts.gstatic.com/**', r => r.fulfill({ path: __SWR + '/work/fonts/node_modules/@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2', contentType: 'font/woff2' }));
+  await p.route('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/**', r => { const fp = __SWR + '/work/fonts/node_modules/pretendard/dist/web/variable/' + r.request().url().split('/variable/')[1].replace('.min.css', '.css'); return fs.existsSync(fp) ? r.fulfill({ path: fp }) : r.fulfill({ status: 404, body: '' }); });
   await p.goto(HTML); await p.evaluate(() => document.fonts.ready);
   await p.setInputFiles('#pdfInput', pick('b3a31a97'));
   await p.waitForFunction(() => !document.body.classList.contains('welcome') && document.querySelectorAll('#lineList .lcard').length > 1, null, { timeout: 90000 }); await p.waitForTimeout(1200);

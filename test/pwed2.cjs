@@ -1,14 +1,15 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 220번 시험: 악보를 불러오면 원본 PDF 보기 + 3단계 2차(악보와 다르게 주황 ✎·목록, ✓ 맞음, 원본 PDF 머리 눌러 고르기, 끌어서 높이)
 // NODE_PATH=/opt/npm-tools/node_modules node test/pwed2.cjs [접두어]   (FROM=마디 순번, 기본 100)
 const { chromium } = require('playwright'); const fs = require('fs'), path = require('path');
-const pre = process.argv[2] || '9203ad49', SM = '/home/claude/samples/', t = '/tmp/pick-' + pre + '.pdf';
+const pre = process.argv[2] || '9203ad49', SM = __SWR + '/samples/', t = '/tmp/pick-' + pre + '.pdf';
 fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
-const VRV = process.env.VRV || '/home/claude/work/vrv/node_modules/verovio/dist/', HTML = 'file://' + path.resolve(process.env.HTML || __dirname + '/../index.html');
+const VRV = process.env.VRV || __SWR + '/work/vrv/node_modules/verovio/dist/', HTML = 'file://' + path.resolve(process.env.HTML || __dirname + '/../index.html');
 let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'ok   ' : 'FAIL ') + n + (x ? ' ' + x : '')); };
 (async () => {
   const b = await chromium.launch(), ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept()); p.on('console', m => { if (m.type() === 'warning') console.log('  warn', m.text()); });
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route('https://cdn.jsdelivr.net/npm/verovio@*/dist/**', r => { const f = r.request().url().split('/dist/')[1]; r.fulfill({ path: VRV + f, contentType: 'text/javascript', headers: { 'access-control-allow-origin': '*' } }); });
   await p.goto(HTML); await p.waitForTimeout(500);
   await p.evaluate(() => localStorage.setItem('hapju-view', JSON.stringify({ mode: 'score', src: 'rec', zoom: 1 })));   // 지난번에 인식 악보를 보던 기기

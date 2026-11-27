@@ -1,14 +1,15 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 악기 켜기·끄기 카드 시험(194번): NODE_PATH=/opt/npm-tools/node_modules node test/pwquick.cjs [접두어] [phone]
 //  단추 수 = 줄 수, 누르면 줄 카드 스위치와 함께 켜짐·꺼짐, 갈래 순서, 한 줄 단추 수(폭), 글자 잘림 없음, 그림 /tmp/quick-*.png
 const { chromium, devices } = require('playwright'); const fs = require('fs');
-const pre = process.argv[2] || '9203ad49', phone = process.argv.includes('phone'), SM = '/home/claude/samples/', t = '/tmp/pick-' + pre + '.pdf';
+const pre = process.argv[2] || '9203ad49', phone = process.argv.includes('phone'), SM = __SWR + '/samples/', t = '/tmp/pick-' + pre + '.pdf';
 fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
 const HTML = process.env.HTML || __dirname + '/../index.html';
 let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'ok   ' : 'FAIL ') + n + (x ? ' ' + x : '')); };
 (async () => { const b = await chromium.launch();
   const ctx = await b.newContext(phone ? { ...devices['iPhone 13'] } : { viewport: { width: 1366, height: 900 } }); await ctx.addInitScript(() => { try { if (!localStorage.getItem('hapju-layout')) localStorage.setItem('hapju-layout', JSON.stringify({ mode: 'push', side: true, top: true })); } catch (e) {} });  const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
   await p.goto('file://' + require('path').resolve(HTML)); await p.setInputFiles('#pdfInput', t);
   await p.waitForFunction(() => document.querySelectorAll('#lineList .lcard').length >= 2 && /읽었습니다/.test(document.getElementById('fileInfo').textContent), null, { timeout: 120000 });

@@ -1,7 +1,7 @@
 #!/bin/bash
 # 내보낸 MusicXML을 뮤즈스코어로 열어 PDF로: 쪽 수를 원래 쪽 바꿈(+1)과 비교
 export QT_QPA_PLATFORM=offscreen
-cd /home/claude/mscore
+cd "${SW_ROOT:-/home/claude}/mscore"
 for f in "$@"; do
   id=$(basename $f .musicxml)
   exp=$(python3 -c "

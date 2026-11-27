@@ -1,8 +1,9 @@
 # 총보↔파트보 마디 대조. python3 compare.py → 요약 출력, /home/claude/cmp/pairs.json(마디별 결과)
 import json,os,re,difflib,collections
 from fractions import Fraction as Fr
-man=json.load(open('/home/claude/manifest.json'))
-D=os.environ.get('DUMP','/home/claude/dump')
+import os; SWR = os.environ.get('SW_ROOT', '/home/claude')   # 작업 공간 뿌리 — 맥 등은 SW_ROOT로 바꿈
+man=json.load(open(os.path.join(SWR, 'manifest.json')))
+D=os.environ.get('DUMP',os.path.join(SWR, 'dump'))
 def load(h):
     p=f'{D}/{h}.json'
     return json.load(open(p)) if os.path.exists(p) else None
@@ -91,7 +92,7 @@ for g,ms in groups.items():
                 if not (NE(x) or NE(y)): continue
                 rows.append({'pn':x['n'],'sn':y['n'],'rok':x['rs']==y['rs'],'pok':x['ps']==y['ps'],'pw':x['w'],'sw':y['w'],'prs':x['rs'],'srs':y['rs'],'pps':x['ps'],'sps':y['ps'],'plen':x['len'],'slen':y['len']})
             res.append({'group':g,'part':ph,'pname':names[ph],'pline':pl,'plabel':pline['name'],'score':sh,'sline':sl,'slabel':js[sh]['lines'][sl]['name'],'ratio':r,'merged':mg,'nbars':len(pb),'sbars':len(sb),'rows':rows})
-json.dump(res,open('/home/claude/cmp/pairs.json','w'),ensure_ascii=False)
+json.dump(res,open(os.path.join(SWR, 'cmp/pairs.json'),'w'),ensure_ascii=False)
 # 요약
 for g in groups:
     rr=[x for x in res if x['group']==g]

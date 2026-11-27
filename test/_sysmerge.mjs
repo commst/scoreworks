@@ -1,6 +1,7 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 악보로 보기의 단 합치기(svSystem) 규칙을 해석기 layouts에 돌려 봄: node test/_sysmerge.mjs <접두어…>
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'; import fs from 'fs';
-const P = await import('../src/score-parser.js'); const SM = '/home/claude/samples/';
+const P = await import('../src/score-parser.js'); const SM = __SWR + '/samples/';
 function merged(sc, page) { const L = sc.layouts[page]; if (!L || !L.systems || !L.sysOf) return null;
   const n = L.staves.length, same = sc.layouts.filter((o, i) => i !== page && o && o.sysOf && o.staves.length === n), groups = L.systems.map(x => x.slice());
   for (let j = groups.length - 1; j > 0; j--) { const a = groups[j - 1][groups[j - 1].length - 1], b = groups[j][0]; const t = same.filter(o => o.sysOf[a] === o.sysOf[b]).length; if (same.length >= 2 && t * 2 > same.length) { groups[j - 1].push(...groups[j]); groups.splice(j, 1); } }

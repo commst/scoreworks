@@ -1,12 +1,13 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 168번: 음 수정 창의 붙임줄 잇기/끊기 — node test/pwtieedit.cjs <html> [desktop|mobile]
-const { chromium, devices } = require('/opt/npm-tools/node_modules/playwright'); const fs = require('fs');
+const { chromium, devices } = require((process.env.NPM_TOOLS || '/opt/npm-tools') + '/node_modules/playwright'); const fs = require('fs');
 const FILE = require('path').resolve(process.argv[2] || 'index.html'), MODE = process.argv[3] || 'desktop';
-const pdf = '/tmp/pick-b3a31a97.pdf'; fs.copyFileSync('/home/claude/samples/' + fs.readdirSync('/home/claude/samples').find(f => f.startsWith('b3a31a97')), pdf);
+const pdf = '/tmp/pick-b3a31a97.pdf'; fs.copyFileSync(__SWR + '/samples/' + fs.readdirSync(__SWR + '/samples').find(f => f.startsWith('b3a31a97')), pdf);
 let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fails++; };
 (async () => { const b = await chromium.launch();
   const ctx = await b.newContext(MODE === 'mobile' ? { ...devices['iPhone 13'] } : { viewport: { width: 1280, height: 900 } });
   const errs = []; const open = async () => { const p = await ctx.newPage(); p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept());
-    await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+    await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
     await p.route(/^https:\/\/(?!cdn\.jsdelivr).*/, r => r.abort());
     await p.goto('file://' + FILE + '#allpanes'); await p.waitForFunction(() => window.__appReady === 'ok');
     await p.setInputFiles('#pdfInput', pdf); await p.waitForFunction(() => /읽었습니다/.test(document.getElementById('fileInfo').textContent), null, { timeout: 150000 }); await p.waitForTimeout(800);

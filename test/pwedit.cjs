@@ -1,16 +1,17 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 음 고치기(✎) 기능 시험: node test/pwedit.cjs <html 절대경로> [desktop|mobile] — 고치기·되돌리기·내보내기·가져오기·다시 열기·재생
 // 219번: 마디맵(217번에 지움)의 마디 칸 ✎ 대신 마디 미리보기와 같은 __openEditor(마디 번호)로 창을 열고, '✎ 마디'는 state.bars의 edited로 봄
-const { chromium, devices } = require('/opt/npm-tools/node_modules/playwright');
+const { chromium, devices } = require((process.env.NPM_TOOLS || '/opt/npm-tools') + '/node_modules/playwright');
 const fs = require('fs');
 const FILE = process.argv[2], MODE = process.argv[3] || 'desktop';
-const pdf = '/home/claude/samples/' + fs.readdirSync('/home/claude/samples').find(f => f.startsWith('b3a31a97'));
+const pdf = __SWR + '/samples/' + fs.readdirSync(__SWR + '/samples').find(f => f.startsWith('b3a31a97'));
 (async () => {
   const browser = await chromium.launch();
   const ctx = await browser.newContext(MODE === 'mobile' ? { ...devices['iPhone 13'], acceptDownloads: true } : { viewport: { width: 1280, height: 900 }, acceptDownloads: true });
   const errs = [];
   const setup = async page => {
     page.on('pageerror', e => errs.push(e.message)); page.on('dialog', d => d.accept());
-    await page.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+    await page.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
     await page.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
     await page.goto('file://' + FILE + '#allpanes');
     await page.setInputFiles('#pdfInput', pdf);

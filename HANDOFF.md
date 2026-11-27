@@ -60,7 +60,7 @@
 ## Claude Code로 이어 하기 (11-27)
 
 - 사용자는 VS Code의 Claude Code 확장으로 이어 가려 함. 저장소를 열면 `CLAUDE.md`를 자동으로 읽고, 거기서 이 문서로 옴
-- 새 환경 준비: `bash tools/setup-workspace.sh` — 시험 도구가 `/home/claude/...` 경로를 그대로 쓰므로 그 구조를 만듦(Linux·WSL·클라우드). macOS처럼 `/home/claude`를 못 만들면 시험은 클라우드(claude.ai/code)·WSL에서, 또는 시험 경로를 환경 변수로 바꾸는 작업을 먼저(132개 파일 — `/home/claude/samples` 121곳, `/home/claude/web` 101곳, `/home/claude/work` 63곳)
+- 새 환경 준비(246번부터 경로는 환경 변수): 맥은 `SW_ROOT=$HOME/sw bash tools/setup-workspace.sh` 한 번, 시험 전 `export SW_ROOT=$HOME/sw NPM_TOOLS=$HOME/sw/npm-tools NODE_PATH=$HOME/sw/npm-tools/node_modules`. 리눅스·클라우드는 기본값(/home/claude, /opt/npm-tools) 그대로. 뮤즈스코어(test/msall.sh는 `$SW_ROOT/mscore`)·MusicXML XSD(`$SW_ROOT/work/xsd`)는 2장대로 따로
 - 장소 옮기기: VS Code 확장과 터미널은 대화 기록을 함께 씀(터미널 `claude --resume`, 터미널용 CLI는 따로 설치). VS Code → 웹·휴대폰은 패널에서 `/remote-control`(PC에서 계속 돎). 웹 클라우드 세션 → VS Code는 세션 기록의 Web 탭, 터미널은 `claude --teleport`(사본이라 웹으로 다시 반영 안 됨). 코드는 언제나 main에 올리고 받아서 맞춤
 - claude.ai 프로젝트 '악보 리더기'의 문서(claude/CHANGELOG.md·README.md·HANDOFF.md)는 이 저장소 파일의 사본 — Claude Code에서는 저장소 파일만 고치면 됨(프로젝트 동기화는 claude.ai에서 작업할 때만)
 

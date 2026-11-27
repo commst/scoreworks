@@ -1,10 +1,11 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // pdf.js 해석 결과(쪽마다 그리기 명령 목록) 캐시 — 회귀 검사 때 PDF를 다시 해석하지 않으려고(181번).
 // 해석기가 쓰는 것만 담는다: 쪽 크기·회전(viewport), 명령 번호 전부, 해석기가 읽는 명령의 인자(글자는 unicode·width·isSpace·originalCharCode),
 // 글꼴 id → 이름. 해석기(score-parser.js)의 처리는 모두 그대로 다시 돌므로, extractPages가 새 명령·글자 속성을 읽게 되면 OPCACHE_VER를 올릴 것
 // 쓰기: const sc = await loadScoreCached(P, pdfjs, 파일) — P = score-parser 모듈
 import fs from 'fs'; import zlib from 'zlib'; import crypto from 'crypto'; import path from 'path';
 export const OPCACHE_VER = 2;
-const DIR = process.env.OPCACHE || '/home/claude/opcache';
+const DIR = process.env.OPCACHE || __SWR + '/opcache';
 const KEEP = ['beginText', 'closeEOFillStroke', 'closeFillStroke', 'closePath', 'closeStroke', 'constructPath', 'endPath', 'eoFill', 'eoFillStroke', 'fill', 'fillStroke',
   'moveText', 'nextLine', 'restore', 'save', 'setCharSpacing', 'setFillGray', 'setFillRGBColor', 'setFont', 'setHScale', 'setLeading', 'setLeadingMoveText', 'setLineWidth',
   'setStrokeGray', 'setStrokeRGBColor', 'setTextMatrix', 'setTextRise', 'setWordSpacing', 'showSpacedText', 'showText', 'stroke', 'transform'];

@@ -1,16 +1,17 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // '음표를 거의 못 읽은 악보' 경고와 원인(216번): NODE_PATH=/opt/npm-tools/node_modules node test/pwreadwarn.cjs [html]
 //  ① 신아리랑(73929564, MuseScore 3.2.3)을 214번 전 상태로 읽게 해(window.__swNoMsSmufl) 경고·원인(글꼴 MScore·만든 프로그램)이 나오는지
 //  ② 고친 상태로는 경고가 없는지 ③ 보통 악보(프론티어)도 경고가 없는지
 //  신아리랑 PDF는 비공개 샘플 저장소(scoreplay_sample)에 올라가 있어야 함
 const { chromium } = require('playwright'); const fs = require('fs'), path = require('path');
-const SM = '/home/claude/samples/', HTML = 'file://' + path.resolve(process.argv[2] || __dirname + '/../index.html');
+const SM = __SWR + '/samples/', HTML = 'file://' + path.resolve(process.argv[2] || __dirname + '/../index.html');
 let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'ok   ' : 'FAIL ') + n + (x ? ' ' + x : '')); };
 const pick = pre => { const t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t); return t; };
 (async () => {
   const b = await chromium.launch();
   const run = async (pre, broken) => {
     const p = await (await b.newContext({ viewport: { width: 1280, height: 860 } })).newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
-    await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+    await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
     if (broken) await p.addInitScript(() => { globalThis.__swNoMsSmufl = true; });
     await p.goto(HTML); await p.waitForTimeout(500);
     await p.setInputFiles('#pdfInput', pick(pre));

@@ -1,11 +1,12 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 악보 다시 불러오기·못 읽는 악보 시험(190번): NODE_PATH=/opt/npm-tools/node_modules node test/pwreload.cjs [html]
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
-const SM = '/home/claude/samples/', cp = pre => { const t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t); return t; };
+const SM = __SWR + '/samples/', cp = pre => { const t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t); return t; };
 const html = path.resolve(process.argv[2] || path.join(__dirname, '../index.html'));
 let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
 (async () => { const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 1600, height: 1000 } });
   const p = await ctx.newPage(); await p.addInitScript(() => { try { if (localStorage.getItem('hapju-warnopen') == null) localStorage.setItem('hapju-warnopen', '1'); } catch (e) {} }); const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept());
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route(/^https:\/\/(?!cdn\.jsdelivr).*/, r => r.abort());
   await p.goto('file://' + html); await p.waitForFunction(() => window.__appReady === 'ok');
   const snap = () => p.evaluate(() => {

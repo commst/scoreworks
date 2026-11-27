@@ -1,6 +1,6 @@
 #!/bin/bash
 # regall.sh <이전 해석기 폴더> → /tmp/rv_*.txt, 요약
-cd /home/claude/scoreplay
+cd "${SW_ROOT:-/home/claude}/scoreplay"
 rm -f /tmp/rg?? /tmp/rg??.rv
 split -n l/8 /tmp/readable /tmp/rg
 for x in /tmp/rg??; do (tr '\n' '\0' < $x | xargs -0 -n 15 node --max-old-space-size=4000 ${TOOL:-test/regrv.mjs} $1/score-parser.js 2>/dev/null | grep -E '^[0-9a-f]{8} |^TOTAL' > $x.rv) & done; wait

@@ -1,3 +1,4 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 아쟁 주법(208번): 앱의 markPizz(악보 pizz.·arco 글자 + 음 수정 '주법' → 음마다 e.pz)를 실제 악보로 시험
 // node test/pizzmark.mjs [악보.pdf…]  — 인자가 없으면 월광 소아쟁(5139dcdd)·바르도 소아쟁(01391308)
 // 마디마다 뜯기 음 수 / 전체 음 수를 보이고, 글자 바로 앞 음은 바뀌지 않고 글자 뒤 음부터 바뀌는지, 수정 표시(pf·af·p1·a1)가 맞게 먹는지 확인
@@ -6,7 +7,7 @@ const P = await import('../src/score-parser.js');
 const src = fs.readFileSync(new URL('../src/index.template.html', import.meta.url), 'utf8');
 const a = src.indexOf('const PZ_ON = '), b = src.indexOf('const lineResOf = ');
 const { markPizz, pizzWord } = new Function(src.slice(a, b) + '; return { markPizz, pizzWord };')();
-const SAMPLES = process.env.SAMPLES || '/home/claude/samples';
+const SAMPLES = process.env.SAMPLES || __SWR + '/samples';
 let files = process.argv.slice(2);
 if (!files.length) files = fs.readdirSync(SAMPLES).filter(f => /^(5139dcdd|01391308)/.test(f)).map(f => SAMPLES + '/' + f);
 let bad = 0;

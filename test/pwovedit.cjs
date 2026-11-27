@@ -1,10 +1,11 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // MusicXML 겹쳐 보기 + 음 고치기 시험(185번): 고친 뒤 동그라미를 다시 그리는지. NODE_PATH=/opt/npm-tools/node_modules node test/pwovedit.cjs  (UP=♯ DN=♭이면 반음은 동그라미에 안 나타나 FAIL이 정상)
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
-const pre = process.env.PRE || '985e95bb', SM = '/home/claude/samples/', t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
+const pre = process.env.PRE || '985e95bb', SM = __SWR + '/samples/', t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
 let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
 (async () => { const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 1366, height: 900 } });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept()); p.on('console', m => { if (m.type() === 'warning' || m.type() === 'error') console.log('console:', m.text().slice(0, 200)); });
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route(/^https:\/\/(?!cdn\.jsdelivr).*/, r => r.abort());
   await p.goto('file://' + path.resolve(__dirname, '../index.html')); await p.waitForFunction(() => window.__appReady === 'ok');
   await p.setInputFiles('#pdfInput', t); await p.waitForFunction(() => /읽었습니다/.test(document.getElementById('fileInfo').textContent), null, { timeout: 200000 });

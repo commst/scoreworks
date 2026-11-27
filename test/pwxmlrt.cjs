@@ -1,12 +1,13 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // MusicXML 되읽기·다시 내보내기: node pwxmlrt.cjs <musicxml 파일…> → xmlout/rt-<이름>.musicxml (앱에 MusicXML을 올려 모든 줄 켜고 내보냄)
 const { chromium } = require('playwright'); const fs = require('fs');
 const path = require('path'), pick = f => { const t = '/tmp/pick-rt-' + path.basename(f).replace(/[^A-Za-z0-9.]/g, '_'); fs.copyFileSync(f, t); return t; };
-const HTML = process.env.HTML || '/home/claude/web/deploy-hapju/index.html';
+const HTML = process.env.HTML || __SWR + '/web/deploy-hapju/index.html';
 (async () => { const b = await chromium.launch();
  for (const pre of process.argv.slice(2)) {
   const p = await (await b.newContext({ viewport: { width: 1280, height: 860 }, acceptDownloads: true })).newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
   await p.goto('file://' + HTML + '#allpanes'); await p.setInputFiles('#pdfInput', pick(pre));
   try { await p.waitForFunction(() => document.querySelectorAll('#lineList .lcard').length >= 1 && /읽었습니다|MusicXML/.test(document.getElementById('fileInfo').textContent), null, { timeout: 90000 }); } catch (e) { console.log(pre, 'load fail'); await p.close(); continue; }

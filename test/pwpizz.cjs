@@ -1,13 +1,14 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 208번: 아쟁 주법(pizz.·arco) — 악보 글자로 뜯기 구간, 음 수정 창의 '주법', 저장·되돌리기, 뜯기 녹음 받기, MusicXML pizz.·arco
 // node test/pwpizz.cjs <html> [desktop|mobile]   (월광 소아쟁 파트보 5139dcdd: 9마디 PIZZ ~ 23마디 arco)
-const { chromium, devices } = require('/opt/npm-tools/node_modules/playwright'); const fs = require('fs');
+const { chromium, devices } = require((process.env.NPM_TOOLS || '/opt/npm-tools') + '/node_modules/playwright'); const fs = require('fs');
 const FILE = require('path').resolve(process.argv[2] || 'index.html'), MODE = process.argv[3] || 'desktop';
-const pdf = '/tmp/pick-5139dcdd.pdf'; fs.copyFileSync('/home/claude/samples/' + fs.readdirSync('/home/claude/samples').find(f => f.startsWith('5139dcdd')), pdf);
+const pdf = '/tmp/pick-5139dcdd.pdf'; fs.copyFileSync(__SWR + '/samples/' + fs.readdirSync(__SWR + '/samples').find(f => f.startsWith('5139dcdd')), pdf);
 let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fails++; };
 (async () => { const b = await chromium.launch();
   const ctx = await b.newContext({ ...(MODE === 'mobile' ? devices['iPhone 13'] : { viewport: { width: 1280, height: 900 } }), acceptDownloads: true });
   const errs = []; const open = async () => { const p = await ctx.newPage(); p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept());
-    await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+    await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
     await p.route(/^https:\/\/(?!cdn\.jsdelivr).*/, r => r.abort());
     await p.goto('file://' + FILE + '#allpanes'); await p.waitForFunction(() => window.__appReady === 'ok');
     await p.setInputFiles('#pdfInput', pdf); await p.waitForFunction(() => /읽었습니다/.test(document.getElementById('fileInfo').textContent), null, { timeout: 150000 }); await p.waitForTimeout(800);

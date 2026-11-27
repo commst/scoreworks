@@ -1,13 +1,14 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 접근성 검사(axe) + 중복 id
 const { chromium } = require('playwright'); const fs = require('fs');
-const SM = '/home/claude/samples/', pick = p => { const s = SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t = '/tmp/pick-' + p + '.pdf'; fs.copyFileSync(s, t); return t; }   // 한글 파일 이름은 setInputFiles가 올리지 못해 영어 이름으로 복사;
-const AXE = fs.readFileSync('/home/claude/work/axetmp/node_modules/axe-core/axe.min.js', 'utf8');
+const SM = __SWR + '/samples/', pick = p => { const s = SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t = '/tmp/pick-' + p + '.pdf'; fs.copyFileSync(s, t); return t; }   // 한글 파일 이름은 setInputFiles가 올리지 못해 영어 이름으로 복사;
+const AXE = fs.readFileSync(__SWR + '/work/axetmp/node_modules/axe-core/axe.min.js', 'utf8');
 (async () => { const b = await chromium.launch(); const all = {};
  for (const [nm, w, h] of [['desk', 1280, 860], ['phone', 390, 844]]) {
   const p = await (await b.newContext({ viewport: { width: w, height: h }, isMobile: w < 900, hasTouch: w < 900 })).newPage();
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
-  await p.goto('file:///home/claude/web/deploy-hapju/index.html'); await p.waitForTimeout(400);
+  await p.goto('file://' + __SWR + '/web/deploy-hapju/index.html'); await p.waitForTimeout(400);
   const run = async (state) => {
     await p.addScriptTag({ content: AXE }).catch(() => {});
     const r = await p.evaluate(async () => { const res = await axe.run(document, { resultTypes: ['violations'], rules: { 'color-contrast': { enabled: false } } }); return res.violations.map(v => ({ id: v.id, impact: v.impact, help: v.help, n: v.nodes.length, ex: v.nodes.slice(0, 3).map(x => x.target.join(' ') + ' :: ' + (x.failureSummary || '').split('\n')[1]) })); });

@@ -1,6 +1,7 @@
 # zip 묶음을 풀어 샘플에 넣기: python3 ingest.py <zip...> → 새 PDF 목록을 /tmp/newN 에
 import os,re,sys,hashlib,shutil,zipfile,collections
-dst='/home/claude/samples'; have={f[:8] for f in os.listdir(dst)}
+import os; SWR = os.environ.get('SW_ROOT', '/home/claude')   # 작업 공간 뿌리 — 맥 등은 SW_ROOT로 바꿈
+dst=os.path.join(SWR, 'samples'); have={f[:8] for f in os.listdir(dst)}
 dec=lambda s: re.sub(r'#U([0-9a-fA-F]{4})',lambda m:chr(int(m.group(1),16)),s)
 new=[];dup=0;seen=set();per=collections.Counter()
 for z in sys.argv[1:]:

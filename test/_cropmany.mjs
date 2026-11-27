@@ -1,7 +1,8 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 여러 마디를 한꺼번에 잘라 냄: node test/_cropmany.mjs <list.json> <outdir>  (list: [{f, li, n, cap}])
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'; import fs from 'fs'; import { execSync } from 'child_process';
 const P = await import(process.env.PARSER || '../src/score-parser.js');
-const [lst, out] = process.argv.slice(2), S = '/home/claude/samples', L = JSON.parse(fs.readFileSync(lst)); fs.mkdirSync(out, { recursive: true });
+const [lst, out] = process.argv.slice(2), S = __SWR + '/samples', L = JSON.parse(fs.readFileSync(lst)); fs.mkdirSync(out, { recursive: true });
 const byF = {}; for (const x of L) (byF[x.f] = byF[x.f] || []).push(x);
 for (const [pre, xs] of Object.entries(byF)) {
   const f = S + '/' + fs.readdirSync(S).find(x => x.startsWith(pre)); const sc = await P.loadScore(pdfjs, new Uint8Array(fs.readFileSync(f)));

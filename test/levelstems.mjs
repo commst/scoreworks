@@ -1,6 +1,6 @@
 // 음량 시험 악보(test/levelref.py)를 앱에 올려 악기·타악 소리마다 크기 맞추기 없이 WAV로 받기.
 // node test/levelstems.mjs <html> <levelref.musicxml> <출력 폴더>
-import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
+const { chromium } = await import((process.env.NPM_TOOLS || '/opt/npm-tools') + '/node_modules/playwright/index.mjs');
 import fs from 'fs';
 const [html, xml, out] = process.argv.slice(2); fs.mkdirSync(out, { recursive: true });
 const parts = JSON.parse(fs.readFileSync(xml + '.json', 'utf8'));

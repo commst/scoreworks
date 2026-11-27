@@ -1,18 +1,19 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 사용설명서 그림(190번): 12_score_play(악보로 보기 + 음표 따라가기), 13_dock(연주 막대 + 마디 이동), 29_full(전체화면 보기 + 아래 연주 막대),
 // 16a_map_top(확인 필요 바로가기), 30_unreadable(못 읽는 악보 → 첫 화면 + 오류)
 // NODE_PATH=/opt/npm-tools/node_modules node tools/manual/mancap10.cjs   (글꼴: /home/claude/work/fonts에서 npm i pretendard@1.3.9 @fontsource-variable/outfit)
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
 fs.mkdirSync('/tmp/manual-pick', { recursive: true });
-const SM = '/home/claude/samples/', pick = (p, nice) => { const t = '/tmp/manual-pick/' + (nice || p) + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t); return t; };
+const SM = __SWR + '/samples/', pick = (p, nice) => { const t = '/tmp/manual-pick/' + (nice || p) + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t); return t; };
 const O = path.resolve(__dirname, 'img') + '/', HTML = 'file://' + path.resolve(process.env.HTML || path.join(__dirname, '../../index.html'));
 const SCORE = process.env.SCORE || '52271c34';   // 연변목가 총보
 async function setup(b, w, h) {
   const ctx = await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, colorScheme: 'light' });
   const p = await ctx.newPage(); p.on('dialog', d => d.accept());
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ contentType: 'text/css', body: "@font-face{font-family:'Outfit';font-weight:100 900;font-display:swap;src:url(https://fonts.gstatic.com/outfit.woff2) format('woff2')}" }));
-  await p.route('https://fonts.gstatic.com/**', r => r.fulfill({ path: '/home/claude/work/fonts/node_modules/@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2', contentType: 'font/woff2' }));
-  await p.route('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/**', r => { const fp = '/home/claude/work/fonts/node_modules/pretendard/dist/web/variable/' + r.request().url().split('/variable/')[1].replace('.min.css', '.css'); return fs.existsSync(fp) ? r.fulfill({ path: fp }) : r.fulfill({ status: 404, body: '' }); });
+  await p.route('https://fonts.gstatic.com/**', r => r.fulfill({ path: __SWR + '/work/fonts/node_modules/@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2', contentType: 'font/woff2' }));
+  await p.route('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/**', r => { const fp = __SWR + '/work/fonts/node_modules/pretendard/dist/web/variable/' + r.request().url().split('/variable/')[1].replace('.min.css', '.css'); return fs.existsSync(fp) ? r.fulfill({ path: fp }) : r.fulfill({ status: 404, body: '' }); });
   await p.route(/^https:\/\/(?!cdn\.jsdelivr|fonts\.)/, r => r.abort());
   await p.goto(HTML); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(600);
   return p;

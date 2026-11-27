@@ -1,6 +1,7 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 const { chromium } = require('playwright'); const fs = require('fs');
 (async () => { const b = await chromium.launch(); const p = await (await b.newContext()).newPage();
-  await p.route('https://commst.github.io/scoreworks/**', r => { const f = r.request().url().split('/scoreworks/')[1].split('?')[0] || 'index.html'; console.log('ROUTE', r.request().url().slice(0,90)); const fp = '/home/claude/scoreplay/' + f; return fs.existsSync(fp) ? r.fulfill({ path: fp }) : r.fulfill({ status: 404, body: '' }); });
+  await p.route('https://commst.github.io/scoreworks/**', r => { const f = r.request().url().split('/scoreworks/')[1].split('?')[0] || 'index.html'; console.log('ROUTE', r.request().url().slice(0,90)); const fp = __SWR + '/scoreplay/' + f; return fs.existsSync(fp) ? r.fulfill({ path: fp }) : r.fulfill({ status: 404, body: '' }); });
   await p.route(/^https:\/\/formsubmit\.co\/.*/, r => { const m = /name="_next"\r\n\r\n([^\r]+)/.exec((r.request().postDataBuffer() || Buffer.alloc(0)).toString('latin1')); console.log('FS', r.request().url(), m && m[1]); return r.fulfill({ status: 303, headers: { Location: m[1] }, body: '' }); });
   await p.route(/^https:\/\/(?!formsubmit|commst\.github\.io).*/, r => r.abort());
   await p.goto('https://commst.github.io/scoreworks/'); await p.waitForTimeout(1500);

@@ -1,14 +1,15 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 태블릿 가로·세로: 왼쪽 탭(악기·빠르기·연주·저장)과 아래 서랍 탭을 누를 수 있는지
 const { chromium } = require('playwright'); const fs = require('fs');
-const SM = '/home/claude/samples/', pick = p => { const s = SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t = '/tmp/pick-' + p + '.pdf'; fs.copyFileSync(s, t); return t; }   // 한글 파일 이름은 setInputFiles가 올리지 못해 영어 이름으로 복사;
-const HTML = process.argv[2] || '/home/claude/web/deploy-hapju/index.html';
+const SM = __SWR + '/samples/', pick = p => { const s = SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t = '/tmp/pick-' + p + '.pdf'; fs.copyFileSync(s, t); return t; }   // 한글 파일 이름은 setInputFiles가 올리지 못해 영어 이름으로 복사;
+const HTML = process.argv[2] || __SWR + '/web/deploy-hapju/index.html';
 const SIZES = [['iPad mini 가로', 1024, 768], ['iPad Air 가로', 1180, 820], ['iPad Pro 11 가로', 1194, 834], ['iPad Pro 12.9 가로', 1366, 1024], ['갤럭시탭 가로', 1280, 800], ['작은 태블릿 가로', 960, 600], ['iPad 세로', 820, 1180]];
 let bad = 0;
 (async () => { const b = await chromium.launch();
  for (const [nm, w, h] of SIZES) {
   const ctx = await b.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: true }); await ctx.addInitScript(() => { try { localStorage.setItem('hapju-layout', JSON.stringify({ mode: 'push', side: true, top: true })); } catch (e) {} });   // 235번 뒤: 왼쪽 패널 옆에 두기·열림(예전 배치)을 시험
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
   await p.goto('file://' + HTML); await p.setInputFiles('#pdfInput', pick('b3a31a97'));
   await p.waitForFunction(() => document.querySelectorAll('#lineList .lcard').length >= 1 && !document.body.classList.contains('welcome'), null, { timeout: 90000 }); await p.waitForTimeout(800);
@@ -25,7 +26,7 @@ let bad = 0;
     if (!anyOk) bad++;
     console.log(`${anyOk ? 'ok  ' : 'FAIL'} ${nm} ${w}x${h} ${lab}: scrollY ${s.scrollY}/${s.docH - h} topbar↓${s.topbar} sidebar↑${s.sideTop} | 탭 ${s.tabs.map(t => t.t + '@' + t.top + (t.ok ? '' : '✗' + t.hit)).join(' ') || '-'} | 서랍탭 ${s.dtabs.map(t => t.t + (t.ok ? '' : '✗' + t.hit)).join(' ') || '-'}`);
   }
-  await p.screenshot({ path: `/home/claude/work/tab_${w}x${h}.png` });
+  await p.screenshot({ path: `${__SWR}/work/tab_${w}x${h}.png` });
   if (errs.length) console.log('  errors', errs);
   await ctx.close(); }
  await b.close(); process.exitCode = bad ? 1 : 0; })();

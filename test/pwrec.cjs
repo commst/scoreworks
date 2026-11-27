@@ -1,12 +1,13 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 2단계(213번) 인식 악보 보기 시험: NODE_PATH=/opt/npm-tools/node_modules node test/pwrec.cjs [접두어] [phone]
 //  ① 시작 화면(예시 장단, 쪽 그림 없음)에서 [인식 악보]가 그려짐 ② PDF를 올린 뒤 [인식 악보] — 첫 조각 시간, 모든 마디가 그려짐(조각 마디 수 = 마디 수)
 //  ③ 마디를 누르면 그 마디부터 재생 → 노란 칸(지금 마디)·음표 칠하기 ④ 크기 + ⑤ 'OO만' ⑥ 나란히(두 칸 다 보임, 좌우/위아래)
 //  ⑦ 파일용 MusicXML은 전과 같음(음 id·여러 마디 쉼표) ⑧ 페이지 오류 없음
 //  Verovio는 jsDelivr 대신 /home/claude/work/vrv/node_modules/verovio/dist에서 (없으면: mkdir -p /home/claude/work/vrv && cd 그곳 && npm i verovio@6.4.1)
 const { chromium, devices } = require('playwright'); const fs = require('fs');
-const pre = process.argv[2] || '9203ad49', phone = process.argv[3] === 'phone', SM = '/home/claude/samples/', t = '/tmp/pick-' + pre + '.pdf';
+const pre = process.argv[2] || '9203ad49', phone = process.argv[3] === 'phone', SM = __SWR + '/samples/', t = '/tmp/pick-' + pre + '.pdf';
 fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
-const VRV = process.env.VRV || '/home/claude/work/vrv/node_modules/verovio/dist/';
+const VRV = process.env.VRV || __SWR + '/work/vrv/node_modules/verovio/dist/';
 let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'ok   ' : 'FAIL ') + n + (x ? ' ' + x : '')); };
 const HTML = 'file://' + require('path').resolve(process.env.HTML || __dirname + '/../index.html');
 (async () => {
@@ -14,7 +15,7 @@ const HTML = 'file://' + require('path').resolve(process.env.HTML || __dirname +
   const ctx = await b.newContext(phone ? { ...devices['iPhone 13'] } : { viewport: { width: 1280, height: 860 } });
   const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route('https://cdn.jsdelivr.net/npm/verovio@*/dist/**', r => { const f = r.request().url().split('/dist/')[1]; r.fulfill({ path: VRV + f, contentType: 'text/javascript', headers: { 'access-control-allow-origin': '*' } }); });
   await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
   await p.goto(HTML); await p.waitForTimeout(600);

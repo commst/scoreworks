@@ -1,7 +1,8 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 163번: 총보는 하나만 — 새 총보를 올리면 지금 연 악보(총보·추가한 악보)를 닫고 새 총보를 엶, 여러 개를 놓으면 첫 파일만, 단추 이름 '총보 바꾸기'
 // NODE_PATH=/opt/npm-tools/node_modules node test/pwonescore.cjs [index.html]
 const { chromium } = require('playwright'); const fs = require('fs');
-const html = require('path').resolve(process.argv[2] || 'index.html'), SM = process.env.SAMPLES || '/home/claude/samples/';
+const html = require('path').resolve(process.argv[2] || 'index.html'), SM = process.env.SAMPLES || __SWR + '/samples/';
 const pick = pre => { const t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t); return t; };
 const A = pick('fe4bc337'), B = pick('e86f5ac0'), X = pick('5d8eb240');   // 밀양아리랑 피리, 홀로아리랑 대금, 밀양아리랑 태평소
 let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fails++; };
@@ -9,7 +10,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); 
  for (const [name, vp] of [['desktop', { width: 1280, height: 860 }], ['phone', { width: 390, height: 844 }]]) {
   const ctx = await b.newContext({ viewport: vp, hasTouch: name === 'phone' }); const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept());
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route(/^https:\/\/(?!cdn\.jsdelivr).*/, r => r.abort());
   await p.goto('file://' + html); await p.waitForFunction(() => window.__appReady === 'ok');
   ok(await p.evaluate(() => !document.getElementById('pdfInput').multiple && document.getElementById('pdfInputLabel').textContent === '총보 추가'), name + ' 총보 칸은 파일 하나만 고름, 처음 단추는 [총보 추가]');

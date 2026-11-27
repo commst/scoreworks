@@ -1,8 +1,9 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 붙임줄 대조용 일괄 자르기: PREV=<예전 해석기> node test/_tiecrop.mjs <접두어> <줄:마디,줄:마디…> <출력 png>
 // 앞 마디와 그 마디를 함께 잘라(같은 오선일 때) 위아래로 쌓고, 줄마다 예전·새 사건(이어진 음 T 표시)을 글로 찍는다
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'; import fs from 'fs'; import { execSync } from 'child_process';
 const A = await import(process.env.PREV), B = await import('../src/score-parser.js');
-const [pre, spec, out] = process.argv.slice(2), S = process.env.SAMPLES || '/home/claude/samples';
+const [pre, spec, out] = process.argv.slice(2), S = process.env.SAMPLES || __SWR + '/samples';
 const f = S + '/' + fs.readdirSync(S).find(x => x.startsWith(pre));
 const d = new Uint8Array(fs.readFileSync(f));
 const sa = await A.loadScore(pdfjs, d.slice()), sb = await B.loadScore(pdfjs, d.slice());

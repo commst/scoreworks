@@ -1,14 +1,15 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 악보 보기 '음표 따라가기' 시험: 총보를 열고 악보로 보기에서 n마디부터 재생 → 지금 소리 나는 음의 PDF 머리에 색 칸(.sv-note, 밝은 쪽 섞기로 머리만 색이 바뀜)이 겹치는지,
 // 'OO만' 보기·끄기·정지 때 사라지는지, 그림(/tmp/pwnotes-*.png)
 // NODE_PATH=/opt/npm-tools/node_modules node test/pwnotes.cjs <접두어> <마디> [phone]
 const { chromium, devices } = require('playwright'); const fs = require('fs'); const path = require('path');
-const [pre, bar, mode] = process.argv.slice(2), SM = '/home/claude/samples/'; const t = '/tmp/pick-' + pre + '.pdf';
+const [pre, bar, mode] = process.argv.slice(2), SM = __SWR + '/samples/'; const t = '/tmp/pick-' + pre + '.pdf';
 fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
 let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext(mode === 'phone' ? { ...devices['iPhone 13'] } : { viewport: { width: 1366, height: 900 }, deviceScaleFactor: +(process.env.DSF || 1) });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept());
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route(/^https:\/\/(?!cdn\.jsdelivr).*/, r => r.abort());
   await p.goto('file://' + path.resolve(process.env.HTML || path.join(__dirname, '../index.html'))); await p.waitForFunction(() => window.__appReady === 'ok');
   await p.setInputFiles('#pdfInput', t); await p.waitForFunction(() => /읽었습니다/.test(document.getElementById('fileInfo').textContent), null, { timeout: 200000 });

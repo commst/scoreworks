@@ -1,7 +1,8 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 const { chromium } = require('playwright');
 (async () => { const b = await chromium.launch(); const p = await b.newPage();
- await p.goto('file:///home/claude/work/manual/manual.html'); await p.waitForTimeout(1500);
- await p.pdf({ path: '/home/claude/work/manual/manual.pdf', format: 'A4', printBackground: true, displayHeaderFooter: true,
+ await p.goto('file://' + __SWR + '/work/manual/manual.html'); await p.waitForTimeout(1500);
+ await p.pdf({ path: __SWR + '/work/manual/manual.pdf', format: 'A4', printBackground: true, displayHeaderFooter: true,
    headerTemplate: '<div></div>',
    footerTemplate: '<div style="width:100%;font-size:8px;color:#8a90a0;text-align:center;font-family:Noto Sans CJK KR">ScoreWorks Studio 사용설명서 · <span class="pageNumber"></span> / <span class="totalPages"></span></div>',
    margin: { top: '16mm', bottom: '18mm', left: '15mm', right: '15mm' } });

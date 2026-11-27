@@ -1,6 +1,7 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 무작위로 화면을 조작해 오류(pageerror·console error)와 이상 상태를 찾는다
-const { chromium, devices } = require('/opt/npm-tools/node_modules/playwright');
-const fs = require('fs'); const SM = '/home/claude/samples/'; const all = fs.readdirSync(SM).filter(f => f.endsWith('.pdf'));
+const { chromium, devices } = require((process.env.NPM_TOOLS || '/opt/npm-tools') + '/node_modules/playwright');
+const fs = require('fs'); const SM = __SWR + '/samples/'; const all = fs.readdirSync(SM).filter(f => f.endsWith('.pdf'));
 const pick = p => SM + all.find(f => f.startsWith(p));
 const seed = +(process.argv[2] || 1), N = +(process.argv[3] || 120), mobile = process.argv[4] === 'mobile';
 let s = seed; const rnd = () => { s = (s * 1103515245 + 12345) % 2147483648; return s / 2147483648; }; const ri = n => Math.floor(rnd() * n);
@@ -11,9 +12,9 @@ let s = seed; const rnd = () => { s = (s * 1103515245 + 12345) % 2147483648; ret
   p.on('pageerror', e => errs.push('PAGEERR ' + e.message + ' @' + log.slice(-3).join(' > ') + ' | ' + (e.stack || '').split('\n').slice(1, 4).map(x => x.trim().replace(/file:.*index.html:/, 'L')).join(' ; ')));
   p.on('console', m => { if (m.type() === 'error' && !/ERR_TUNNEL|Failed to load resource|MP3 인코더|lame/.test(m.text())) errs.push('CONSOLE ' + m.text().slice(0, 200) + ' @' + log.slice(-3).join(' > ')); });
   p.on('dialog', d => d.accept());
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'), contentType: 'text/javascript' }));
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'), contentType: 'text/javascript' }));
   await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
-  await p.goto('file:///home/claude/web/deploy-hapju/index.html'); await p.waitForTimeout(800);
+  await p.goto('file://' + __SWR + '/web/deploy-hapju/index.html'); await p.waitForTimeout(800);
   const log = [];
   const pdfs = ['b3a31a97', 'd95ddafe', '59ee4663', '5b2e1f54', '52cfd0bf', '1fe03d65', 'a05c32d0', '9e386483', '20983efb'];
   const safe = async (name, fn) => { log.push(name); try { await fn(); } catch (e) { if (!/Timeout|not visible|detached|intercepts|outside of the viewport|not enabled|disabled/i.test(e.message)) errs.push('ACT ' + name + ': ' + e.message.split('\n')[0]); } };

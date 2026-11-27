@@ -1,11 +1,12 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 악보로 보기 스크롤 시험(187번): 일시정지한 채 끝까지 스크롤하며 보이는 쪽에 그림이 있는지. NODE_PATH=/opt/npm-tools/node_modules node test/pwsvscroll.cjs [html] [phone]
 const { chromium, devices } = require('playwright'); const fs = require('fs'); const path = require('path');
-const pre = process.env.PRE || '61c75dd1', SM = '/home/claude/samples/', t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
+const pre = process.env.PRE || '61c75dd1', SM = __SWR + '/samples/', t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
 const html = path.resolve(process.argv[2] || path.join(__dirname, '../index.html')), mode = process.argv[3];
 let fail = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fail++; };
 (async () => { const b = await chromium.launch(); const ctx = await b.newContext(mode === 'phone' ? { ...devices['iPhone 13'] } : { viewport: { width: 1600, height: 1100 } });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('dialog', d => d.accept());
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route(/^https:\/\/(?!cdn\.jsdelivr).*/, r => r.abort());
   await p.goto('file://' + html); await p.waitForFunction(() => window.__appReady === 'ok');
   await p.setInputFiles('#pdfInput', t); await p.waitForFunction(() => /읽었습니다/.test(document.getElementById('fileInfo').textContent), null, { timeout: 300000 });

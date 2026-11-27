@@ -1,6 +1,7 @@
 # python3 show.py <파트 접두어> [줄] [rhythm|pitch] [개수] → 다른 마디와 crop 명령
 import json,sys,subprocess
-r=json.load(open('/home/claude/cmp/pairs.json'))
+import os; SWR = os.environ.get('SW_ROOT', '/home/claude')   # 작업 공간 뿌리 — 맥 등은 SW_ROOT로 바꿈
+r=json.load(open(os.path.join(SWR, 'cmp/pairs.json')))
 pre=sys.argv[1]; pl=int(sys.argv[2]) if len(sys.argv)>2 else 0; kind=sys.argv[3] if len(sys.argv)>3 else 'any'; n=int(sys.argv[4]) if len(sys.argv)>4 else 3
 p=[x for x in r if x['part']==pre and x['pline']==pl][0]
 print(p['pname'],'#',pl,'↔',p['score'],'줄',p['sline'],p['slabel'],f"{p['ratio']:.0%}")

@@ -1,10 +1,11 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 해석기 고치기 전/후 마디 비교: PREV=이전 score-parser.js 절대경로 node test/bdiff.mjs <샘플 접두어> [보여줄 수] → 바뀐 마디의 경고·음 전후
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import fs from 'fs';
-const A = await import(process.env.PREV || '/home/claude/score-parser.prev.js'), B = await import('../src/score-parser.js');
+const A = await import(process.env.PREV || __SWR + '/score-parser.prev.js'), B = await import('../src/score-parser.js');
 const v = x => typeof x === 'number' ? x : x.n / x.d;
 const [pre, maxShow = 6] = process.argv.slice(2);
-const f = (process.env.SAMPLES || '/home/claude/samples') + '/' + fs.readdirSync(process.env.SAMPLES || '/home/claude/samples').find(x => x.startsWith(pre));
+const f = (process.env.SAMPLES || __SWR + '/samples') + '/' + fs.readdirSync(process.env.SAMPLES || __SWR + '/samples').find(x => x.startsWith(pre));
 const d = fs.readFileSync(f);
 const a = await A.loadScore(pdfjs, new Uint8Array(d)), b = await B.loadScore(pdfjs, new Uint8Array(d));
 let better = 0, worse = 0, same = 0, shown = 0;

@@ -1,14 +1,15 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 샘플 전곡 앱 점검: node sweep.cjs <html> <out.json> [startIdx] [endIdx]
 const { chromium } = require('playwright'); const fs = require('fs');
 const [, , HTML, OUT, S0 = '0', S1 = '999'] = process.argv;
-const SM = '/home/claude/samples/'; const files = fs.readdirSync(SM).filter(f => /\.pdf$/i.test(f)).sort().slice(+S0, +S1);
+const SM = __SWR + '/samples/'; const files = fs.readdirSync(SM).filter(f => /\.pdf$/i.test(f)).sort().slice(+S0, +S1);
 (async () => {
   const b = await chromium.launch(); const res = [];
   for (const f of files) {
     const ctx = await b.newContext({ viewport: { width: 1366, height: 860 } }); const p = await ctx.newPage();
     const errs = [], warns = [];
     p.on('pageerror', e => errs.push('PAGE ' + e.message)); p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); else if (m.type() === 'warning') warns.push(m.text()); });
-    await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const x = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + x, contentType: 'text/javascript' }); });
+    await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const x = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + x, contentType: 'text/javascript' }); });
     await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
     const r = { f }; const t0 = Date.now();
     try {

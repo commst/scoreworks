@@ -1,6 +1,7 @@
 import json,collections
 from fractions import Fraction as F
-r=json.load(open('/home/claude/cmp/pairs.json'))
+import os; SWR = os.environ.get('SW_ROOT', '/home/claude')   # 작업 공간 뿌리 — 맥 등은 SW_ROOT로 바꿈
+r=json.load(open(os.path.join(SWR, 'cmp/pairs.json')))
 good=[p for p in r if p['ratio']>=0.6]
 def ev(rs): 
     d={}
@@ -21,4 +22,4 @@ for p in good:
             k='시작 위치 다름'
         C[(k,side)]+=1; ex[(k,side)].append((p['part'],p['pline'],y['pn'],p['score'],p['sline'],y['sn']))
 for k,v in sorted(C.items(),key=lambda x:-x[1]): print(v,k,ex[k][:2])
-json.dump({f'{k[0]}|{k[1]}':v for k,v in ex.items()},open('/home/claude/cmp/rex.json','w'),ensure_ascii=False)
+json.dump({f'{k[0]}|{k[1]}':v for k,v in ex.items()},open(os.path.join(SWR, 'cmp/rex.json'),'w'),ensure_ascii=False)

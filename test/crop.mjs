@@ -1,7 +1,8 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 마디 그림 잘라 보기: node test/crop.mjs <샘플 접두어> <줄 번호> <마디 번호...> → /tmp/crop-<접두어>-<줄>-<마디>.png (앞뒤 마디 조금 포함)
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs'; import fs from 'fs'; import { execSync } from 'child_process';
 const P = await import('../src/score-parser.js');
-const [pre, line, ...nums] = process.argv.slice(2), S = process.env.SAMPLES || '/home/claude/samples';
+const [pre, line, ...nums] = process.argv.slice(2), S = process.env.SAMPLES || __SWR + '/samples';
 const f = S + '/' + fs.readdirSync(S).find(x => x.startsWith(pre));
 const sc = await P.loadScore(pdfjs, new Uint8Array(fs.readFileSync(f)));
 const r = P.analyzeLine(sc, sc.lines.length ? +line : null);

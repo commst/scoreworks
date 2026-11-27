@@ -1,5 +1,6 @@
 import json,collections,re
-r=json.load(open('/home/claude/cmp/pairs.json'))
+import os; SWR = os.environ.get('SW_ROOT', '/home/claude')   # 작업 공간 뿌리 — 맥 등은 SW_ROOT로 바꿈
+r=json.load(open(os.path.join(SWR, 'cmp/pairs.json')))
 good=[p for p in r if p['ratio']>=0.6]
 c=collections.Counter(); wkinds=collections.Counter(); tot=0
 pw_bars=sw_bars=0

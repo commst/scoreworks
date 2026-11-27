@@ -1,14 +1,15 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 사용설명서 그림 다시 찍기(122·123번 화면): 빠르기 칸, 빠르기 못 읽은 악보, 저장 칸 아래쪽, 공유 설정, 마디 골라 넣기, 마디 미리보기
 const { chromium } = require('playwright'); const fs = require('fs');
-const SM = '/home/claude/samples/', pick = p => SM + fs.readdirSync(SM).find(f => f.startsWith(p));
-const O = '/home/claude/work/manual/img/', HTML = 'file:///home/claude/web/deploy-hapju/index.html';
+const SM = __SWR + '/samples/', pick = p => SM + fs.readdirSync(SM).find(f => f.startsWith(p));
+const O = __SWR + '/work/manual/img/', HTML = 'file://' + __SWR + '/web/deploy-hapju/index.html';
 async function setup(b, w, h) {
   const ctx = await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, colorScheme: 'light' }); const p = await ctx.newPage();
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ contentType: 'text/css', body: "@font-face{font-family:'Outfit';font-weight:100 900;font-display:swap;src:url(https://fonts.gstatic.com/outfit.woff2) format('woff2')}" }));
   // 글꼴: 작업 공간에서는 CDN에 못 닿으므로 npm으로 받은 파일 (/home/claude/work/fonts에서 npm i pretendard@1.3.9 @fontsource-variable/outfit)
-  await p.route('https://fonts.gstatic.com/**', r => r.fulfill({ path: '/home/claude/work/fonts/node_modules/@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2', contentType: 'font/woff2' }));
-  await p.route('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/**', r => { const fp = '/home/claude/work/fonts/node_modules/pretendard/dist/web/variable/' + r.request().url().split('/variable/')[1].replace('.min.css', '.css'); return fs.existsSync(fp) ? r.fulfill({ path: fp }) : r.fulfill({ status: 404, body: '' }); });
+  await p.route('https://fonts.gstatic.com/**', r => r.fulfill({ path: __SWR + '/work/fonts/node_modules/@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2', contentType: 'font/woff2' }));
+  await p.route('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/**', r => { const fp = __SWR + '/work/fonts/node_modules/pretendard/dist/web/variable/' + r.request().url().split('/variable/')[1].replace('.min.css', '.css'); return fs.existsSync(fp) ? r.fulfill({ path: fp }) : r.fulfill({ status: 404, body: '' }); });
   await p.route(/^https:\/\/(api\.github|raw\.githubusercontent)\.com\/.*/, r => r.fulfill({ status: 404, body: '' }));
   await p.goto(HTML); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(600); return p;
 }

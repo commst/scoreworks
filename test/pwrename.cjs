@@ -1,12 +1,13 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 악기 이름 고치기 시험
 const { chromium } = require('playwright'); const fs = require('fs');
-const SM = '/home/claude/samples/', pick = p => { const s = SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t = '/tmp/pick-' + p + '.pdf'; fs.copyFileSync(s, t); return t; }   // 한글 파일 이름은 setInputFiles가 올리지 못해 영어 이름으로 복사;
+const SM = __SWR + '/samples/', pick = p => { const s = SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t = '/tmp/pick-' + p + '.pdf'; fs.copyFileSync(s, t); return t; }   // 한글 파일 이름은 setInputFiles가 올리지 못해 영어 이름으로 복사;
 const ok = (c, m) => { console.log((c ? 'ok  ' : 'FAIL') + ' ' + m); if (!c) process.exitCode = 1; };
 (async () => { const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 1280, height: 860 }, deviceScaleFactor: 2, acceptDownloads: true }); await ctx.addInitScript(() => { try { if (!localStorage.getItem('hapju-layout')) localStorage.setItem('hapju-layout', JSON.stringify({ mode: 'push', side: true, top: true })); } catch (e) {} });  const p = await ctx.newPage(); const errs = [];
  p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
- await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+ await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
  await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
- const load = async () => { await p.goto('file:///home/claude/web/deploy-hapju/index.html'); await p.setInputFiles('#pdfInput', pick('b3a31a97')); await p.waitForFunction(() => document.querySelectorAll('#lineList .lcard').length > 1, null, { timeout: 90000 }); await p.waitForTimeout(800); };
+ const load = async () => { await p.goto('file://' + __SWR + '/web/deploy-hapju/index.html'); await p.setInputFiles('#pdfInput', pick('b3a31a97')); await p.waitForFunction(() => document.querySelectorAll('#lineList .lcard').length > 1, null, { timeout: 90000 }); await p.waitForTimeout(800); };
  await load();
  const card = i => `#lineList .lcard:nth-child(${i})`;
  const names = () => p.$$eval('#lineList .lname', es => es.map(e => e.textContent));
@@ -47,6 +48,6 @@ const ok = (c, m) => { console.log((c ? 'ok  ' : 'FAIL') + ' ' + m); if (!c) pro
  const ji = (await names()).findIndex(n => /장고/.test(n)) + 1;
  await p.click(card(ji) + ' .lfold'); await p.waitForTimeout(200); await p.fill(card(ji) + ' .lrename input', '모듬북'); await p.press(card(ji) + ' .lrename input', 'Enter'); await p.waitForTimeout(300);
  const hint = await p.textContent(card(ji) + ' .rn-hint'); ok(/북/.test(hint), 'perc suggestion: ' + hint);
- await p.locator(card(ji)).screenshot({ path: '/home/claude/work/manual/img/04b_rename.png' });
+ await p.locator(card(ji)).screenshot({ path: __SWR + '/work/manual/img/04b_rename.png' });
  ok(!errs.length, 'no errors ' + errs.join(' | '));
  await b.close(); })();

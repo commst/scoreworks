@@ -1,3 +1,4 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 시작 시험: 저장된 설정(localStorage)이 여러 가지인 상태로 앱을 열어 끝까지 시작되는지(__appReady) 본다.
 // node test/pwboot.cjs <index.html 절대경로>   (113번: '악보로 보기'를 저장해 두면 시작이 멈추던 문제)
 const { chromium } = require('playwright');
@@ -26,7 +27,7 @@ const VPS = { desktop: { width: 1280, height: 800 }, phone: { width: 390, height
     const name = vpn + ' ' + name0;
     const ctx = await b.newContext({ viewport: { width: vp.width, height: vp.height }, isMobile: !!vp.isMobile, hasTouch: !!vp.hasTouch }); const p = await ctx.newPage(); const errs = [];
     p.on('pageerror', e => errs.push(e.message));
-    await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+    await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
     await p.route(/^https:\/\/(?!cdn\.jsdelivr).*/, r => r.abort());
     await p.addInitScript(s => { if (!sessionStorage.getItem('seeded')) { for (const [k, v] of Object.entries(s)) localStorage.setItem(k, v); sessionStorage.setItem('seeded', '1'); } }, ls);
     await p.goto('file://' + html);

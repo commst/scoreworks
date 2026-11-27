@@ -1,13 +1,14 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // '악보대로 고칠 수 있는 곳' 모아 보기(205번): 맞게 읽은 음 둘을 ✎로 한 칸 올려 '잘못 읽은 음'을 만들고 → 경고 목록 위 요약 → [모아 보기] 창 →
 // [고치러 가기]로 그 음 말풍선이 열리는지, [그림 대조 전체 검사]가 끝나는지. 그림: <출력>-bar.png(요약) -sheet.png(창) -bubble.png(말풍선)
 // NODE_PATH=/opt/npm-tools/node_modules node test/pwfixlist.cjs [접두어] [줄 이름 일부] [출력 접두어] [phone]
 const { chromium, devices } = require('playwright'); const fs = require('fs');
-const pre = process.argv[2] || '9203ad49', part = process.argv[3] || '대금', out = process.argv[4] || '/tmp/fixlist', phone = process.argv[5] === 'phone', SM = '/home/claude/samples/', t = '/tmp/pick-' + pre + '.pdf';
+const pre = process.argv[2] || '9203ad49', part = process.argv[3] || '대금', out = process.argv[4] || '/tmp/fixlist', phone = process.argv[5] === 'phone', SM = __SWR + '/samples/', t = '/tmp/pick-' + pre + '.pdf';
 fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
 let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'ok   ' : 'FAIL ') + n + (x ? ' ' + x : '')); };
 (async () => { const b = await chromium.launch(); const p = await (await b.newContext(phone ? { ...devices['iPhone 13'] } : { viewport: { width: 1400, height: 950 }, deviceScaleFactor: 2 })).newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
   await p.goto('file://' + require('path').resolve(process.env.HTML || __dirname + '/../index.html') + '#allpanes-dbg'); await p.setInputFiles('#pdfInput', t);
   await p.waitForFunction(() => /읽었습니다/.test(document.getElementById('fileInfo').textContent), null, { timeout: 120000 });

@@ -1832,3 +1832,9 @@
 - 원인: Verovio는 가사 글자 폭을 자기 글꼴 수치로 재는데 한글은 없어 실제보다 좁게 잡고 음표 간격을 정함. 달빛항해 총보 율명 971개 중 365곳이 옆 글자와 겹침
 - 고친 것 ① 화면용 MusicXML 가사(`lyrPad`): 두 글자 이상 한글이면 양옆에 좁은 빈칸(U+2009)을 (글자 수 − 1)개씩 붙여 Verovio가 자리를 더 잡게(파일용 MusicXML은 그대로). 한 글자마다 붙이면 단이 20 → 36개로 늘어 이 정도로 — 25단 ② 그린 뒤 `recLyricFit`(recAfterDraw): 같은 단·같은 줄 글자끼리 가운데 사이 거리보다 넓은 글자만 가운데를 두고 가로로 줄임(최대 0.4배, 많이 줄면 세로도 0.72배까지). 결과 겹침 365 → 0, 줄인 글자 423개 평균 0.87배
 - 시험: pwyul(PC·휴대폰)·pwrec·pwside·pwed·pwstudio0·pwboot, 겹침 세기 /tmp/sylp3.cjs(HTML=… 달빛항해 5a5e4c8e)
+
+## 2026-11-27 (246) · 시험 도구 경로를 환경 변수로(맥에서 Claude Code로 이어 하기 준비)
+- 사용자: 맥의 VS Code + Claude Code로 이어 가려 함 → 시험 도구가 `/home/claude/...`(샘플·pdf.js·Verovio·저장소)와 `/opt/npm-tools`를 그대로 써서 맥에서는 돌지 않던 것
+- 고친 것(앱은 그대로): 시험·도구 스크립트 119개(.cjs·.mjs)의 `/home/claude` 287곳을 `__SWR`(= `process.env.SW_ROOT || '/home/claude'`)로, 파이썬 7개는 `SWR = os.environ.get('SW_ROOT', …)`, 셸 5개는 `${SW_ROOT:-/home/claude}`. `/opt/npm-tools/node_modules/…`를 직접 부르던 14개는 `process.env.NPM_TOOLS`(없으면 /opt/npm-tools) — .mjs의 정적 import는 동적 import로(ESM은 NODE_PATH를 안 봄). 기본값이 예전 경로라 지금 작업 공간은 그대로
+- `tools/setup-workspace.sh`: `SW_ROOT`(기본 /home/claude) 아래에 저장소 링크·샘플(비공개 저장소)·pdf.js·Verovio를 꾸림, `/opt`에 쓸 수 없으면 도구는 `$SW_ROOT/npm-tools`에. 맥 예: `SW_ROOT=$HOME/sw bash tools/setup-workspace.sh` 뒤 `export SW_ROOT=$HOME/sw NPM_TOOLS=$HOME/sw/npm-tools NODE_PATH=$HOME/sw/npm-tools/node_modules`
+- 확인: 바꾼 파일 모두 `node --check`·`py_compile`·`bash -n`, 기본 경로로 pwboot·tdzcheck·musicxml-import, 빈 폴더 `SW_ROOT=/tmp/sw`에 setup-workspace.sh를 돌려 그 경로로 pwyul·pwside·회귀 스냅숏(snap check — 101파일 차이 0)

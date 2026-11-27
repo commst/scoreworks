@@ -1,3 +1,4 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 회귀 기준 스냅숏(181번): 지금 해석기 결과를 기준 파일로 저장해 두고, 해석기를 고친 뒤에는 새 결과만 만들어 기준과 견준다
 // (예전 방식은 옛 해석기·새 해석기로 PDF를 두 번씩 읽었음). PDF 해석(pdf.js)은 opcache.mjs로 캐시 → 두 번째부터는 해석기 처리만 돎
 //   node test/cmp/snap.mjs check            기준과 비교 (regrn.mjs와 같은 분류: FILL·EMPTIED·OTHER(TIE/STEM)·NEW·LOST, 새 경고)
@@ -10,7 +11,7 @@ import { fileURLToPath } from 'url';
 import { loadScoreCached } from './opcache.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const P = await import(process.env.PARSER ? path.resolve(process.env.PARSER) : path.join(HERE, '../../src/score-parser.js'));
-const GOLDEN = process.env.GOLDEN || '/home/claude/scoreplay_sample/golden', SAMPLES = process.env.SAMPLES || '/home/claude/samples';
+const GOLDEN = process.env.GOLDEN || __SWR + '/scoreplay_sample/golden', SAMPLES = process.env.SAMPLES || __SWR + '/samples';
 const [cmd = 'check', ...rest] = process.argv.slice(2);
 
 function list() {

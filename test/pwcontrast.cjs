@@ -1,7 +1,8 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 밝은·어두운 모드 글자 대비 검사: node pwcontrast.cjs <html> [shotdir]
 const { chromium } = require('playwright'); const fs = require('fs');
 const [, , HTML, SHOT] = process.argv;
-const SM = '/home/claude/samples/', pick = p => { const s = SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t = '/tmp/pick-' + p + '.pdf'; fs.copyFileSync(s, t); return t; }   // 한글 파일 이름은 setInputFiles가 올리지 못해 영어 이름으로 복사;
+const SM = __SWR + '/samples/', pick = p => { const s = SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t = '/tmp/pick-' + p + '.pdf'; fs.copyFileSync(s, t); return t; }   // 한글 파일 이름은 setInputFiles가 올리지 못해 영어 이름으로 복사;
 const audit = () => {
   const parse = c => { const m = c.match(/rgba?\(([^)]+)\)/); if (!m) return null; const v = m[1].split(/[ ,/]+/).filter(Boolean).map(Number); return { r: v[0], g: v[1], b: v[2], a: v.length > 3 ? v[3] : 1 }; };
   const lum = ({ r, g, b }) => { const f = x => { x /= 255; return x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4); }; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); };
@@ -32,7 +33,7 @@ const audit = () => {
   for (const scheme of ['light', 'dark']) for (const [nm, w, h] of [['phone', 390, 844], ['desk', 1366, 860]]) {
     const ctx = await b.newContext({ viewport: { width: w, height: h }, hasTouch: w < 900, isMobile: w < 900, colorScheme: scheme }); await ctx.addInitScript(() => { try { if (!localStorage.getItem('hapju-layout')) localStorage.setItem('hapju-layout', JSON.stringify({ mode: 'push', side: true, top: true })); } catch (e) {} }); 
     const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
-    await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+    await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
     await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
     await p.goto('file://' + HTML); await p.waitForTimeout(400);
     const check = async (state) => { const bad = await p.evaluate(audit); total += bad.length; console.log(`${scheme} ${nm} ${state}: ${bad.length ? 'LOW ' + bad.length : 'ok'}`); bad.slice(0, 6).forEach(x => console.log('   ' + x)); if (SHOT) await p.screenshot({ path: `${SHOT}/c-${scheme}-${nm}-${state}.png` }); };

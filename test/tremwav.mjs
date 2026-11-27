@@ -1,10 +1,11 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 트레몰로 + 꺾쇠: 연변목가 총보 양금 줄만 켜고 1~4마디를 WAV로 받아 0.1초마다 크기와 치는 횟수를 봄.  node test/tremwav.mjs [html] [접두어] [줄 이름] [마디부터] [마디까지]
-import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
+const { chromium } = await import((process.env.NPM_TOOLS || '/opt/npm-tools') + '/node_modules/playwright/index.mjs');
 import fs from 'fs';
-const [html = '/home/claude/scoreplay/index.html', pre = '52271c34', lname = '양금', from = '1', to = '4'] = process.argv.slice(2);
-const SM = '/home/claude/samples/', t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
+const [html = __SWR + '/scoreplay/index.html', pre = '52271c34', lname = '양금', from = '1', to = '4'] = process.argv.slice(2);
+const SM = __SWR + '/samples/', t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
 const b = await chromium.launch(); const p = await (await b.newContext({ acceptDownloads: true })).newPage();
-await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
 await p.route(/^https:\/\/(?!cdn\.jsdelivr).*/, r => r.abort());
 await p.goto('file://' + html + '#allpanes'); await p.setInputFiles('#pdfInput', t);
 await p.waitForFunction(() => document.querySelectorAll('#lineList .lcard').length > 2, null, { timeout: 120000 }); await p.waitForTimeout(800);

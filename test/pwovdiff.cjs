@@ -1,12 +1,13 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 겹쳐 보기 1·2단계(193번): node test/pwovdiff.cjs <접두어> [줄:마디] — MusicXML 저장 뒤 확인 창에서 주황(모양·셈여림 다름)·빨강 마디 수, 차이 종류별 마디 수. 줄:마디를 주면 그 마디로 가서 겹쳐 보기 그림(/tmp/ov.png)과 주황 동그라미 이유
 // 겹쳐 보기 확장 확인: 총보를 열고 모든 줄 켠 뒤 xmlCheck 결과에서 모양·셈여림 차이 집계
 const { chromium } = require('playwright'); const fs = require('fs');
-const pre = process.argv[2], SM = '/home/claude/samples/', src = SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(src, t);
+const pre = process.argv[2], SM = __SWR + '/samples/', src = SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(src, t);
 (async () => { const b = await chromium.launch(); const p = await (await b.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
-  await p.goto('file://' + (process.env.HTML || '/home/claude/scoreplay/index.html') + '#allpanes'); await p.setInputFiles('#pdfInput', t);
+  await p.goto('file://' + (process.env.HTML || __SWR + '/scoreplay/index.html') + '#allpanes'); await p.setInputFiles('#pdfInput', t);
   await p.waitForFunction(() => document.querySelectorAll('#lineList .lcard').length >= 1 && /읽었습니다/.test(document.getElementById('fileInfo').textContent), null, { timeout: 120000 });
   await p.click('#allOn').catch(() => {}); await p.waitForTimeout(2000);
   const dl = p.waitForEvent('download', { timeout: 60000 }).catch(() => null); await p.click('#exportXmlBtn'); await dl;

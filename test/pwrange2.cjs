@@ -1,11 +1,12 @@
-const { chromium } = require('/opt/npm-tools/node_modules/playwright');
-const fs = require('fs'); const SM = '/home/claude/samples/'; const pick = p => { const s = SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t = '/tmp/pick-' + p + '.pdf'; fs.copyFileSync(s, t); return t; }   // 한글 파일 이름은 setInputFiles가 올리지 못해 영어 이름으로 복사;
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
+const { chromium } = require((process.env.NPM_TOOLS || '/opt/npm-tools') + '/node_modules/playwright');
+const fs = require('fs'); const SM = __SWR + '/samples/'; const pick = p => { const s = SM + fs.readdirSync(SM).find(f => f.startsWith(p)), t = '/tmp/pick-' + p + '.pdf'; fs.copyFileSync(s, t); return t; }   // 한글 파일 이름은 setInputFiles가 올리지 못해 영어 이름으로 복사;
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); const errs = [];
   const open = async () => { const p = await ctx.newPage(); p.on('pageerror', e => errs.push(e.message));
-    await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'), contentType: 'text/javascript' }));
+    await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'), contentType: 'text/javascript' }));
     await p.route('https://fonts.googleapis.com/**', r => r.fulfill({ body: '', contentType: 'text/css' }));
-    await p.goto('file:///home/claude/web/deploy-hapju/index.html'); await p.waitForTimeout(800);
+    await p.goto('file://' + __SWR + '/web/deploy-hapju/index.html'); await p.waitForTimeout(800);
     await p.setInputFiles('#pdfInput', pick('b3a31a97')); await p.waitForFunction(() => /마디를 읽었습니다|하나 이상 켜세요/.test(document.querySelector('#fileInfo').textContent), null, { timeout: 120000 }); await p.waitForTimeout(1200); return p; };
   const rng = async (p, t) => console.log(t, await p.inputValue('#from'), await p.inputValue('#to'), '| save', await p.inputValue('#sFrom'), await p.inputValue('#sTo'));
   let p = await open(); await rng(p, 'load');

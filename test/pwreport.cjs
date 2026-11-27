@@ -1,13 +1,14 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // [문제점 신고하기]: 단추 자리(위 막대·첫 화면·사용법 창), 미리 채움, 전송(FormSubmit는 가짜 응답), 실패하면 메일 앱으로 넘길지 물음
 const { chromium } = require('playwright'); const fs = require('fs');
-const pre = '9203ad49', SM = process.env.SAMPLES || '/home/claude/samples/'; const t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
+const pre = '9203ad49', SM = process.env.SAMPLES || __SWR + '/samples/'; const t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
 let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fails++; };
 (async () => { const b = await chromium.launch();
  for (const [name, vp] of [['desktop', { width: 1280, height: 860 }], ['laptop', { width: 1024, height: 700 }], ['tablet', { width: 820, height: 1180 }], ['phone', { width: 390, height: 844 }]]) {
   const ctx = await b.newContext({ viewport: vp, hasTouch: name === 'phone' || name === 'tablet' }); const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message)); const dlg = []; let accept = true; p.on('dialog', d => { dlg.push(d.message()); accept ? d.accept() : d.dismiss(); });
   let mode = 'ok'; const sent = [];
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route(/^https:\/\/formsubmit\.co\/.*/, r => { { const rq = r.request(), ct = rq.headers()['content-type'] || '', raw = rq.postDataBuffer() || Buffer.alloc(0); let body = {}; if (/json/.test(ct)) body = JSON.parse(raw.toString() || '{}'); sent.push({ url: rq.url(), ct, body, raw }); }
     if (!/\/ajax\//.test(r.request().url())) {   // 첨부: 숨은 폼 전송(multipart) → 성공하면 _next로 넘김
       const m = /name="_next"\r\n\r\n([^\r]+)/.exec((r.request().postDataBuffer() || Buffer.alloc(0)).toString('latin1'));
@@ -18,7 +19,7 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); 
     if (mode === 'activate') return r.fulfill({ status: 200, contentType: 'application/json', body: '{"success":"false","message":"This form needs Activation."}' });
     return r.abort(); });
   await p.route(/^https:\/\/(?!cdn\.jsdelivr|formsubmit|commst\.github\.io).*/, r => r.abort());
-  await p.route('https://commst.github.io/scoreworks/**', r => { const f = r.request().url().split('/scoreworks/')[1].split('?')[0] || 'index.html'; const fp = '/home/claude/scoreplay/' + f; return fs.existsSync(fp) ? r.fulfill({ path: fp }) : r.fulfill({ status: 404, body: '' }); });
+  await p.route('https://commst.github.io/scoreworks/**', r => { const f = r.request().url().split('/scoreworks/')[1].split('?')[0] || 'index.html'; const fp = __SWR + '/scoreplay/' + f; return fs.existsSync(fp) ? r.fulfill({ path: fp }) : r.fulfill({ status: 404, body: '' }); });
   await p.goto('https://commst.github.io/scoreworks/'); await p.waitForTimeout(800);
   const vis = id => p.evaluate(id => { const e = document.getElementById(id); if (!e) return false; const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden'; }, id);
   // 위 막대: 넓은 화면에서는 [사용설명서 받기] 오른쪽에 간격을 두고, 좁은 화면에서는 숨김(첫 화면·사용법 창에 있음)

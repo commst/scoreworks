@@ -1,11 +1,12 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 메트로놈이 음악에 묻히지 않는지: 큰 총보(프론티어, 모든 줄)의 20~23마디를 [음원 저장] WAV로 메트로놈 끔·보통·크게 받아
 // 박 자리(40ms)의 크기를 견줌.  node test/metrolvl.mjs [html]
-import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
+const { chromium } = await import((process.env.NPM_TOOLS || '/opt/npm-tools') + '/node_modules/playwright/index.mjs');
 import fs from 'fs';
-const html = process.argv[2] || '/home/claude/scoreplay/index.html', SM = '/home/claude/samples/';
+const html = process.argv[2] || __SWR + '/scoreplay/index.html', SM = __SWR + '/samples/';
 const t = '/tmp/pick-9203ad49.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith('9203ad49')), t);
 const b = await chromium.launch(); const p = await (await b.newContext({ acceptDownloads: true })).newPage();
-await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
 await p.route(/^https:\/\/(?!cdn\.jsdelivr).*/, r => r.abort());
 await p.goto('file://' + html + '#allpanes'); await p.setInputFiles('#pdfInput', t);
 await p.waitForFunction(() => document.querySelectorAll('#lineList .lcard').length > 2, null, { timeout: 120000 }); await p.waitForTimeout(800);

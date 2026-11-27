@@ -1,20 +1,21 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 새 기능 시험: 마디 골라 빠르기·rit. 넣기, 공유 설정(GitHub는 가짜 서버로)
 const { chromium } = require('playwright'); const fs = require('fs');
-const pre = '9203ad49', SM = '/home/claude/samples/'; const t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
+const pre = '9203ad49', SM = __SWR + '/samples/'; const t = '/tmp/pick-' + pre + '.pdf'; fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
 let fails = 0; const ok = (c, m) => { console.log((c ? 'ok   ' : 'FAIL ') + m); if (!c) fails++; };
 (async () => { const b = await chromium.launch();
  for (const [name, vp] of [['desktop', { width: 1280, height: 860 }], ['phone', { width: 390, height: 844 }]]) {
   const ctx = await b.newContext({ viewport: vp, hasTouch: name === 'phone' }); await ctx.addInitScript(() => { try { if (!localStorage.getItem('hapju-layout')) localStorage.setItem('hapju-layout', JSON.stringify({ mode: 'push', side: true, top: true })); } catch (e) {} });  const p = await ctx.newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message)); const dlg = []; p.on('dialog', d => { dlg.push(d.message()); d.accept(); });
   const store = {}; const calls = [];
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route(/^https:\/\/api\.github\.com\/.*/, async r => { const q = r.request(), u = q.url().split('?')[0], path = u.split('/contents/')[1]; calls.push(q.method() + ' ' + path + ' auth=' + (q.headers().authorization || '').slice(0, 12));
     if ((q.headers().authorization || '') !== 'Bearer TESTTOKEN') return r.fulfill({ status: 401, body: '{}' });
     if (q.method() === 'GET') return store[path] ? r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ sha: 'abc', content: store[path] }) }) : r.fulfill({ status: 404, body: '{}' });
     const body = JSON.parse(q.postData()); store[path] = body.content; return r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }); });
   await p.route(/^https:\/\/raw\.githubusercontent\.com\/.*/, r => { const path = r.request().url().split('/main/')[1].split('?')[0]; calls.push('RAW ' + path); return store[path] ? r.fulfill({ status: 200, contentType: 'application/json', body: Buffer.from(store[path], 'base64').toString('utf8') }) : r.fulfill({ status: 404, body: 'x' }); });
   await p.route(/^https:\/\/(?!cdn\.jsdelivr|api\.github|raw\.githubusercontent).*/, r => r.abort());
-  await p.route('https://commst.github.io/scoreworks/**', r => { const f = r.request().url().split('/scoreworks/')[1].split('?')[0] || 'index.html'; const fp = '/home/claude/scoreplay/' + f; return fs.existsSync(fp) ? r.fulfill({ path: fp }) : r.fulfill({ status: 404, body: '' }); });
+  await p.route('https://commst.github.io/scoreworks/**', r => { const f = r.request().url().split('/scoreworks/')[1].split('?')[0] || 'index.html'; const fp = __SWR + '/scoreplay/' + f; return fs.existsSync(fp) ? r.fulfill({ path: fp }) : r.fulfill({ status: 404, body: '' }); });
   const open = async () => { await p.goto('https://commst.github.io/scoreworks/'); await p.setInputFiles('#pdfInput', t);
     await p.waitForFunction(() => document.querySelectorAll('#lineList .lcard').length >= 1 && /읽었습니다/.test(document.getElementById('fileInfo').textContent), null, { timeout: 150000 }); await p.waitForTimeout(1500); };
   const tab = async tb => { await p.evaluate(() => { const m = document.getElementById('msg'); if (m && !m.hidden) m.click(); }); if (name === 'desktop') await p.click('#tab-' + tb); else { if (!(await p.evaluate(() => document.body.classList.contains('sheet-open')))) await p.click(`.dtab[data-tab="${tb}"]`); else await p.click(`.tab2[data-tab="${tb}"]`); } await p.waitForTimeout(300); };

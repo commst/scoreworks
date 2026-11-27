@@ -1,3 +1,4 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 다시 읽은(세로 맞춤) 마디를 PDF에서 잘라 그림으로: S=출력폴더(그 안에 vis/) node test/vis.mjs <샘플 접두어> [개수] [씨앗]
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import fs from 'fs'; import { execSync } from 'child_process';
@@ -5,7 +6,7 @@ const P = await import('../src/score-parser.js');
 const S = process.env.S;
 const NEED = /박자보다 김|마디 길이를 넘음/;
 const [pre, nmax, seed] = process.argv.slice(2);
-const f = fs.readdirSync(process.env.SAMPLES || '/home/claude/samples').find(x => x.startsWith(pre)), path = (process.env.SAMPLES || '/home/claude/samples') + '/' + f;
+const f = fs.readdirSync(process.env.SAMPLES || __SWR + '/samples').find(x => x.startsWith(pre)), path = (process.env.SAMPLES || __SWR + '/samples') + '/' + f;
 const sc = await P.loadScore(pdfjs, new Uint8Array(fs.readFileSync(path)));
 const all = sc.lines.map((l, i) => P.analyzeLine(sc, i));
 const v = x => typeof x === 'number' ? x : x.n / x.d;

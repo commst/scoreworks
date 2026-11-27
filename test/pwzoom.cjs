@@ -1,9 +1,10 @@
+const __SWR = process.env.SW_ROOT || '/home/claude';   // 작업 공간 뿌리(샘플·pdf.js·Verovio·저장소) — 맥 등은 SW_ROOT로 바꿈
 // 휴대폰 확대·축소·회전 레이아웃 시험(211번): NODE_PATH=/opt/npm-tools/node_modules node test/pwzoom.cjs [접두어]
 //  좁은 폭(글자 크기를 키운 휴대폰과 같은 효과: 260·300·320·360·390px), 가로(667·844), 세로→가로→세로 돌리기에서
 //  첫 화면·악보를 연 화면·악보로 보기·아래 서랍(악기·빠르기·연주·저장·음색)마다 가로로 넘치는 요소가 없는지 본다.
 //  넘침 = 문서가 가로로 굴러감(scrollWidth > 화면 폭) 또는 보이는 요소의 오른쪽 끝이 화면 밖(가로 스크롤 칸 안의 것은 뺌)
 const { chromium } = require('playwright'); const fs = require('fs');
-const pre = process.argv[2] || '9203ad49', SM = '/home/claude/samples/', t = '/tmp/pick-' + pre + '.pdf';
+const pre = process.argv[2] || '9203ad49', SM = __SWR + '/samples/', t = '/tmp/pick-' + pre + '.pdf';
 fs.copyFileSync(SM + fs.readdirSync(SM).find(f => f.startsWith(pre)), t);
 let fail = 0; const ok = (n, c, x = '') => { if (!c) fail++; console.log((c ? 'ok   ' : 'FAIL ') + n + (x ? ' ' + x : '')); };
 const HTML = 'file://' + require('path').resolve(process.env.HTML || __dirname + '/../index.html');
@@ -25,7 +26,7 @@ const report = (name, o) => ok(name, o.doc <= 1 && !o.n, o.doc > 1 || o.n ? `문
 async function page(b, w, h) {
   const ctx = await b.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: '/home/claude/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
+  await p.route('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/**', r => { const f = r.request().url().split('pdfjs-dist@4.10.38/')[1].replace('.min.mjs', '.mjs'); r.fulfill({ path: __SWR + '/web/node_modules/pdfjs-dist/' + f, contentType: 'text/javascript' }); });
   await p.route(/^https?:\/\/(?!cdn\.jsdelivr\.net\/npm\/pdfjs-dist)/, r => r.fulfill({ body: '', contentType: 'text/css' }));
   await p.goto(HTML); await p.waitForTimeout(600); return { p, errs };
 }
